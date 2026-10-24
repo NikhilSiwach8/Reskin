@@ -217,17 +217,35 @@ button:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
   .meter { padding: 4px 6px; }
   .meter-label { font-size: 9px; }
   #btn-buy { padding: 8px 10px; font-size: 12px; }
-  #btn-info, #btn-menu { display: none; }
-  #meter-balance { display: none; }
-  body.show-balance #meter-balance { display: block; }
 }
 @media (max-width: 760px) and (orientation: portrait) {
   #controls { flex-wrap: wrap; height: auto; padding-top: 8px; padding-bottom: max(8px, env(safe-area-inset-bottom)); }
   .ctl-meters { order: -1; flex-basis: 100%; }
-  #meter-balance { display: block; }
-  #btn-info, #btn-menu { display: grid; }
   #btn-spin { margin-top: 0; }
   :root { --bar-h: 150px; }
+}
+/* Short landscape screens (phones, Stake mini-player): compact bar. Info, settings and balance always stay visible. */
+@media (max-height: 500px) and (orientation: landscape) {
+  :root { --bar-h: 54px; }
+  #controls { gap: 6px; padding-left: 8px; padding-right: 8px; }
+  .ctl-group { gap: 5px; }
+  .ctl-meters { gap: 5px; }
+  .icon-btn { width: 34px; height: 34px; border-width: 2px; }
+  .icon-btn svg { width: 18px; height: 18px; }
+  .meter { padding: 2px 8px; border-radius: 8px; }
+  .meter-label { font-size: 8px; letter-spacing: 0.08em; }
+  .meter-value { font-size: 13px; }
+  .meter-bet { gap: 4px; padding: 2px 4px; }
+  .step-btn { width: 24px; height: 24px; font-size: 16px; }
+  #btn-buy { padding: 6px 10px; font-size: 11px; }
+  #btn-spin { width: 58px; height: 58px; margin-top: -8px; border-width: 3px; padding: 6px; box-shadow: 0 0 0 3px #150a20, 0 0 16px rgba(125, 255, 168, 0.5); }
+}
+/* Very narrow landscape (mini-player S): sound, turbo and autoplay move to Settings (which has the same toggles). */
+@media (max-width: 560px) and (orientation: landscape) {
+  #btn-sound, #btn-turbo, #btn-auto { display: none !important; }
+  #btn-buy { padding: 5px 8px; font-size: 10px; }
+  .meter { padding: 2px 5px; }
+  .meter-value { font-size: 11px; }
 }
 @media (max-height: 420px) and (orientation: landscape) {
   #feature-panel { width: 200px; padding: 8px; gap: 4px; font-size: 12px; }

@@ -91,3 +91,12 @@ function hash(s: string): number {
   for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
   return h >>> 0;
 }
+
+/** Probability that a reel window of `reelSet` shows `sym`, per reel (exact, from the strips). */
+export function windowProbability(reelSet: string, sym: SymbolId): number[] {
+  return buildStrips(reelSet).map((strip) => {
+    let hits = 0;
+    for (let stop = 0; stop < strip.length; stop++) if (windowAt(strip, stop).includes(sym)) hits++;
+    return hits / strip.length;
+  });
+}

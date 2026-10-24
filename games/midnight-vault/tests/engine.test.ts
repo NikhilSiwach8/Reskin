@@ -300,6 +300,10 @@ describe('Three Keys to the Vault', () => {
     }
   });
 
+  it('starts Vault Breach stage 3 at Relic Overload level 1 or higher', () => {
+    expect(overloadLevel(FEATURES.vaultBreach.overloadStartCharge)).toBeGreaterThanOrEqual(1);
+  });
+
   it('opens The Vault Breach with 5 Keys and runs all four stages', () => {
     const rng = new Rng(9);
     const book = playRound(1, 'base', rng, { board: forcedKeyBoard(rng, 5) });

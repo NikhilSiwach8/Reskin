@@ -1,15 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 96" width="512" height="96">
-<defs><linearGradient id="gold150" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF1B0" stop-opacity="1"/><stop offset="0.25" stop-color="#F5C95A" stop-opacity="1"/><stop offset="0.55" stop-color="#D7A544" stop-opacity="1"/><stop offset="0.8" stop-color="#9A6A1F" stop-opacity="1"/><stop offset="1" stop-color="#6B4410" stop-opacity="1"/></linearGradient><linearGradient id="golddk151" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B8862E" stop-opacity="1"/><stop offset="1" stop-color="#5A3608" stop-opacity="1"/></linearGradient><linearGradient id="st152" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B0A6C8" stop-opacity="1"/><stop offset="0.5" stop-color="#5C5070" stop-opacity="1"/><stop offset="1" stop-color="#2A2238" stop-opacity="1"/></linearGradient></defs>
+<defs><linearGradient id="gold159" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF1B0" stop-opacity="1"/><stop offset="0.25" stop-color="#F5C95A" stop-opacity="1"/><stop offset="0.55" stop-color="#D7A544" stop-opacity="1"/><stop offset="0.8" stop-color="#9A6A1F" stop-opacity="1"/><stop offset="1" stop-color="#6B4410" stop-opacity="1"/></linearGradient><linearGradient id="golddk160" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B8862E" stop-opacity="1"/><stop offset="1" stop-color="#5A3608" stop-opacity="1"/></linearGradient><linearGradient id="st161" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B0A6C8" stop-opacity="1"/><stop offset="0.5" stop-color="#5C5070" stop-opacity="1"/><stop offset="1" stop-color="#2A2238" stop-opacity="1"/></linearGradient></defs>
 <rect x="8" y="22" width="112" height="52" rx="26" fill="none" stroke="#150A20" stroke-width="26"/>
-<rect x="8" y="22" width="112" height="52" rx="26" fill="none" stroke="url(#st152)" stroke-width="14"/>
-<rect x="72" y="40" width="40" height="16" rx="8" fill="url(#gold150)" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="5"/>
+<rect x="8" y="22" width="112" height="52" rx="26" fill="none" stroke="url(#st161)" stroke-width="14"/>
+<rect x="72" y="40" width="40" height="16" rx="8" fill="url(#gold159)" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="5"/>
 <rect x="136" y="22" width="112" height="52" rx="26" fill="none" stroke="#150A20" stroke-width="26"/>
-<rect x="136" y="22" width="112" height="52" rx="26" fill="none" stroke="url(#st152)" stroke-width="14"/>
-<rect x="200" y="40" width="40" height="16" rx="8" fill="url(#gold150)" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="5"/>
+<rect x="136" y="22" width="112" height="52" rx="26" fill="none" stroke="url(#st161)" stroke-width="14"/>
+<rect x="200" y="40" width="40" height="16" rx="8" fill="url(#gold159)" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="5"/>
 <rect x="264" y="22" width="112" height="52" rx="26" fill="none" stroke="#150A20" stroke-width="26"/>
-<rect x="264" y="22" width="112" height="52" rx="26" fill="none" stroke="url(#st152)" stroke-width="14"/>
-<rect x="328" y="40" width="40" height="16" rx="8" fill="url(#gold150)" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="5"/>
+<rect x="264" y="22" width="112" height="52" rx="26" fill="none" stroke="url(#st161)" stroke-width="14"/>
+<rect x="328" y="40" width="40" height="16" rx="8" fill="url(#gold159)" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="5"/>
 <rect x="392" y="22" width="112" height="52" rx="26" fill="none" stroke="#150A20" stroke-width="26"/>
-<rect x="392" y="22" width="112" height="52" rx="26" fill="none" stroke="url(#st152)" stroke-width="14"/>
-<rect x="456" y="40" width="40" height="16" rx="8" fill="url(#gold150)" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="5"/>
+<rect x="392" y="22" width="112" height="52" rx="26" fill="none" stroke="url(#st161)" stroke-width="14"/>
+<rect x="456" y="40" width="40" height="16" rx="8" fill="url(#gold159)" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="5"/>
 </svg>

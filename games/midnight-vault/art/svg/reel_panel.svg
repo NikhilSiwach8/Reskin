@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 750 750" width="750" height="750">
-<defs><radialGradient id="rb142" cx="0.5" cy="0.5" r="0.5" fx="0.5" fy="0.5"><stop offset="0" stop-color="#2A1A48" stop-opacity="1"/><stop offset="1" stop-color="#0E0A1A" stop-opacity="1"/></radialGradient><radialGradient id="rv143" cx="0.5" cy="0.5" r="0.5" fx="0.5" fy="0.5"><stop offset="0.6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.55"/></radialGradient></defs>
-<rect width="750" height="750" fill="url(#rb142)"/>
+<defs><radialGradient id="rb151" cx="0.5" cy="0.5" r="0.5" fx="0.5" fy="0.5"><stop offset="0" stop-color="#2A1A48" stop-opacity="1"/><stop offset="1" stop-color="#0E0A1A" stop-opacity="1"/></radialGradient><radialGradient id="rv152" cx="0.5" cy="0.5" r="0.5" fx="0.5" fy="0.5"><stop offset="0.6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.55"/></radialGradient></defs>
+<rect width="750" height="750" fill="url(#rb151)"/>
 <line x1="150" y1="12" x2="150" y2="738" stroke="#9D66FF" stroke-width="2" opacity="0.22"/>
 <line x1="300" y1="12" x2="300" y2="738" stroke="#9D66FF" stroke-width="2" opacity="0.22"/>
 <line x1="450" y1="12" x2="450" y2="738" stroke="#9D66FF" stroke-width="2" opacity="0.22"/>
 <line x1="600" y1="12" x2="600" y2="738" stroke="#9D66FF" stroke-width="2" opacity="0.22"/>
-<rect width="750" height="750" fill="url(#rv143)"/>
+<rect width="750" height="750" fill="url(#rv152)"/>
 </svg>

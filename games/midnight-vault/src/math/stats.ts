@@ -4,6 +4,8 @@
 import { WINCAP } from '../engine/config.ts';
 import type { Book } from '../engine/types.ts';
 
+export type BookSummary = Pick<Book, 'id' | 'payoutMultiplier' | 'tags' | 'criteria'>;
+
 export interface ModeStats {
   mode: string;
   cost: number;
@@ -17,6 +19,7 @@ export interface ModeStats {
   maxWinProbability: number;
   zeroProbability: number;
   aboveScale: number;
+  fixedGroups: { name: string; probability: number; books: number }[];
   features: { tag: string; probability: number; oneIn: number; rtpContribution: number; avgWin: number }[];
   buckets: { label: string; probability: number }[];
   sim: {
@@ -48,9 +51,9 @@ const BUCKETS: [number, number, string][] = [
 export function buildStats(
   mode: string,
   cost: number,
-  books: Book[],
+  books: BookSummary[],
   weights: number[],
-  extra: ModeStats['sim'] & { rawRtp: number; zeroProbability: number; aboveScale: number; seconds: number },
+  extra: ModeStats['sim'] & { rawRtp: number; zeroProbability: number; aboveScale: number; fixedGroups: ModeStats['fixedGroups']; seconds: number },
 ): ModeStats {
   const W = weights.reduce((a, b) => a + b, 0);
   const p = (i: number) => weights[i] / W;
@@ -105,6 +108,7 @@ export function buildStats(
     maxWinProbability: maxP,
     zeroProbability: extra.zeroProbability,
     aboveScale: extra.aboveScale,
+    fixedGroups: extra.fixedGroups,
     features,
     buckets,
     sim: {
@@ -120,7 +124,7 @@ export function buildStats(
 }
 
 const pct = (v: number, d = 3) => `${(v * 100).toFixed(d)}%`;
-const oneIn = (v: number) => (v > 0 ? `1 in ${Math.round(1 / v).toLocaleString('en-US')}` : 'never');
+const oneIn = (v: number) => (v > 0 ? `1 in ${(1 / v < 100 ? (1 / v).toFixed(2) : Math.round(1 / v).toLocaleString('en-US'))}` : 'never');
 
 export function renderReport(modes: ModeStats[], args: { books: number; seed: number; target: number }): string {
   const out: string[] = [];
@@ -138,6 +142,7 @@ export function renderReport(modes: ModeStats[], args: { books: number; seed: nu
     out.push(`- Probability of a round paying less than its cost, after weighting: ${pct(m.zeroProbability, 2)}`);
     out.push(`- Weighting adjustment: rounds paying at least the cost are ${m.aboveScale.toFixed(4)}x as likely as in the raw simulation`);
     out.push(`- Win-cap estimate: natural cap hits ${m.sim.naturalCaps} / ${m.sim.natural.toLocaleString('en-US')}; natural Cursed Fortune rounds ${m.sim.naturalBreach}; forced Cursed Fortune cap rate ${m.sim.forcedHits} / ${m.sim.forcedAttempts}; probability used ${m.sim.wincapEstimate.toExponential(3)}`);
+    for (const g of m.fixedGroups) out.push(`- Fixed-probability group \`${g.name}\`: ${g.books} books sharing probability ${g.probability.toExponential(3)} (${oneIn(g.probability)})`);
     out.push('', '| Feature tag | Frequency | RTP contribution | Average round win |', '|---|---|---|---|');
     for (const f of m.features) out.push(`| ${f.tag} | ${oneIn(f.probability)} | ${pct(f.rtpContribution, 2)} | ${f.avgWin.toFixed(2)}x |`);
     out.push('', '| Round win | Probability |', '|---|---|');

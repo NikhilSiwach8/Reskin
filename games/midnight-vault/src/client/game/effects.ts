@@ -1,5 +1,5 @@
 // Visual layers on top of the reels: relic blocks, paylines, particles and feature props.
-import { Container, Graphics, Sprite, Text, TilingSprite, type Texture } from 'pixi.js';
+import { Container, Graphics, Sprite, Text, Texture, TilingSprite } from 'pixi.js';
 import { PAYLINES, REELS, ROWS } from '../../engine/config.ts';
 import type { Cell, LineWin, RelicBlock } from '../../engine/types.ts';
 import { symbolTexture, tex } from '../assets.ts';
@@ -78,7 +78,7 @@ export class RelicLayer extends Container {
     const key = block.id > 0 ? block.id : -this.nextLocal++;
     const root = new Container();
     const frame = new Graphics();
-    const art = new Sprite(symbolTexture('RL'));
+    const art = new Sprite(block.size > 1 && tex('relic_block') !== Texture.EMPTY ? tex('relic_block') : symbolTexture('RL'));
     art.anchor.set(0.5);
     const label = new Text({ text: block.mult > 1 ? `x${block.mult}` : '', style: textStyle(block.size > 1 ? 44 : 34) });
     label.anchor.set(1, 1);

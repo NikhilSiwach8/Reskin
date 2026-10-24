@@ -23,3 +23,7 @@ All skills except the two marked "written for this repo" are copied unchanged. T
 - **RTP, balancing and books:** `rtp-optimizer`, `auto-balancer`, `book-generator`, `game-math-director`, `senior-game-math-engineer`
 - **UI, UX, animation and audio:** `slot-ui-studio`, `ui-slot-ux-designer`, `event-animation-designer`, `css-motion-designer`, `pixi-svelte-integrator`, `slot-vfx-artist`, `slot-audio-engineer`, `turbo-spin-designer`, `autoplay-system-designer`
 - **Engine and performance:** `cpp-engine-core`, `cpp-performance-engineer`, `low-latency-systems`, `parallel-computing`, `wasm-integration`, `rng-crypto-specialist`
+
+## Games
+
+- [`games/midnight-vault`](games/midnight-vault/README.md): **Midnight Vault**, a 5x5, 15-line Halloween slot for Stake Engine with an outcome engine, Stake book generator, PixiJS client, local mock RGS, original art, tests and documentation.

@@ -13,6 +13,7 @@ export const TEXTURES = [
   'bg_final_heist',
   'frame',
   'reel_panel',
+  'relic_block',
   'logo',
   'fx_chain',
   'fx_lock',

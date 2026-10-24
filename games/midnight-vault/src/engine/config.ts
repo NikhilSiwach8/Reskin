@@ -203,7 +203,7 @@ export const FEATURES = {
   vaultBreach: {
     hauntingSpins: 4,
     overloadSpins: 4,
-    overloadStartCharge: 3,
+    overloadStartCharge: 5,
     finalHeistRespins: 3,
     finalSurgeSize: 4,
     hauntingMarks: [[4, 30], [5, 30], [6, 25], [8, 15]] as Weighted<number>,

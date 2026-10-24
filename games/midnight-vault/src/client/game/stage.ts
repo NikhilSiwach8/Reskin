@@ -58,6 +58,10 @@ export class Stage {
       this.particles.update(t.deltaMS);
     });
     window.addEventListener('resize', () => this.layout());
+    for (const id of ['controls', 'replay-bar']) {
+      const el = document.getElementById(id);
+      if (el) new ResizeObserver(() => this.layout()).observe(el);
+    }
     this.layout();
   }
 
@@ -72,12 +76,15 @@ export class Stage {
       bg.position.set(vw / 2, vh / 2);
     }
     const land = this.orientation === 'landscape';
-    // Design space; the bottom of each layout is reserved for the DOM control bar.
+    // Design space of the playfield (logo + board). It is fitted into the area above the
+    // DOM control bar, whose real height depends on the screen (it wraps on narrow phones).
+    const bar = document.getElementById('controls')?.offsetHeight || document.getElementById('replay-bar')?.offsetHeight || 0;
+    const availH = Math.max(100, vh - bar);
     const dw = land ? 1920 : 1080;
-    const dh = land ? 1080 : 1920;
-    const s = Math.min(vw / dw, vh / dh);
+    const dh = land ? 960 : 1340;
+    const s = Math.min(vw / dw, availH / dh);
     this.root.scale.set(s);
-    this.root.position.set((vw - dw * s) / 2, (vh - dh * s) / 2);
+    this.root.position.set((vw - dw * s) / 2, (availH - dh * s) / 2);
     if (land) {
       this.board.scale.set(0.84);
       this.board.position.set((dw - FRAME.w * 0.84) / 2, 40);

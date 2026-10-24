@@ -6,10 +6,11 @@
 // Outputs:
 //   art/svg/<name>.svg           editable vector source (committed)
 //   art/render/<name>.png        full-resolution render (regenerated, git-ignored)
+//   art/painted/<name>.png       optional painted source; replaces the vector render when present
 //   public/assets/<name>.webp    runtime asset (committed)
 //   public/assets/symbols.webp + symbols.json   symbol atlas (Pixi spritesheet format)
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
@@ -37,16 +38,22 @@ for (const [name, def] of entries) {
   await page.waitForFunction(() => document.images[0]?.complete);
   const png = join(dirs.render, `${name}.png`);
   await page.screenshot({ path: png, omitBackground: !def.opaque, clip: { x: 0, y: 0, width: w, height: h } });
+  // A reviewed painted version (tools/generate-art-openai.mjs) takes priority over the vector render.
+  const painted = join(root, 'art/painted', `${name}.png`);
+  if (existsSync(painted)) {
+    execFileSync('convert', [painted, '-resize', `${w}x${h}!`, png]);
+    console.log(`${name}: using painted source`);
+  }
   const [rw, rh] = def.runtime;
   execFileSync('convert', [png, '-resize', `${rw}x${rh}!`, '-quality', def.opaque ? '86' : '92', '-define', 'webp:alpha-quality=95', join(dirs.out, `${name}.webp`)]);
   console.log(`${name}  ${w}x${h} -> ${rw}x${rh}`);
 }
 await browser.close();
 
-// Symbol atlas: 4x4 grid of 256px cells.
+// Symbol atlas: 4x4 grid of 320px cells.
 const symbols = Object.keys(ASSETS).filter((n) => n.startsWith('sym_'));
 if (!filter || filter.startsWith('sym')) {
-  const cell = 256;
+  const cell = 320;
   const cols = 4;
   const frames = {};
   const args = ['-size', `${cols * cell}x${cols * cell}`, 'xc:none'];

@@ -1,0 +1,24 @@
+{
+  "generated": {
+    "books": 100000,
+    "seed": 1313
+  },
+  "modes": [
+    {
+      "mode": "base",
+      "cost": 1,
+      "rtp": 0.9599999999199481,
+      "maxWin": 5000,
+      "maxWinProbability": 1.3488090000103752e-7,
+      "hitRate": 0.2761266950201894
+    },
+    {
+      "mode": "bonus",
+      "cost": 100,
+      "rtp": 0.959999999986501,
+      "maxWin": 5000,
+      "maxWinProbability": 0.000040000000003698075,
+      "hitRate": 0.9986197622385434
+    }
+  ]
+}

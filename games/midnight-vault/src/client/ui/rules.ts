@@ -107,7 +107,7 @@ export function buildRules(container: HTMLElement, opts: { math?: MathSummary; b
   <ol>
     <li><b>The Seal Breaks:</b> the vault opens.</li>
     <li><b>The Haunting:</b> ${vb.hauntingSpins} spins, each with a Phantom Heist that transforms ${uniq(vb.hauntingMarks.map(([m]) => m)).replace(/x/g, '')} positions.</li>
-    <li><b>Relic Overload:</b> ${vb.overloadSpins} spins starting at level 1 (${vb.overloadStartCharge} charge), with at least one Relic per spin.</li>
+    <li><b>Relic Overload:</b> ${vb.overloadSpins} spins starting at level ${ov.thresholds.filter((t) => vb.overloadStartCharge >= t).length} (${vb.overloadStartCharge} charge), with at least one Relic per spin.</li>
     <li><b>The Final Heist:</b> a ${vb.finalSurgeSize}x${vb.finalSurgeSize} Relic Surge, then a Lockdown in which reels showing Relics lock and the others respin ${vb.finalHeistRespins} times (new Relics lock their reel and reset the respins). The final grid is expanded and paid.</li>
   </ol>
 </section>
