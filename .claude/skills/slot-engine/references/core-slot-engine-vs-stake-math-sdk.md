@@ -1,0 +1,86 @@
+# Comparing to Stake Math SDK
+
+> How is Slot Engine different from the Stake Math SDK?
+> Source: https://slot-engine.dev/docs/core/slot-engine-vs-stake-math-sdk
+
+## Slot Engine is inspired by Stake's Math SDK
+
+Slot Engine Core and Stake's Math SDK share many similarities, including comparable APIs.
+Originally conceived as a TypeScript port of the Math SDK, Slot Engine evolved during development
+to deliver an improved developer experience and enhanced code versioning capabilities.
+
+## Challenges & Solutions
+
+Here's how Slot Engine addresses key challenges encountered with the Math SDK:
+
+### Stake Math SDK Challenges
+
+Stake's solution provides a Python codebase that developers can clone and customize.
+However, game development with the Math SDK presents several challenges:
+
+#### Complexity Barriers
+- Requires deep understanding of complex inner workings
+- Features deep class inheritance and functions spanning multiple files
+- Can overwhelm developers, especially those new to programming
+
+#### Type Safety Issues
+- Lacks comprehensive type definitions
+- Results in `any` types throughout the codebase
+- Complicates development and debugging
+
+#### Version Management Problems
+- Not distributed through package managers
+- Upgrading existing games becomes cumbersome and risky
+- Custom code modifications make updates nearly impossible without significant refactoring
+
+Despite these challenges, the Stake Math SDK is battle-tested and widely used by
+industry professionals for creating sophisticated games.
+
+### Slot Engine's Approach
+
+Slot Engine improves the developer experience by reducing some complexity through design choices:
+
+#### Simplified Architecture
+- Consciously avoids exposing all source code during development
+- Provides utility functions, services, and hooks instead
+- Reduces the need to override core functionality
+
+#### Better Developer Experience
+- Lower learning curve for new developers
+- Cleaner, more maintainable code structure
+- Improved type safety
+
+#### Package Distribution
+- Distributed as an npm package for easy installation and updates
+- Semantic versioning ensures predictable upgrade paths
+- No need to clone and modify source code directly
+
+## Fundamental Differences
+
+### "Magic Methods"
+
+Examining Stake's example games reveals that developers must manually invoke methods like `reset_seed()`, `reset_book()`, or `check_repeat()`.
+The purpose of these methods isn't immediately clear—understanding their role in game simulation requires diving deep into the underlying implementation.
+
+Slot Engine eliminates most "magic methods" by incorporating their functionality directly into the core logic,
+reducing developer confusion and improving code clarity for developers.
+
+### Game Flow
+
+_(This text explains some opinions of the author and the reason for certain design decisions)_
+
+Stake's Math SDK provides pre-built functions for common game mechanics.
+However, these functions are designed for standard game patterns and often fall short when implementing unique features.
+For instance, the default functions cannot accommodate super bonus mechanics without modification.
+Since every slot game has distinctive requirements, developers frequently need to override
+entire functions to achieve their desired functionality.
+
+Slot Engine takes a fundamentally different approach to address this.
+Rather than offering monolithic functions for major game flow components,
+the Core library provides granular utility functions that serve as building blocks for custom game logic.
+
+Developers implement their complete game flow within a single hook function that integrates with the game configuration.
+This hook orchestrates the entire game sequence using utility functions combined with custom code.
+While this approach may initially appear more complex than navigating pre-built functions, it offers significant advantages:
+it eliminates the need to navigate complex source code hierarchies and override multiple interconnected functions,
+ultimately providing developers with greater flexibility to create truly customized gaming experiences.

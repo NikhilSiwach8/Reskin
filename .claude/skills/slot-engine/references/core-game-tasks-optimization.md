@@ -1,0 +1,255 @@
+# Optimizing your Game
+
+> Achieve perfect RTP with optimization
+> Source: https://slot-engine.dev/docs/core/game-tasks/optimization
+
+## Introduction
+
+After simulating and analyzing the outcomes of your game, you may notice that
+your RTP may be too high or too low and that the game may generally be unbalanced.
+To achieve a desired target RTP, the optimizer can be used.
+
+The optimizer is a **first-party, pure TypeScript** package: `@slot-engine/optimizer`.
+It assigns new weights to your lookup tables so the game pays out **exactly** the configured RTP,
+with the configured hit rates and payout distribution per criteria.
+
+Under the hood, it solves a convex optimization problem: it finds the weight distribution
+**closest to your simulated results** (minimum KL-divergence) that satisfies all hit rate
+and RTP constraints exactly. The solution is deterministic and runs in seconds, even for
+millions of simulations.
+
+After optimization is done, you can observe that the weights in your lookup tables have been redistributed.
+
+Before:
+
+```csv
+1,1,780
+2,1,1000
+3,1,0
+...
+```
+
+After:
+
+```csv
+1,1816455674,780
+2,58062661,1000
+3,19165815565,0
+...
+```
+
+## Configuration
+
+Ensure your simulations cover a wide range of outcomes. Otherwise the optimizer might
+struggle to work properly. You can configure [analysis](https://slot-engine.dev/docs/core/game-tasks/analysis)
+to get an overview of all payout ranges and how often certain outcomes appear. Ensure
+there are sufficient outcomes for each payout range.
+
+Call `configureOptimization()` on your game.
+The keys of the config object are your game mode names,
+each defining an optimization target per `ResultSet` criteria.
+
+```ts lineNumbers
+const game = createSlotGame({
+  /* ... */
+})
+
+game.configureOptimization({
+  base: {
+    targets: {
+      // Losing books: no hitRate, so they absorb the remaining probability
+      "0": {},
+      // No rtp / avgWin, so this criteria gets the remaining RTP of the mode
+      basegame: { hitRate: 4 },
+      freespins: { hitRate: 150, rtp: 0.38 },
+      // All maxwin books pay exactly 5000x, so the RTP
+      // contribution is fixed at 5000 / 500000 = 0.01
+      maxwin: { hitRate: 500_000 },
+    },
+  },
+  bonus: {
+    targets: {
+      // Absorbs the remaining probability and gets the remaining RTP
+      freespins: {},
+      maxwin: { hitRate: 5000 },
+    },
+  },
+})
+```
+
+Finally call `runTasks()` on your game
+
+```ts lineNumbers
+game.runTasks({
+  doSimulation: true,
+  doOptimization: true,
+})
+```
+
+The target RTP of each game mode is taken from the `rtp` of your game mode configuration,
+so you don't need to define it again.
+
+### Optimization Targets
+
+By default, each `ResultSet` of a game mode must have a corresponding optimization target, named after its criteria.
+
+But you can add more targets by defining `match` to target arbitrary books by tags, payout ranges and/or criteria instead — see [matching books](#matching-books).
+
+A target defines **which books** it applies to, **how often** it occurs, and **how much** it pays out:
+
+| Property  | Type          | Description                                                                                                              |
+| --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `match`   | `TargetMatch` | Optionally restrict this target to books matching the given tags, payout range and/or criteria. See [matching books](#matching-books). |
+| `hitRate` | `number`      | The target hit rate as "1 in N spins", e.g. `150` to hit once every 150 spins.                                           |
+| `rtp`     | `number`      | The target RTP contribution as a fraction of the bet cost, e.g. `0.38`. All contributions must sum to the game mode RTP. |
+| `avgWin`  | `number`      | The target average payout multiplier per hit, e.g. `5000`. Alternative to `rtp` (don't define both).                     |
+| `scale`   | `ScaleRule[]` | Optional rules to reshape the payout distribution within this criteria. See [scaling](#scaling).                         |
+
+**All properties are optional**, with the following rules:
+
+- `hitRate` may be omitted for **at most one** target per game mode.
+  That target then **absorbs the remaining probability**. This is typically used for
+  the losing criteria (`"0"`) or the most frequent criteria of a bonus mode.
+- Targets without `rtp` / `avgWin` automatically **share the remaining RTP** of the game mode.
+  At least one multi-payout target should leave its RTP open, so the optimizer has room
+  to hit the game mode RTP exactly.
+- If all results of a criteria pay the same amount (e.g. max wins), its RTP contribution
+  is already fixed by `hitRate` alone — don't define `rtp` / `avgWin` for it.
+
+If your targets are contradictory or mathematically impossible to satisfy with the simulated
+results, the optimizer throws a **descriptive error** telling you which target is infeasible
+and what range would be achievable.
+
+### Matching Books
+
+By default, a target's key must equal a `ResultSet` criteria name and the target applies to
+**all books of that criteria**. Define `match` to instead select books by **payout range**,
+**tags** and/or **criteria** — the target's key then becomes just a label.
+
+```ts lineNumbers
+game.configureOptimization({
+  base: {
+    targets: {
+      "0": {},
+      basegame: { hitRate: 4 },
+      // claims all books paying 500x or more, regardless of criteria
+      bigwins: { match: { winRange: [500, 5000] }, hitRate: 5000, rtp: 0.1 },
+      freespins: { hitRate: 150 },
+    },
+  },
+})
+```
+
+| Property   | Type                                           | Description                                                                                                       |
+| ---------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `criteria` | `string \| string[]`                            | Match books belonging to one or more `ResultSet` criteria.                                                       |
+| `tags`     | `Record<string, string \| number \| boolean>`   | Match books tagged with **all** of the given properties via [`tag()`](https://slot-engine.dev/docs/core/game-context/data-service#tag). |
+| `winRange` | `[number, number]`                              | Match books whose payout multiplier falls within the inclusive range `[min, max]`.                               |
+
+If multiple `match` properties are defined, **all of them must match**. E.g. combining
+`criteria` and `winRange` matches only books of that criteria that also fall within the payout range.
+
+#### Matching by tags
+
+Tag books during simulation with [`ctx.services.data.tag()`](https://slot-engine.dev/docs/core/game-context/data-service#tag),
+then match them by that tag:
+
+```ts lineNumbers
+// in your game logic, e.g. when a retrigger occurs
+ctx.services.data.tag({ retrigger: true })
+```
+
+```ts lineNumbers
+game.configureOptimization({
+  base: {
+    targets: {
+      "0": {},
+      basegame: { hitRate: 4 },
+      retriggers: { match: { tags: { retrigger: true } }, hitRate: 400, rtp: 0.15 },
+      freespins: { hitRate: 150, rtp: 0.3 },
+      maxwin: { hitRate: 500_000 },
+    },
+  },
+})
+```
+
+#### Matching order
+
+- Targets with `match` claim their books **before** plain criteria targets, **in the order they
+  are defined** — the first matching target wins.
+- Books not claimed by any `match` target fall back to the target whose key equals their
+  `ResultSet` criteria.
+- Every book must end up covered by **exactly one** target. The optimizer throws if any books
+  remain unmatched, or if a target (matcher or criteria) doesn't match any books.
+
+Because matchers claim books before criteria fallbacks, a `match` target can "steal" books from a
+criteria target declared elsewhere. In the example above, books from `basegame` paying 500x or
+more are assigned to `bigwins`, not `basegame` — even though `basegame` is also a target. This
+shrinks `basegame`'s payout range, which can change how aggressively its remaining books need to
+be tilted to hit its configured hit rate / RTP.
+
+### Scaling
+
+With scaling you can artificially increase (or decrease) the chances of certain win ranges being hit,
+reshaping the payout distribution of a criteria. The configured hit rates and RTP still hold exactly —
+scaling only changes the **shape** of the distribution.
+
+```ts lineNumbers
+game.configureOptimization({
+  base: {
+    targets: {
+      "0": {},
+      basegame: { hitRate: 4 },
+      freespins: {
+        hitRate: 150,
+        rtp: 0.38,
+        // Make 50x-150x freespin wins 1.2x more likely
+        scale: [{ winRange: [50, 150], factor: 1.2 }],
+      },
+      maxwin: { hitRate: 500_000 },
+    },
+  },
+})
+```
+
+| Property   | Type               | Description                                                           |
+| ---------- | ------------------ | --------------------------------------------------------------------- |
+| `winRange` | `[number, number]` | The inclusive payout multiplier range the rule applies to.            |
+| `factor`   | `number`           | The factor the weights in the range are multiplied by. Must be `> 0`. |
+
+## Using the optimizer manually
+
+The optimizer is a standalone package. If you need full control, you can call `optimize()` yourself:
+
+```ts lineNumbers
+import { optimize } from "@slot-engine/optimizer"
+
+await optimize({
+  input: {
+    lookupTable: "path_to_lookup_table",
+    lookupTableSegmented: "path_to_lookup_table_segmented",
+  },
+  output: {
+    lookupTable: "output_path_to_optimized_lookup_table"
+  },
+  cost: 1, // game mode cost
+  rtp: 0.96, // target RTP
+  targets: {
+    /* ... */
+  },
+})
+```
+
+`optimize()` reads the unoptimized lookup table, solves the optimization problem, and writes
+the optimized lookup table. Book ids, order and payouts stay identical — only the weights change.
+It returns a result object with the achieved RTP, hit rates and average wins per criteria.
+
+> **Migrating from the Rust optimizer?:** Earlier versions of Slot Engine used Stake's Rust-based optimization program.
+The new TypeScript optimizer replaces it entirely:
+
+- `OptimizationConditions` → plain `targets` objects (see above). `searchConditions` and
+  `priority` are no longer needed, since targets are matched by result set criteria and
+  solved simultaneously instead of greedily.
+- `OptimizationParameters` → removed. The solver is exact and needs no tuning knobs.
+- `OptimizationScaling` → the optional `scale` array on each target.
+- Rust and cargo are no longer required.

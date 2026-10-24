@@ -1,0 +1,142 @@
+# Simulating your Game
+
+> How Slot Engine simulates your game
+> Source: https://slot-engine.dev/docs/core/game-tasks/simulation
+
+## Introduction
+
+Configuring a game alone isn't enough - it also has to be simulated to ensure correct functionality.
+
+Simulating your game is quite simple:
+
+### Call `configureSimulation()` on your game
+
+```ts lineNumbers
+const game = createSlotGame({
+  /* ... */
+})
+
+game.configureSimulation({
+  simRunsAmount: {
+    base: 100_000,
+    bonus: 100_000,
+  },
+  concurrency: 16,
+})
+```
+
+- `simRunsAmount` defines the amount of simulations for each game mode. For quick and dirty testing
+  you can do 10_000 simulations, but for production a minimum of 500_000 is recommended. If you do not wish
+  to simulate certain game modes, just exclude them from `simRunsAmount`.
+- `concurrency` controls the amount of threads (Node workers) used for simulation.
+
+[See all options](#options)
+
+### Call `runTasks()` on your game
+
+```ts lineNumbers=11
+game.runTasks({
+  doSimulation: true,
+})
+```
+
+### Run simulations
+
+Running simulations will generate JSONL and CSV files containing the results of your simulated spins.
+The easiest way to do this is by using the [`tsx` library](https://tsx.hirok.io/).
+
+```sh
+cd ./path-to/your-game
+pnpm tsx ./index.ts --slot-engine-run
+```
+
+> **Important:** For technical reasons, the flag `--slot-engine-run` is required when running your game
+
+Simulation time can range from a few seconds to several minutes, depending on game modes,
+simulation count, thread concurrency, and your hardware.
+
+  **Ensure sufficient disk space** for large and complex games with many events. Slot
+  Engine offloads in-memory data to temporary files which grow in size as your game is
+  simulating. **Large games with 5+ million simulations can temporarily take up 10-20 GB
+  of disk space.**
+
+### configureSimulation() options
+
+| Property                | Type                     | Description                                                                                                                                                                | Required |
+| ----------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `simRunsAmount`         | `Record<string, number>` | List of game modes and their simulation count.                                                                                                                             | yes      |
+| `concurrency`           | `number`                 | Number of threads (Node worker threads) to use. More threads = faster simulation, but higher CPU usage.<br/>Default: 6                                                     |          |
+| `maxPendingSims`        | `number`                 | The maximum number of simulation results to keep pending in memory before writing to disk. Basically batch update size. Variable performance / RAM impact.<br/>Default: 25 |          |
+| `maxDiskBuffer`         | `number`                 | The maximum data buffer in MB for writing simulation results to disk. Variable performance / RAM impact.<br/>Default: 150                                                  |          |
+| `makeUncompressedBooks` | `boolean`                | Whether uncompressed book files should be created. **Warning: This may use a lot of disk space depending on your game!**                                                   |          |
+
+## Output Files / Publish Files
+
+The output will be written to the `__build__/publish_files` directory. Those are the **final files**
+that can be uploaded to Stake Engine as the "math" part.
+
+### books\_\<gameMode>.jsonl.zst
+
+For each game mode a books file is generated which contains a list of all books (simulations).
+That file is compressed using Zstandard compression, because book files tend to get quite large the more events you have.
+
+```jsonl
+{"id":1,"payoutMultiplier":780,"events":[{"index":1,"type":"test","data":{"test":123}}]}
+{"id":2,"payoutMultiplier":1000,"events":[{"index":1,"type":"test","data":{"test":123}}]}
+{"id":3,"payoutMultiplier":0,"events":[{"index":1,"type":"test","data":{"test":123}}]}
+...
+```
+
+### index.json
+
+An overview of all simulated game modes and their corresponding file names.
+
+### lookUpTable\_\<gameMode>\_0.csv
+
+The lookup table contains a list of all book IDs, a weight, and the payout multiplier (scaled by 100).
+
+A book's weight determines the probability of that outcome being selected by the Stake RGS when resolving a bet.
+
+**By default**, all results have an **equal probability** of being selected.
+
+```csv
+ID, weight, payout
+1,1,780
+2,1,1000
+3,1,0
+...
+```
+
+Since every outcome has the same weight, initial game RTP will likely be too high or too low - this is completely normal.
+You will use [optimization](https://slot-engine.dev/docs/core/game-tasks/optimization) to automatically redistribute weights
+to achieve a specific target RTP with high precision.
+
+## FAQ / Common Issues
+
+  **My simulation is very slow or stuck**
+
+    The most common reason for why your simulation might be stuck or progress very slowly is that
+    certain **outcomes are very rare** or might **never occur** naturally, for example max wins.
+
+    If you're noticing that simulating max wins or other rare criteria slows down your simulation,
+    there's a few things you can do:
+
+    - Make it easier for the program to simulate rare outcomes, for example by using a dedicated
+    reel set with more wilds and generally higher symbols.
+    - Programmatically force the desired outcome (board setup, multipliers, etc.)
+
+  
+  **I**
+
+    Ensure you `cd`'ed into the game directory where your game file is.
+
+    If you're running the game from a different directory, add `rootDir: __dirname` to your game configuration.
+
+  
+  **JavaScript heap out of memory**
+
+    If Node runs out of memory, you have a few options to consider:
+
+    - Reduce the amount of simulations for a game mode. You generally don't need more than 1-2 million simulations per game mode
+    - Increase memory limit in Node
+    - Tune the simulation options, specifically `maxPendingSims` and/or `maxDiskBuffer`

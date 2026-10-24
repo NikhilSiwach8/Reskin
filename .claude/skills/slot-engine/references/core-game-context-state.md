@@ -1,0 +1,29 @@
+# State
+
+> Access the simulation state from the game context
+> Source: https://slot-engine.dev/docs/core/game-context/state
+
+## Introduction
+
+The core game state holds useful information about the current simulation.
+
+  Most of the state is handled automatically during simulation, or when calling service
+  methods. You won't need to touch most of it. Defined [custom additional
+  state](https://slot-engine.dev/docs/core/config/custom-state) is available under `ctx.state.userData`
+
+Wrong usage can break simulations!
+
+## Properties
+
+| Property                | Type                  | Description                                                                                                                                  |
+| ----------------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `currentGameMode`       | `string`              | The name of the currently simulated game mode.<br/>**Serves internal purposes only. Do not modify!**                                         |
+| `currentSpinType`       | `string`              | As defined under `SPIN_TYPE`.                                                                                                                |
+| `currentResultSet`      | `ResultSet`           | The current result set. Useful to conditionally do things to achieve certain outcomes.<br/>**Serves internal purposes only. Do not modify!** |
+| `isCriteriaMet`         | `boolean`             | **Serves internal purposes only. Do not modify!**                                                                                            |
+| `currentFreespinAmount` | `number`              | Stores the number of remaining free spins. Increased using `awardFreespins()` from game service. Reduce manually.                            |
+| `totalFreespinAmount`   | `number`              | Stores the number of total awarded free spins. Increased using `awardFreespins()` from game service. Don't reduce.                           |
+| `triggeredFreespins`    | `boolean`             | Whether free spins were triggered. Set using `awardFreespins()` from game service.                                                           |
+| `triggeredMaxWin`       | `boolean`             | Whether a max win was triggered. Set automatically at the end of a simulation.                                                               |
+| `userData`              | `Record<string, any>` | Custom user state as defined in the game config. Do with it what you want.                                                                   |
+| `skipAttempt`           | `boolean`             | Can be set to `true` to skip a simulation attempt.                                                                                           |

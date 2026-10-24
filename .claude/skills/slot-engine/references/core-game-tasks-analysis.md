@@ -1,0 +1,100 @@
+# Analyzing your Game
+
+> Get insights on your game
+> Source: https://slot-engine.dev/docs/core/game-tasks/analysis
+
+## Introduction
+
+Configure analysis to get useful statistics about your game.
+
+Analyzing your game is quite simple:
+
+Simply adjust your `runTasks()` configuration to include analysis:
+
+```ts lineNumbers=11
+game.runTasks({
+  // ...
+  doAnalysis: true,
+  analysisOpts: {
+    gameModes: ["base"],
+    // Optionally analyze hit rates of tagged simulations
+    tagStats: [
+      { groupBy: ["symbolId", "kind", "spinType"] }, // Hit rates of win combinations
+      { groupBy: ["criteria"] }, // Hit rates of criteria
+    ],
+  },
+})
+```
+
+## Analyze Hit Rates
+
+Using the option `tagStats`, you can generate the `stats_tags.json` file to get
+a breakdown of hit rates for simulations with arbitrary tags.
+Hit rates are calculated considering the weights in the lookup table.
+
+`tagStats` is an array of configurations, where a config item is built like this:
+
+```ts
+interface TagStatsConfig {
+  /**
+   * Properties to group by from the tagged search entries.
+   * E.g. `["symbolId", "kind", "spinType"]` for symbol hit rates.
+   */
+  groupBy: string[]
+  /**
+   * Optional filter to only include tags matching these values.
+   */
+  filter?: Record<string, string>
+  /**
+   * Optional custom name for this stats group in the output.
+   */
+  name?: string
+}
+```
+
+The resulting file will look like this:
+
+```json title="stats_tags.json"
+[
+  {
+    "gameMode": "base",
+    "groups": [
+      {
+        "name": "symbolId_kind_spinType",
+        "groupBy": ["symbolId", "kind", "spinType"],
+        "items": [
+          {
+            "key": "L3|5|basegame",
+            "properties": {
+              "symbolId": "L3",
+              "kind": "5",
+              "spinType": "basegame"
+            },
+            "count": 39979,
+            "hitRateString": "1 in 12",
+            "hitRate": 11.739591272077966
+          }
+          // ...
+        ]
+      }
+      // ...
+    ]
+  }
+]
+```
+
+## Output Files / Publish Files
+
+The output will be written to the `__build__` directory.
+
+### stats_payouts.json
+
+Contains a list of win ranges and how many simulations (from the final lookup table) fall into those ranges.
+
+### stats_summary.json
+
+Contains various statistics about volatility, hit rates, etc.
+
+### stats_tags.json
+
+Arbitrary hit rate analysis.

@@ -1,0 +1,61 @@
+# Game Modes
+
+> How to define your game modes
+> Source: https://slot-engine.dev/docs/core/config/game-modes
+
+## Introduction
+
+A game mode defines a **purchasable** game behavior, similar to "bet modes" in the Stake Math SDK.
+Game modes can vary in cost, outcomes, symbols, and mechanics.
+
+Common game mode patterns include:
+
+- **Base game** - The standard gameplay at 1x bet multiplier
+- **Ante Bet** - Increased odds of hitting free spins for extra cost
+- **Bonus game** - e.g. 100x bet for instant free spins
+- **Super bonus** - e.g. 500x bet for instant super free spins
+
+Players can bet on the base game or purchase bonus features directly.
+A "base" mode can still include free spins triggered naturally, while a dedicated "bonus" mode
+allows immediate access for an extra cost.
+
+## Defining Game Modes
+
+Game modes usually require a lot of configuration. They define which symbols make up your reel strips
+and which simulation results to output. Here is a relatively simple example with one game mode:
+
+```ts lineNumbers
+import { defineGameModes, GameMode } from "@slot-engine/core"
+
+export const gameModes = defineGameModes({
+  base: new GameMode({
+    name: "base",
+    cost: 1,
+    rtp: 0.96,
+    reelsAmount: 5,
+    symbolsPerReel: [3, 3, 3, 3, 3],
+    isBonusBuy: false,
+    reelSets: [
+      /* list of reel sets */
+    ],
+    resultSets: [
+      /* list of result sets */
+    ],
+  }),
+})
+```
+
+## GameMode Constructor Options
+
+All options are required.
+
+| Property         | Type          | Description                                                            |
+| ---------------- | ------------- | ---------------------------------------------------------------------- |
+| `name`           | `string`      | Name of the game mode. Must match the key as set in `defineGameModes`. |
+| `reelsAmount`    | `number`      | Number of reels the board has.                                         |
+| `symbolsPerReel` | `number[]`    | Amount of symbols on each reel.                                        |
+| `cost`           | `number`      | Cost of the game mode, multiplied by the base bet.                     |
+| `rtp`            | `number`      | The target RTP of the game mode, between 94 and 98.                    |
+| `reelSets`       | `ReelSet[]`   | See: [Game Modes: Reel Sets](https://slot-engine.dev/docs/core/config/reel-sets)              |
+| `resultSets`     | `ResultSet[]` | See: [Game Modes: Result Sets](https://slot-engine.dev/docs/core/config/result-sets)          |
+| `isBonusBuy`     | `boolean`     | Whether this game mode is a bonus buy.                                 |

@@ -1,0 +1,124 @@
+# Data Service
+
+> Service for interacting with the book data or tagger.
+> Source: https://slot-engine.dev/docs/core/game-context/data-service
+
+## Introduction
+
+Slot Engine has data layers that store JSON data required for
+game optimization, statistical analysis and frontend visualization.
+
+### Book
+
+Each simulation produces a "book" that contains information about the simulation,
+like simulation ID, payout values, and JSON data for frontend visualization.
+
+The book stores **events** as an array of objects with an index, type and arbitrary data.
+Events define, in chronological order, **what should be displayed to the player** on the frontend.
+
+Common events include:
+
+- Revealing the board symbols
+- Displaying win lines
+- Displaying win amount
+- Trigger free spins screen
+
+In short: (Almost) every visual change on the frontend for a single spin is defined inside a book.
+
+For example:
+
+```ts lineNumbers
+ctx.services.data.addBookEvent({
+  type: "show-winlines",
+  data: {
+    lines: [0, 3]
+    wins: [
+      [
+        { reel: 0, row: 0 },
+        { reel: 1, row: 0 },
+        { reel: 2, row: 0 },
+      ],
+      [
+        { reel: 0, row: 2 },
+        { reel: 1, row: 2 },
+        { reel: 2, row: 2 },
+      ],
+    ]
+  }
+})
+
+ctx.services.data.addBookEvent({
+  type: "add-update-balance",
+  data: {
+    value: 200,
+  }
+})
+```
+
+Each added event receives an auto-incremented index, allowing the frontend to process events in the correct chronological order.
+
+### Tagging
+
+Tagging allows grouping simulations by arbitrary criteria. If using [optimization](https://slot-engine.dev/docs/core/game-tasks/optimization),
+this would allow you to target specific simulations to optimize.
+It also enables capturing notable runs (e.g. max win simulations) so they can be replayed locally for debugging or demonstration.
+
+Tags are written to the `__build__` directory as `tags_<gameMode>.json`. The JSON structure matches the Stake Math SDK format for interoperability.
+
+Without having to configure anything, Slot Engine automatically tags simulations with their result set criteria.
+You can add additional tags as needed using `tag()`.
+
+Tags are also used to enable filtering books when browsing them with [Panel](https://slot-engine.dev/docs/panel).
+
+## Methods
+
+### log()
+
+| Method                    | Type                        |
+| ------------------------- | --------------------------- |
+| `ctx.services.data.log()` | `(message: string) => void` |
+
+Write a log to the terminal UI. **This is more reliable than `console.log`.**
+
+### addBookEvent()
+
+| Method                             | Type              |
+| ---------------------------------- | ----------------- |
+| `ctx.services.data.addBookEvent()` | `(event) => void` |
+
+#### Parameters
+
+| Parameter | Type                                          |
+| --------- | --------------------------------------------- |
+| `event`   | `{ type: string, data: Record<string, any> }` |
+
+Adds a new event to the current book.
+
+### tag()
+
+| Method                    | Type             |
+| ------------------------- | ---------------- |
+| `ctx.services.data.tag()` | `(data) => void` |
+
+#### Parameters
+
+| Parameter | Type                                          |
+| --------- | --------------------------------------------- |
+| `data`    | `Record<string, string \| number \| boolean>` |
+
+Tag the current simulation for statistical analysis and book filtering.
+
+### tagSymbolOccurrence()
+
+| Method                                    | Type             |
+| ----------------------------------------- | ---------------- |
+| `ctx.services.data.tagSymbolOccurrence()` | `(data) => void` |
+
+#### Parameters
+
+| Parameter | Type                                                      |
+| --------- | --------------------------------------------------------- |
+| `data`    | `{ kind: number; symbolId: string; [key: string]: any; }` |
+
+A wrapper around `ctx.services.data.tag()` to tag symbol occurrences.
+Win types already call this under the hood to document symbol hits.

@@ -1,0 +1,58 @@
+# Hooks
+
+> Inject custom logic into the Core library
+> Source: https://slot-engine.dev/docs/core/config/hooks
+
+## Introduction
+
+Hooks are a way of adding your own code on top of Slot Engine.
+They allow you to execute code or update state at specific points of the program.
+
+## List of Hooks
+
+These are the hooks you can define in your game configuration.
+
+### onHandleGameFlow
+
+| Property           | Type                         | Required |
+| ------------------ | ---------------------------- | -------- |
+| `onHandleGameFlow` | `(ctx: GameContext) => void` | yes      |
+
+The complete game logic must be [implemented](https://slot-engine.dev/docs/core/game-implementation) in this hook.
+
+### onSimulationAccepted
+
+| Property               | Type                         | Required |
+| ---------------------- | ---------------------------- | -------- |
+| `onSimulationAccepted` | `(ctx: GameContext) => void` |          |
+
+This hook is called after a simulation is accepted and the payout has been written to the book.
+Useful to run code after completing a simulation and before continuing with the next.
+
+> **Important:** **No payouts or results should be altered using this hook!** But adding additional data
+  with `ctx.services.data.tag()` is perfectly fine.
+
+### onGameModeComplete
+
+| Property             | Type                                                    | Required |
+| -------------------- | ------------------------------------------------------- | -------- |
+| `onGameModeComplete` | `(info: GameModeCompleteInfo) => void \| Promise<void>` |          |
+
+This hook is called after a game mode has been **fully simulated** and all of its files
+have been written. It only runs on the main thread, and is awaited.
+
+It receives the completed `mode` name, all file `paths` of the build directory,
+and the game `metadata`. A common use case is feeding the lookup table paths into the
+`optimize()` function of [`@slot-engine/optimizer`](https://slot-engine.dev/docs/core/game-tasks/optimization#using-the-optimizer-manually).
+
+```ts lineNumbers
+const game = createSlotGame({
+  // ...
+  hooks: {
+    onHandleGameFlow,
+    onGameModeComplete: async ({ mode, paths, metadata }) => {
+      console.log(`Mode ${mode} done:`, paths.lookupTable(mode))
+    },
+  },
+})
+```

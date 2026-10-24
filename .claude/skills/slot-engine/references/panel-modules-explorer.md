@@ -1,0 +1,15 @@
+# Explorer
+
+> Inspect compressed book files and lookup tables, and view game events.
+> Source: https://slot-engine.dev/docs/panel/modules/explorer
+
+## Overview
+
+The explorer module lets you browse through the lookup table aswell as the book files.
+It provides a convenient way to display book events to help identify correctness of your game's event data.
+
+## Filters
+
+Filters let you narrow down the displayed data to your liking.
+
+The available filters depend on your [tags](https://slot-engine.dev/docs/core/game-context/data-service#tagging) and how your simulations are tagged.

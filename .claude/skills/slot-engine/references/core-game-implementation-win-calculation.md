@@ -1,0 +1,163 @@
+# Win Calculation
+
+> How to calculate wins with different strategies
+> Source: https://slot-engine.dev/docs/core/game-implementation/win-calculation
+
+## Introduction
+
+There are multiple approaches for calculating wins, depending of the type of game you're going for.
+
+### Context
+
+Each win type operates disconnected from the game context, that's why you have to explicitly
+pass the game context to the win type class constructor.
+
+### Configuration
+
+The configuration options depend on the win type.
+
+### Wild Symbol
+
+To ensure wild symbols are recognized and handled correctly during calculation,
+you must pass one of the following to the win type constructor:
+
+A complete game symbol ...
+
+```ts lineNumbers
+const wildSymbol = ctx.config.symbols.get("W")
+
+const lines = new LinesWinType({
+  wildSymbol,
+  // ...
+})
+```
+
+... or a property that identifies one or more symbols.
+
+```ts lineNumbers
+const lines = new LinesWinType({
+  wildSymbol: { isWild: true },
+  // ...
+})
+```
+
+### Post-Processing
+
+After calculating wins you have the option to process them further, e.g. multiply by a global multiplier.
+
+```ts lineNumbers
+const { payout, winCombinations } = lines
+  .evaluateWins(ctx.services.board.getBoardReels())
+  .postProcess((wins, ctx) => {
+    // Example: Apply 2x multiplier during free spins
+
+    let multiplier = 1
+    if (ctx.state.currentSpinType === SPIN_TYPE.FREE_SPINS) {
+      multiplier = 2
+    }
+
+    return {
+      winCombinations: wins.map((w) => ({
+        ...w,
+        payout: w.payout * multiplier,
+      })),
+    }
+  })
+  .getWins()
+```
+
+`postProcess` should return the modified win combinations. The resulting total `payout` from `getWins()`
+will be recalculated based on your modifications to the win combinations.
+
+While you're not forced to use `postProcess()` to modify the win data,
+it provides an opinionated way of writing cohesive win evaluation logic.
+
+## Paylines Wins
+
+Calculation of classic line-based wins.
+
+```ts lineNumbers
+import { LinesWinType } from "@slot-engine/core"
+
+export function onHandleGameFlow(ctx: Context) {
+  const wildSymbol = ctx.config.symbols.get("W")
+
+  const lines = new LinesWinType({
+    ctx,
+    lines: {
+      1: [0, 0, 0, 0, 0],
+      2: [1, 1, 1, 1, 1],
+      3: [2, 2, 2, 2, 2],
+      // ...
+    },
+    wildSymbol,
+  })
+
+  const { payout, winCombinations } = lines
+    .evaluateWins(ctx.services.board.getBoardReels())
+    .getWins()
+}
+```
+
+## Cluster Wins
+
+Cluster-based win calculation.
+
+```ts lineNumbers
+import { ClusterWinType } from "@slot-engine/core"
+
+export function onHandleGameFlow(ctx: Context) {
+  const wildSymbol = ctx.config.symbols.get("W")
+
+  const cluster = new ClusterWinType({
+    ctx,
+    wildSymbol,
+  })
+
+  const { payout, winCombinations } = cluster
+    .evaluateWins(ctx.services.board.getBoardReels())
+    .getWins()
+}
+```
+
+## Manyways Wins
+
+Megaways or 243-ways -esque calculations.
+
+```ts lineNumbers
+import { ManywaysWinType } from "@slot-engine/core"
+
+export function onHandleGameFlow(ctx: Context) {
+  const wildSymbol = ctx.config.symbols.get("W")
+
+  const ways = new ManywaysWinType({
+    ctx,
+    wildSymbol,
+  })
+
+  const { payout, winCombinations } = ways
+    .evaluateWins(ctx.services.board.getBoardReels())
+    .getWins()
+}
+```
+
+### Jumping gaps
+
+This win type has a unique option, in that it's able to jump gaps when calculating wins.
+That means it's possible for wins to start at any reel from left to right, and gap reels
+(a reel without the winning symbol) will not interrupt the win ways.
+
+```ts lineNumbers
+const boardReels = ctx.services.board.getBoardReels()
+
+const { payout, winCombinations } = ways
+  .evaluateWins(boardReels, { jumpGaps: true })
+  .getWins()
+
+// |A|A|C|C|A|
+// |B|A|C|A|C|
+// |B|A|B|A|C|
+// A: 6-way win, 4 of a kind
+// B: no win
+// C: 4-way win, 3 of a kind
+```
