@@ -4,3 +4,4 @@ math-output/*
 !math-output/README.md
 art/render/
 art/painted/
+release/
