@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<defs><linearGradient id="gold46" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF1B0" stop-opacity="1"/><stop offset="0.25" stop-color="#F5C95A" stop-opacity="1"/><stop offset="0.55" stop-color="#D7A544" stop-opacity="1"/><stop offset="0.8" stop-color="#9A6A1F" stop-opacity="1"/><stop offset="1" stop-color="#6B4410" stop-opacity="1"/></linearGradient><linearGradient id="golddk47" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B8862E" stop-opacity="1"/><stop offset="1" stop-color="#5A3608" stop-opacity="1"/></linearGradient><filter id="s48" x="-30%" y="-30%" width="160%" height="160%">
+<feGaussianBlur in="SourceAlpha" stdDeviation="8"/><feOffset dy="10" result="o"/>
+<feFlood flood-color="#000" flood-opacity="0.55"/><feComposite in2="o" operator="in" result="s"/>
+<feMerge><feMergeNode in="s"/><feMergeNode in="SourceGraphic"/></feMerge></filter><radialGradient id="gl52" cx="0.5" cy="0.5" r="0.5" fx="0.5" fy="0.5"><stop offset="0" stop-color="#ffffff" stop-opacity="0.4"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></radialGradient><filter id="f51" x="-50%" y="-50%" width="200%" height="200%">
+<feGaussianBlur in="SourceAlpha" stdDeviation="10" result="b"/>
+<feFlood flood-color="#7DFFA8" flood-opacity="1"/>
+<feComposite in2="b" operator="in" result="g"/>
+<feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter><linearGradient id="cv49" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7D4FC9" stop-opacity="1"/><stop offset="0.6" stop-color="#4A2A86" stop-opacity="1"/><stop offset="1" stop-color="#2A1650" stop-opacity="1"/></linearGradient><linearGradient id="pg50" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF6DC" stop-opacity="1"/><stop offset="1" stop-color="#C9BB94" stop-opacity="1"/></linearGradient></defs>
+<g filter="url(#s48)">
+<path d="M120 112 L410 84 L430 410 L140 448 Z" fill="url(#pg50)" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="10"/>
+<path d="M142 436 L426 398" stroke="#A8996F" stroke-width="3"/>
+<path d="M144 427 L425 389" stroke="#A8996F" stroke-width="3"/>
+<path d="M146 418 L424 380" stroke="#A8996F" stroke-width="3"/>
+<path d="M148 409 L423 371" stroke="#A8996F" stroke-width="3"/>
+<path d="M86 96 L392 62 L412 392 L104 432 Z" fill="url(#cv49)" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="12"/>
+<path d="M86 96 L130 92 L148 428 L104 432 Z" fill="#2A1650" opacity="0.6"/>
+<path transform="translate(92 102) scale(1 1)" d="M0 0 H64 L50 16 H16 V50 L0 64 Z" fill="url(#gold46)" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="6"/>
+<path transform="translate(386 68) scale(-1 1)" d="M0 0 H64 L50 16 H16 V50 L0 64 Z" fill="url(#gold46)" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="6"/>
+<path transform="translate(406 386) scale(-1 -1)" d="M0 0 H64 L50 16 H16 V50 L0 64 Z" fill="url(#gold46)" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="6"/>
+<path transform="translate(110 426) scale(1 -1)" d="M0 0 H64 L50 16 H16 V50 L0 64 Z" fill="url(#gold46)" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="6"/>
+<circle cx="252" cy="248" r="86" fill="url(#gold46)" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="10"/>
+<circle cx="252" cy="248" r="66" fill="#2A1650" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="6"/>
+<path d="M252 206 C278 206 294 222 294 244 C294 258 286 268 278 272 V286 H226 V272 C218 268 210 258 210 244 C210 222 226 206 252 206Z" fill="#E8E1CF" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="6"/>
+<g filter="url(#f51)"><ellipse cx="236" cy="244" rx="10" ry="12" fill="#7DFFA8"/><ellipse cx="268" cy="244" rx="10" ry="12" fill="#7DFFA8"/></g>
+<path d="M240 276 V286 M252 276 V286 M264 276 V286" stroke="#150A20" stroke-width="4"/>
+</g>
+<ellipse cx="190" cy="150" rx="80" ry="24" fill="url(#gl52)" transform="rotate(-20 190 150)"/>
+<path d="M420 104 Q423.52 116.48 436 120 Q423.52 123.52 420 136 Q416.48 123.52 404 120 Q416.48 116.48 420 104Z" fill="#7DFFA8" opacity="0.9"/>
+</svg>

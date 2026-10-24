@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<defs><filter id="s69" x="-30%" y="-30%" width="160%" height="160%">
+<feGaussianBlur in="SourceAlpha" stdDeviation="6"/><feOffset dy="12" result="o"/>
+<feFlood flood-color="#000" flood-opacity="0.6"/><feComposite in2="o" operator="in" result="s"/>
+<feMerge><feMergeNode in="s"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="f71" x="-50%" y="-50%" width="200%" height="200%">
+<feGaussianBlur in="SourceAlpha" stdDeviation="12" result="b"/>
+<feFlood flood-color="#FFC93A" flood-opacity="0.6"/>
+<feComposite in2="b" operator="in" result="g"/>
+<feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter><linearGradient id="lf67" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF3A6" stop-opacity="1"/><stop offset="0.35" stop-color="#FFC93A" stop-opacity="1"/><stop offset="0.75" stop-color="#C47A0C" stop-opacity="1"/><stop offset="1" stop-color="#6E3E04" stop-opacity="1"/></linearGradient><linearGradient id="lt68" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="0.75"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></linearGradient><clipPath id="cl70"><path d="M86 448 L198 64 H314 L426 448 H318 L298 378 H214 L194 448 Z M234 304 H278 L256 214 Z" fill-rule="evenodd"/></clipPath></defs>
+<g filter="url(#f71)"><g filter="url(#s69)">
+<path d="M86 448 L198 64 H314 L426 448 H318 L298 378 H214 L194 448 Z M234 304 H278 L256 214 Z" fill-rule="evenodd" fill="#150A20" stroke="#150A20" stroke-width="34" stroke-linejoin="round"/>
+<path d="M86 448 L198 64 H314 L426 448 H318 L298 378 H214 L194 448 Z M234 304 H278 L256 214 Z" fill-rule="evenodd" fill="url(#lf67)"/>
+<g clip-path="url(#cl70)">
+<rect x="0" y="40" width="512" height="200" fill="url(#lt68)" opacity="0.6"/>
+<path d="M86 448 L198 64 H314 L426 448 H318 L298 378 H214 L194 448 Z M234 304 H278 L256 214 Z" fill="none" stroke="#6E3E04" stroke-width="22" opacity="0.55" transform="translate(0 10)"/>
+<path d="M86 448 L198 64 H314 L426 448 H318 L298 378 H214 L194 448 Z M234 304 H278 L256 214 Z" fill="none" stroke="#ffffff" stroke-width="8" opacity="0.5" transform="translate(-3 -4)"/>
+</g>
+<path d="M86 448 L198 64 H314 L426 448 H318 L298 378 H214 L194 448 Z M234 304 H278 L256 214 Z" fill-rule="evenodd" fill="none" stroke="#150A20" stroke-width="10" stroke-linejoin="round"/>
+</g></g>
+<path d="M400 70 Q404.84 87.16 422 92 Q404.84 96.84 400 114 Q395.16 96.84 378 92 Q395.16 87.16 400 70Z" fill="#ffffff" opacity="0.9"/>
+</svg>

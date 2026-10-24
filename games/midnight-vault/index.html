@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#100D1D" />
+    <title>Midnight Vault</title>
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <div id="loading" role="status" aria-live="polite">
+      <div class="loading-title">Midnight Vault</div>
+      <div class="loading-bar"><div class="loading-fill"></div></div>
+      <div class="loading-text">Unlocking the vault…</div>
+    </div>
+
+    <aside id="feature-panel" hidden aria-live="polite">
+      <div class="fp-title"></div>
+      <div class="fp-spins"><span class="fp-label">Free spins</span><span class="fp-value">0</span></div>
+      <div class="fp-respins" hidden><span class="fp-label">Respins</span><span class="fp-value">0</span></div>
+      <div class="fp-hour" hidden><span class="fp-label">Clock</span><span class="fp-value">IX</span></div>
+      <div class="fp-win"><span class="fp-label">Bonus win</span><span class="fp-value">0</span></div>
+      <div class="ledger" hidden>
+        <div class="ledger-title">Haunted Ledger</div>
+        <div class="seal" data-seal="relic"><img src="assets/seal_relic.webp" alt="" /><div class="seal-body"><span class="seal-name">Relic Seal</span><div class="seal-bar"><i></i></div><span class="seal-meta"></span></div></div>
+        <div class="seal" data-seal="phantom"><img src="assets/seal_phantom.webp" alt="" /><div class="seal-body"><span class="seal-name">Phantom Seal</span><div class="seal-bar"><i></i></div><span class="seal-meta"></span></div></div>
+        <div class="seal" data-seal="clock"><img src="assets/seal_clock.webp" alt="" /><div class="seal-body"><span class="seal-name">Clock Seal</span><div class="seal-bar"><i></i></div><span class="seal-meta"></span></div></div>
+      </div>
+    </aside>
+
+    <div id="banner" aria-live="assertive" hidden><div class="banner-title"></div><div class="banner-sub"></div></div>
+    <div id="keys-choice" hidden>
+      <div class="keys-title">The vault chooses your path</div>
+      <div class="keys-row">
+        <figure data-path="cursedFortune"><img src="assets/key_cursed_fortune.webp" alt="" /><figcaption>Cursed Fortune</figcaption></figure>
+        <figure data-path="phantomPayday"><img src="assets/key_phantom_payday.webp" alt="" /><figcaption>Phantom Payday</figcaption></figure>
+        <figure data-path="midnightCountdown"><img src="assets/key_midnight_countdown.webp" alt="" /><figcaption>Midnight Countdown</figcaption></figure>
+      </div>
+    </div>
+    <div id="toast" role="alert" hidden></div>
+
+    <nav id="controls" aria-label="Game controls">
+      <div class="ctl-group ctl-left">
+        <button class="icon-btn" id="btn-menu" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm8.6 4.9-1.9-.4a7 7 0 0 1-.6 1.5l1.1 1.6-1.6 1.6-1.6-1.1a7 7 0 0 1-1.5.6l-.4 1.9h-2.2l-.4-1.9a7 7 0 0 1-1.5-.6l-1.6 1.1-1.6-1.6 1.1-1.6a7 7 0 0 1-.6-1.5l-1.9-.4v-2.2l1.9-.4a7 7 0 0 1 .6-1.5L5.1 6.9l1.6-1.6 1.6 1.1a7 7 0 0 1 1.5-.6l.4-1.9h2.2l.4 1.9a7 7 0 0 1 1.5.6l1.6-1.1 1.6 1.6-1.1 1.6a7 7 0 0 1 .6 1.5l1.9.4Z"/></svg></button>
+        <button class="icon-btn" id="btn-info" aria-label="Game rules and paytable" title="Rules"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 15h-2v-6h2Zm0-8h-2V7h2Z"/></svg></button>
+        <button class="icon-btn" id="btn-sound" aria-label="Mute sound" title="Sound"><svg class="on" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9Zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4ZM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6Z"/></svg><svg class="off" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9Zm13.6 3 2.4-2.4-1.4-1.4-2.4 2.4-2.4-2.4-1.4 1.4 2.4 2.4-2.4 2.4 1.4 1.4 2.4-2.4 2.4 2.4 1.4-1.4Z"/></svg></button>
+      </div>
+      <div class="ctl-group ctl-meters">
+        <div class="meter" id="meter-balance"><span class="meter-label">Balance</span><span class="meter-value">—</span></div>
+        <div class="meter meter-bet" id="meter-bet">
+          <button class="step-btn" id="btn-bet-down" aria-label="Decrease bet">−</button>
+          <div><span class="meter-label">Bet</span><span class="meter-value">—</span></div>
+          <button class="step-btn" id="btn-bet-up" aria-label="Increase bet">+</button>
+        </div>
+        <div class="meter meter-win" id="meter-win"><span class="meter-label">Win</span><span class="meter-value">—</span></div>
+      </div>
+      <div class="ctl-group ctl-right">
+        <button class="pill-btn" id="btn-buy" aria-label="Buy bonus">Buy Bonus</button>
+        <button class="icon-btn" id="btn-auto" aria-label="Autoplay" title="Autoplay"><svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8Z"/><path d="M10.5 9v6l4.5-3Z"/></svg><span class="auto-count"></span></button>
+        <button class="icon-btn" id="btn-turbo" aria-label="Turbo" aria-pressed="false" title="Turbo"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h6l-1 8 9-12h-6Z"/></svg></button>
+        <button id="btn-spin" aria-label="Spin"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 10a22 22 0 0 1 21 15h-7l10 12 10-12h-7A28 28 0 0 0 6 25l6 2a22 22 0 0 1 20-17Zm0 44a22 22 0 0 1-21-15h7L8 27-2 39h7a28 28 0 0 0 53 2l-6-2a22 22 0 0 1-20 15Z"/></svg></button>
+      </div>
+    </nav>
+
+    <div id="replay-bar" hidden>
+      <span class="replay-label">Bet replay</span>
+      <button class="pill-btn" id="btn-replay-play">Play</button>
+    </div>
+
+    <div class="modal" id="modal-rules" hidden role="dialog" aria-modal="true" aria-labelledby="rules-title">
+      <div class="modal-card modal-wide">
+        <header><h2 id="rules-title">Game Rules</h2><button class="close-btn" data-close aria-label="Close">×</button></header>
+        <div class="modal-body" id="rules-body"></div>
+      </div>
+    </div>
+
+    <div class="modal" id="modal-settings" hidden role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <div class="modal-card">
+        <header><h2 id="settings-title">Settings</h2><button class="close-btn" data-close aria-label="Close">×</button></header>
+        <div class="modal-body settings">
+          <label><input type="checkbox" id="set-music" checked /> Music</label>
+          <label><input type="checkbox" id="set-sfx" checked /> Sound effects</label>
+          <label><input type="checkbox" id="set-reduced" /> Reduced motion (fewer flashes, shakes and particles)</label>
+          <label><input type="checkbox" id="set-turbo" /> Turbo spin</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="modal-auto" hidden role="dialog" aria-modal="true" aria-labelledby="auto-title">
+      <div class="modal-card">
+        <header><h2 id="auto-title">Autoplay</h2><button class="close-btn" data-close aria-label="Close">×</button></header>
+        <div class="modal-body">
+          <p>Number of rounds</p>
+          <div class="choice-row" id="auto-counts">
+            <button class="pill-btn" data-count="10">10</button><button class="pill-btn" data-count="25">25</button><button class="pill-btn" data-count="50">50</button><button class="pill-btn" data-count="100">100</button>
+          </div>
+          <label><input type="checkbox" id="auto-stop-feature" checked /> Stop when a feature triggers</label>
+          <p class="auto-summary"></p>
+          <div class="modal-actions"><button class="pill-btn" data-close>Cancel</button><button class="pill-btn primary" id="auto-confirm">Start autoplay</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="modal-buy" hidden role="dialog" aria-modal="true" aria-labelledby="buy-title">
+      <div class="modal-card">
+        <header><h2 id="buy-title">Buy Bonus</h2><button class="close-btn" data-close aria-label="Close">×</button></header>
+        <div class="modal-body">
+          <div class="buy-keys"><img src="assets/key_cursed_fortune.webp" alt="" /><img src="assets/key_phantom_payday.webp" alt="" /><img src="assets/key_midnight_countdown.webp" alt="" /></div>
+          <p id="buy-text"></p>
+          <div class="modal-actions"><button class="pill-btn" data-close>Cancel</button><button class="pill-btn primary" id="buy-confirm">Buy</button></div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/client/main.ts"></script>
+  </body>
+</html>

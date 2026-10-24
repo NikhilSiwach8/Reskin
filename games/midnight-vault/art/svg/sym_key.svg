@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<defs><linearGradient id="gold10" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF1B0" stop-opacity="1"/><stop offset="0.25" stop-color="#F5C95A" stop-opacity="1"/><stop offset="0.55" stop-color="#D7A544" stop-opacity="1"/><stop offset="0.8" stop-color="#9A6A1F" stop-opacity="1"/><stop offset="1" stop-color="#6B4410" stop-opacity="1"/></linearGradient><linearGradient id="golddk11" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B8862E" stop-opacity="1"/><stop offset="1" stop-color="#5A3608" stop-opacity="1"/></linearGradient><filter id="f12" x="-50%" y="-50%" width="200%" height="200%">
+<feGaussianBlur in="SourceAlpha" stdDeviation="14" result="b"/>
+<feFlood flood-color="#7DFFA8" flood-opacity="0.85"/>
+<feComposite in2="b" operator="in" result="g"/>
+<feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="s13" x="-30%" y="-30%" width="160%" height="160%">
+<feGaussianBlur in="SourceAlpha" stdDeviation="8"/><feOffset dy="10" result="o"/>
+<feFlood flood-color="#000" flood-opacity="0.55"/><feComposite in2="o" operator="in" result="s"/>
+<feMerge><feMergeNode in="s"/><feMergeNode in="SourceGraphic"/></feMerge></filter><radialGradient id="gl16" cx="0.5" cy="0.5" r="0.5" fx="0.5" fy="0.5"><stop offset="0" stop-color="#ffffff" stop-opacity="0.8"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></radialGradient><radialGradient id="em14" cx="0.5" cy="0.5" r="0.5" fx="0.5" fy="0.5"><stop offset="0" stop-color="#E8FFF0" stop-opacity="1"/><stop offset="0.5" stop-color="#3BE58A" stop-opacity="1"/><stop offset="1" stop-color="#08713E" stop-opacity="1"/></radialGradient><radialGradient id="au15" cx="0.5" cy="0.5" r="0.5" fx="0.5" fy="0.5"><stop offset="0" stop-color="#7DFFA8" stop-opacity="0.4"/><stop offset="1" stop-color="#7DFFA8" stop-opacity="0"/></radialGradient></defs>
+<circle cx="256" cy="256" r="230" fill="url(#au15)"/>
+<g filter="url(#f12)"><g filter="url(#s13)" transform="rotate(-38 256 256)">
+<rect x="236" y="190" width="40" height="270" rx="14" fill="url(#gold10)" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="10"/>
+<path d="M276 372 H340 V400 H312 V420 H340 V452 H276 Z" fill="url(#gold10)" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="10"/>
+<rect x="226" y="230" width="60" height="22" rx="8" fill="url(#gold10)" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="8"/>
+<path d="M256 40 C318 40 362 84 362 138 C362 196 314 226 256 226 C198 226 150 196 150 138 C150 84 194 40 256 40 Z" fill="url(#gold10)" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="12"/>
+<path d="M256 62 C300 62 336 94 336 136 C336 180 302 204 256 204 C210 204 176 180 176 136 C176 94 212 62 256 62 Z" fill="#5A3608" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="6"/>
+<path d="M214 22 L256 6 L298 22 L282 52 H230 Z" fill="url(#gold10)" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="8"/>
+<polygon points="301.0,160.0 256.0,186.0 211.0,160.0 211.0,108.0 256.0,82.0 301.0,108.0" fill="url(#em14)" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="8"/>
+<polygon points="276.8,140.0 256.0,152.0 235.2,140.0 235.2,116.0 256.0,104.0 276.8,116.0" fill="#E8FFF0" opacity="0.7"/>
+</g></g>
+<ellipse cx="190" cy="150" rx="46" ry="18" fill="url(#gl16)" transform="rotate(-40 190 150)"/>
+<path d="M398 98 Q402.84 115.16 420 120 Q402.84 124.84 398 142 Q393.16 124.84 376 120 Q393.16 115.16 398 98Z" fill="#ffffff" opacity="0.9"/>
+<path d="M110 384 Q113.52 396.48 126 400 Q113.52 403.52 110 416 Q106.48 403.52 94 400 Q106.48 396.48 110 384Z" fill="#7DFFA8" opacity="0.9"/>
+</svg>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+<defs><linearGradient id="gold192" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF1B0" stop-opacity="1"/><stop offset="0.25" stop-color="#F5C95A" stop-opacity="1"/><stop offset="0.55" stop-color="#D7A544" stop-opacity="1"/><stop offset="0.8" stop-color="#9A6A1F" stop-opacity="1"/><stop offset="1" stop-color="#6B4410" stop-opacity="1"/></linearGradient><linearGradient id="golddk193" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B8862E" stop-opacity="1"/><stop offset="1" stop-color="#5A3608" stop-opacity="1"/></linearGradient><filter id="gw195" x="-50%" y="-50%" width="200%" height="200%">
+<feGaussianBlur in="SourceAlpha" stdDeviation="10" result="b"/>
+<feFlood flood-color="#7DFFA8" flood-opacity="1"/>
+<feComposite in2="b" operator="in" result="g"/>
+<feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="s196" x="-30%" y="-30%" width="160%" height="160%">
+<feGaussianBlur in="SourceAlpha" stdDeviation="5"/><feOffset dy="6" result="o"/>
+<feFlood flood-color="#000" flood-opacity="0.6"/><feComposite in2="o" operator="in" result="s"/>
+<feMerge><feMergeNode in="s"/><feMergeNode in="SourceGraphic"/></feMerge></filter><radialGradient id="fc194" cx="0.5" cy="0.5" r="0.5" fx="0.5" fy="0.5"><stop offset="0" stop-color="#3A2560" stop-opacity="1"/><stop offset="1" stop-color="#140C22" stop-opacity="1"/></radialGradient></defs>
+<g filter="url(#s196)">
+<polygon points="248.0,128.0 231.9,188.0 188.0,231.9 128.0,248.0 68.0,231.9 24.1,188.0 8.0,128.0 24.1,68.0 68.0,24.1 128.0,8.0 188.0,24.1 231.9,68.0" fill="url(#gold192)" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="8"/>
+<circle cx="128" cy="128" r="90" fill="url(#fc194)" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="6"/>
+</g>
+<g filter="url(#gw195)"><polygon points="128,64 176,98 176,158 128,194 80,158 80,98" fill="#7DFFA8" stroke="#150A20" stroke-width="7" stroke-linejoin="round"/><polygon points="128,64 176,98 128,114 80,98" fill="#E8FFF0" opacity="0.7"/></g>
+</svg>

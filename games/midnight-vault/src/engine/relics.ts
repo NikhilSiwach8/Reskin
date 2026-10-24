@@ -36,12 +36,13 @@ export function expandRelics(grid: Grid, rng: Rng, opts: ExpandOptions): ExpandR
   const level = opts.overloadLevel ?? 0;
   const minSize = FEATURES.overload.minSize[level];
   const factor = FEATURES.overload.multFactor[level];
+  const bonus = FEATURES.overload.multBonus[level];
   const preExisting = new Set(grid.blocks.keys());
 
   const fresh = grid
     .find((s, c) => s === 'RL' && grid.blockAt[c.reel][c.row] === -1 && (opts.only?.(c) ?? true))
     .map((c) => {
-      const mult = rng.weighted(opts.table.mult) * factor;
+      const mult = (rng.weighted(opts.table.mult) + bonus) * factor;
       const size = Math.max(minSize, rng.weighted(opts.table.size));
       return { block: grid.addBlock(c, c, 1, mult), want: size };
     });

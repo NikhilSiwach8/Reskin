@@ -25,6 +25,7 @@ interface Args {
   modes: ModeName[];
   forcedWincaps: number;
   forcedAttempts: number;
+  clientSummary: boolean;
 }
 
 function parseArgs(argv: string[]): Args {
@@ -40,6 +41,7 @@ function parseArgs(argv: string[]): Args {
     modes: get('modes', 'base,bonus').split(',') as ModeName[],
     forcedWincaps: Number(get('wincaps', '25')),
     forcedAttempts: Number(get('wincap-attempts', '600000')),
+    clientSummary: argv.includes('--client-summary'),
   };
 }
 
@@ -122,6 +124,13 @@ async function main() {
   writeFileSync(join(args.out, 'index.json'), JSON.stringify(index, null, 2) + '\n');
   writeFileSync(join(args.out, 'stats.json'), JSON.stringify({ args, modes: all }, null, 2) + '\n');
   writeFileSync(join(args.out, 'REPORT.md'), renderReport(all, args));
+  // Small summary for the in-game rules panel (RTP and max win per mode).
+  const summary = JSON.stringify({
+    generated: { books: args.books, seed: args.seed },
+    modes: all.map((m) => ({ mode: m.mode, cost: m.cost, rtp: m.rtp, maxWin: m.maxWin, maxWinProbability: m.maxWinProbability, hitRate: m.hitRate })),
+  }, null, 2) + '\n';
+  writeFileSync(join(args.out, 'math.json'), summary);
+  if (args.clientSummary) writeFileSync(join(process.cwd(), 'public/math.json'), summary);
   console.log(`wrote ${args.out}`);
 }
 

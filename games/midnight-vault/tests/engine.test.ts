@@ -194,7 +194,7 @@ describe('relic expansion', () => {
     b[1][1] = 'RL';
     const g = new Grid(b);
     const res = expandRelics(g, new Rng(1), { table: fixed(5, 1), overloadLevel: 3 });
-    expect(res.blocks[0]).toMatchObject({ size: FEATURES.overload.minSize[3], mult: 5 * FEATURES.overload.multFactor[3] });
+    expect(res.blocks[0]).toMatchObject({ size: FEATURES.overload.minSize[3], mult: (5 + FEATURES.overload.multBonus[3]) * FEATURES.overload.multFactor[3] });
   });
 
   it('places a Relic Surge block on free cells only', () => {

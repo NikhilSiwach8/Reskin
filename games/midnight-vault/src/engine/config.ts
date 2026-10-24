@@ -170,9 +170,11 @@ export const FEATURES = {
 
   /** Relic Overload (Cursed Fortune and Vault Breach stage 3). */
   overload: {
-    thresholds: [5, 10, 14],
+    thresholds: [5, 11, 16],
     /** Minimum expansion size at each level (index = level). */
     minSize: [1, 2, 2, 3],
+    /** Added to each relic's own multiplier at each level (applied before the factor). */
+    multBonus: [0, 0, 2, 2],
     /** Relic multiplier factor at each level. Level 3 doubles each relic's own multiplier. */
     multFactor: [1, 1, 1, 2],
   },
