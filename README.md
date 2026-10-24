@@ -26,4 +26,4 @@ All skills except the two marked "written for this repo" are copied unchanged. T
 
 ## Games
 
-- [`games/midnight-vault`](games/midnight-vault/README.md): **Midnight Vault**, a 5x5, 15-line Halloween slot for Stake Engine with an outcome engine, Stake book generator, PixiJS client, local mock RGS, original art, tests and documentation.
+- [`games/midnight-vault`](games/midnight-vault/README.md): **Midnight Vault**, a 5x5, 15-line Halloween slot for Stake Engine with an outcome engine, Stake book generator, PixiJS client, local mock RGS, painted art, tests and documentation.
