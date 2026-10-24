@@ -1,0 +1,28 @@
+{
+  "name": "midnight-vault",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Midnight Vault - a 5x5, 15-line Halloween slot for Stake Engine (math engine, Stake book generator, PixiJS client, local mock RGS).",
+  "engines": { "node": ">=22.15.0" },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --config vitest.config.ts",
+    "math": "node --experimental-strip-types src/math/cli.ts",
+    "math:dev": "node --experimental-strip-types src/math/cli.ts --books 20000 --out math-output/dev",
+    "math:publish": "node --experimental-strip-types src/math/cli.ts --books 100000 --out math-output/publish",
+    "art": "node tools/render-art.mjs"
+  },
+  "dependencies": {
+    "pixi.js": "8.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.21",
+    "typescript": "5.9.3",
+    "vite": "8.3.5",
+    "vitest": "5.0.5"
+  }
+}

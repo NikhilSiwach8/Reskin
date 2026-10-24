@@ -1,0 +1,5 @@
+node_modules/
+dist/
+math-output/*
+!math-output/README.md
+art/render/
