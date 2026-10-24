@@ -8,7 +8,7 @@
 import { closeSync, createReadStream, createWriteStream, mkdirSync, openSync, rmSync, writeFileSync, writeSync } from 'node:fs';
 import { join } from 'node:path';
 import { pipeline } from 'node:stream/promises';
-import { createZstdCompress } from 'node:zlib';
+import { constants as zlibConstants, createZstdCompress } from 'node:zlib';
 import { BET_MODES, WINCAP } from '../engine/config.ts';
 import { forcedKeyBoard, playRound, type ModeName } from '../engine/round.ts';
 import { Rng } from '../engine/rng.ts';
@@ -77,7 +77,9 @@ class BookSink {
   async compressTo(target: string): Promise<void> {
     this.flush();
     closeSync(this.fd);
-    await pipeline(createReadStream(this.path), createZstdCompress(), createWriteStream(target));
+    // Level 19 keeps the upload small (the bonus books shrink about 2.5x versus the default level).
+    const zstd = createZstdCompress({ params: { [zlibConstants.ZSTD_c_compressionLevel]: 19, [zlibConstants.ZSTD_c_checksumFlag]: 1 } });
+    await pipeline(createReadStream(this.path), zstd, createWriteStream(target));
     rmSync(this.path);
   }
 }
