@@ -30,7 +30,16 @@ const page = await browser.newPage();
 for (const [name, def] of entries) {
   const markup = def.build();
   writeFileSync(join(dirs.svg, `${name}.svg`), markup);
-  const [w, h] = def.render;
+  const painted = join(root, 'art/painted', `${name}.png`);
+  const hasPainted = existsSync(painted);
+  let [w, h] = def.render;
+  let [rw, rh] = def.runtime;
+  if (hasPainted) {
+    // keep the painted source's aspect ratio (fit to the configured width)
+    const [pw, ph] = execFileSync('identify', ['-format', '%w %h', painted]).toString().split(' ').map(Number);
+    h = Math.round((w * ph) / pw);
+    rh = Math.round((rw * ph) / pw);
+  }
   await page.setViewportSize({ width: w, height: h });
   await page.setContent(
     `<html><body style="margin:0;background:transparent"><img src="data:image/svg+xml;base64,${Buffer.from(markup).toString('base64')}" style="width:${w}px;height:${h}px;display:block"></body></html>`,
@@ -38,13 +47,11 @@ for (const [name, def] of entries) {
   await page.waitForFunction(() => document.images[0]?.complete);
   const png = join(dirs.render, `${name}.png`);
   await page.screenshot({ path: png, omitBackground: !def.opaque, clip: { x: 0, y: 0, width: w, height: h } });
-  // A reviewed painted version (tools/generate-art-openai.mjs) takes priority over the vector render.
-  const painted = join(root, 'art/painted', `${name}.png`);
-  if (existsSync(painted)) {
+  // A painted version (tools/import-painted.py or tools/generate-art-openai.mjs) takes priority over the vector render.
+  if (hasPainted) {
     execFileSync('convert', [painted, '-resize', `${w}x${h}!`, png]);
     console.log(`${name}: using painted source`);
   }
-  const [rw, rh] = def.runtime;
   execFileSync('convert', [png, '-resize', `${rw}x${rh}!`, '-quality', def.opaque ? '86' : '92', '-define', 'webp:alpha-quality=95', join(dirs.out, `${name}.webp`)]);
   console.log(`${name}  ${w}x${h} -> ${rw}x${rh}`);
 }

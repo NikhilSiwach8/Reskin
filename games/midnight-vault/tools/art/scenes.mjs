@@ -248,44 +248,31 @@ function finalHeistBg() {
 /** Frame canvas 1000x1060; the reel window is x 125..875, y 200..950. */
 export const FRAME = { w: 1000, h: 1060, window: { x: 125, y: 200, w: 750, h: 750 } };
 
+/**
+ * Reel window border. The painted bank archway (art/source/bg-bank.webp) frames the board,
+ * so the frame is a slim ornate gold border around the reel window only.
+ */
 function frame() {
   const [gd, gold, golddk] = goldDefs();
-  const sh = id('s'), stone = id('st'), flame = id('fl'), fglow = id('fg'), green = id('gn');
+  const sh = id('s'), green = id('gn');
   const { x, y, w, h } = FRAME.window;
-  const pillar = (px) => `
-<rect x="${px}" y="250" width="92" height="700" rx="10" fill="url(#${stone})" ${OUT} stroke-width="8"/>
-${[0, 1, 2].map((i) => `<rect x="${px + 18 + i * 20}" y="280" width="12" height="640" rx="6" fill="#000" opacity="0.25"/>`).join('')}
-<rect x="${px - 14}" y="226" width="120" height="40" rx="8" fill="url(#${gold})" ${OUT} stroke-width="7"/>
-<rect x="${px - 14}" y="930" width="120" height="40" rx="8" fill="url(#${gold})" ${OUT} stroke-width="7"/>
-<path d="M${px + 6} 226 C${px + 6} 196 ${px + 86} 196 ${px + 86} 226 Z" fill="url(#${golddk})" ${OUT} stroke-width="6"/>
-<path d="M${px + 46} 120 C${px + 76} 150 ${px + 70} 180 ${px + 46} 196 C${px + 22} 180 ${px + 16} 150 ${px + 46} 120 Z" fill="url(#${flame})" filter="url(#${fglow})"/>
-<path d="M${px + 46} 150 C${px + 60} 166 ${px + 58} 182 ${px + 46} 192 C${px + 34} 182 ${px + 32} 166 ${px + 46} 150 Z" fill="#E8FFF0" opacity="0.8"/>`;
-  return svg(FRAME.w, FRAME.h, [...gd, dropShadow(sh, 14, 12, 0.6), glowFilter(fglow, C.green, 14, 1), glowFilter(green, C.green, 10, 1),
-    linear(stone, [[0, '#3E2C5E'], [0.5, '#2A1C44'], [1, '#1A1030']], 0, 0, 1, 0),
-    linear(flame, [[0, '#E8FFF0'], [0.4, C.green], [1, '#0E8A49']]),
-  ], [
+  const studs = [];
+  for (let i = 1; i < 5; i++) {
+    studs.push([x + (w * i) / 5, y - 34], [x + (w * i) / 5, y + h + 34], [x - 34, y + (h * i) / 5], [x + w + 34, y + (h * i) / 5]);
+  }
+  return svg(FRAME.w, FRAME.h, [...gd, dropShadow(sh, 12, 12, 0.65), glowFilter(green, C.green, 10, 1)], [
     `<g filter="url(#${sh})">`,
-    // crest / pediment
-    `<path d="M70 210 L500 40 L930 210 Z" fill="#24163E" stroke="url(#${gold})" stroke-width="14" stroke-linejoin="round"/>`,
-    `<path d="M70 210 L500 40 L930 210 Z" fill="none" ${OUT} stroke-width="4"/>`,
-    `<path d="M160 196 L500 70 L840 196 Z" fill="#1A1030"/>`,
-    // skull ornament
-    `<path d="M500 64 C548 64 580 96 580 138 C580 166 564 182 552 190 V214 H448 V190 C436 182 420 166 420 138 C420 96 452 64 500 64Z" fill="url(#${gold})" ${OUT} stroke-width="9"/>`,
-    `<g filter="url(#${green})"><ellipse cx="474" cy="138" rx="18" ry="22" fill="${C.green}"/><ellipse cx="526" cy="138" rx="18" ry="22" fill="${C.green}"/></g>`,
-    `<path d="M500 160 L490 178 H510 Z" fill="${C.outline}"/><path d="M470 196 V214 M490 196 V214 M510 196 V214 M530 196 V214" stroke="${C.outline}" stroke-width="5"/>`,
-    pillar(18), pillar(890),
-    // window border
     `<rect x="${x - 34}" y="${y - 34}" width="${w + 68}" height="${h + 68}" rx="30" fill="none" stroke="${C.outline}" stroke-width="44"/>`,
     `<rect x="${x - 34}" y="${y - 34}" width="${w + 68}" height="${h + 68}" rx="30" fill="none" stroke="url(#${gold})" stroke-width="32"/>`,
     `<rect x="${x - 12}" y="${y - 12}" width="${w + 24}" height="${h + 24}" rx="16" fill="none" stroke="${C.outline}" stroke-width="12"/>`,
     `<rect x="${x - 12}" y="${y - 12}" width="${w + 24}" height="${h + 24}" rx="16" fill="none" stroke="url(#${golddk})" stroke-width="6"/>`,
+    ...studs.map(([cx, cy]) => `<circle cx="${cx}" cy="${cy}" r="9" fill="${C.green}" stroke="${C.outline}" stroke-width="4"/>`),
     ...[[x - 34, y - 34], [x + w + 34, y - 34], [x - 34, y + h + 34], [x + w + 34, y + h + 34]].map(([cx, cy]) =>
       `<circle cx="${cx}" cy="${cy}" r="34" fill="url(#${gold})" ${OUT} stroke-width="8"/><circle cx="${cx}" cy="${cy}" r="16" fill="${C.green}" filter="url(#${green})"/>`),
-    // base plinth
-    `<path d="M60 990 H940 L910 1050 H90 Z" fill="url(#${stone})" ${OUT} stroke-width="8"/>`,
-    `<rect x="60" y="978" width="880" height="24" rx="8" fill="url(#${gold})" ${OUT} stroke-width="6"/>`,
+    // top crest
+    `<path d="M${x + w / 2 - 90} ${y - 40} Q${x + w / 2} ${y - 120} ${x + w / 2 + 90} ${y - 40} Z" fill="url(#${gold})" ${OUT} stroke-width="8"/>`,
+    `<polygon points="${x + w / 2},${y - 112} ${x + w / 2 + 26},${y - 78} ${x + w / 2},${y - 44} ${x + w / 2 - 26},${y - 78}" fill="${C.green}" ${OUT} stroke-width="6" filter="url(#${green})"/>`,
     `</g>`,
-    sparkle(250, 120, 14, C.green), sparkle(760, 120, 14, C.green),
   ]);
 }
 

@@ -85,18 +85,19 @@ export class Stage {
     const s = Math.min(vw / dw, availH / dh);
     this.root.scale.set(s);
     this.root.position.set((vw - dw * s) / 2, (availH - dh * s) / 2);
+    // The board sits in the painted bank archway; the logo crowns it from above.
     if (land) {
-      this.board.scale.set(0.84);
-      this.board.position.set((dw - FRAME.w * 0.84) / 2, 40);
-      this.logo.width = 500;
+      this.board.scale.set(0.78);
+      this.board.position.set((dw - FRAME.w * 0.78) / 2, 150);
+      this.logo.width = 400;
       this.logo.scale.y = this.logo.scale.x;
-      this.logo.position.set(dw / 2, 2);
+      this.logo.position.set(dw / 2, -8);
     } else {
       this.board.scale.set(1);
-      this.board.position.set((dw - FRAME.w) / 2, 260);
-      this.logo.width = 720;
+      this.board.position.set((dw - FRAME.w) / 2, 330);
+      this.logo.width = 640;
       this.logo.scale.y = this.logo.scale.x;
-      this.logo.position.set(dw / 2, 30);
+      this.logo.position.set(dw / 2, 6);
     }
     const g = this.gridLayer.getGlobalPosition();
     const k = this.board.scale.x * s;
@@ -106,7 +107,7 @@ export class Stage {
 
   /** Clock placement in grid coordinates (left of the board in landscape, below it in portrait). */
   clockSpot(): { x: number; y: number; size: number } {
-    return this.orientation === 'landscape' ? { x: -330, y: 520, size: 330 } : { x: 120, y: 900, size: 260 };
+    return this.orientation === 'landscape' ? { x: -360, y: 520, size: 330 } : { x: 120, y: 900, size: 260 };
   }
 
   async setBackground(name: TextureName): Promise<void> {

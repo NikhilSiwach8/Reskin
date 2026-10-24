@@ -259,3 +259,90 @@ body.reduced-motion #banner.show, body.reduced-motion .keys-row figure { animati
   #banner.show { animation: none; }
   #btn-spin.spinning svg { animation: none; }
 }
+
+/* ================================================================
+   Painted UI skin (art/source/ui-sheet.webp, cut by tools/import-painted.py)
+   ================================================================ */
+:root { --bar-h: clamp(84px, 12vh, 112px); }
+#controls { background: linear-gradient(to top, rgba(8, 5, 16, 0.97), rgba(16, 10, 30, 0.82)); border-top: 2px solid rgba(215, 165, 68, 0.7); box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.5); }
+
+.icon-btn {
+  width: 56px; height: 49px; border: none; border-radius: 0; padding: 0;
+  background: url('./img/btn_blank.webp') center / contain no-repeat; box-shadow: none;
+}
+.icon-btn svg { width: 22px; height: 22px; fill: #f5c95a; filter: drop-shadow(0 1px 0 #6b4410); }
+#btn-menu { background-image: url('./img/btn_settings.webp'); }
+#btn-sound { background-image: url('./img/btn_sound.webp'); }
+#btn-turbo { background-image: url('./img/btn_turbo.webp'); }
+#btn-menu svg, #btn-sound svg, #btn-turbo svg { display: none !important; }
+#btn-sound.muted { filter: grayscale(0.8) brightness(0.8); }
+#btn-sound.muted::after { content: ''; position: absolute; left: 18%; right: 18%; top: 50%; height: 5px; border-radius: 3px; background: var(--crimson); transform: rotate(-35deg); box-shadow: 0 0 0 2px #150a20; }
+.icon-btn[aria-pressed='true'] { box-shadow: none; filter: drop-shadow(0 0 8px var(--green)) brightness(1.15); }
+.icon-btn:active:not(:disabled) { transform: translateY(2px) scale(0.96); box-shadow: none; }
+
+.meter {
+  position: relative; width: 186px; height: 88px; border: none; border-radius: 0; box-shadow: none;
+  background: url('./img/panel_balance.webp') center / 100% 100% no-repeat;
+  padding: 34px 16px 10px 64px; text-align: left; display: flex; flex-direction: column; justify-content: center;
+}
+.meter-label { font-size: 10px; }
+.meter-value { font-size: clamp(14px, 1.6vw, 20px); }
+.meter-win { background-image: url('./img/panel_win.webp'); padding-left: 60px; }
+.meter-bet { width: auto; height: auto; background: none; padding: 0; flex-direction: row; align-items: center; gap: 4px; }
+.meter-bet > div { width: 168px; height: 88px; background: url('./img/panel_bet.webp') center / 100% 100% no-repeat; padding: 34px 12px 10px 60px; display: flex; flex-direction: column; justify-content: center; }
+.step-btn { width: 46px; height: 37px; border: none; border-radius: 0; padding: 0; color: transparent; font-size: 0; background: url('./img/btn_minus.webp') center / contain no-repeat; }
+#btn-bet-up { background-image: url('./img/btn_plus.webp'); }
+
+#btn-spin {
+  width: clamp(96px, 15vh, 140px); height: clamp(89px, 13.9vh, 130px); margin-top: -40px; border: none; border-radius: 0; padding: 0;
+  background: url('./img/spin.webp') center / contain no-repeat; box-shadow: none;
+}
+#btn-spin svg { display: none; }
+#btn-spin:active:not(:disabled) { transform: translateY(3px) scale(0.96); box-shadow: none; }
+#btn-spin.spinning { animation: spin-glow 0.9s ease-in-out infinite; }
+@keyframes spin-glow { 50% { filter: brightness(1.25) drop-shadow(0 0 14px rgba(125, 255, 168, 0.8)); } }
+
+#feature-panel {
+  width: min(330px, 28vw); border-style: solid; border-width: 64px 40px 58px 40px;
+  border-image: url('./img/panel_feature.webp') 92 60 80 60 fill stretch; background: none; box-shadow: none; padding: 0 6px; border-radius: 0;
+}
+
+@media (max-width: 760px) {
+  .meter:not(.meter-bet) { width: 132px; height: 64px; padding: 24px 8px 6px 44px; }
+  .meter-bet > div { width: 120px; height: 64px; padding: 24px 6px 6px 42px; }
+  .meter-value { font-size: 13px; }
+  .meter-label { font-size: 8px; }
+  .icon-btn { width: 44px; height: 38px; }
+  .step-btn { width: 36px; height: 29px; }
+}
+@media (max-width: 760px) and (orientation: portrait) {
+  .ctl-meters { gap: 2px; }
+  .meter:not(.meter-bet) { width: 31vw; height: 15vw; padding: 5.6vw 2vw 1.4vw 10.2vw; }
+  .meter-bet > div { width: 28vw; height: 15vw; padding: 5.6vw 1.6vw 1.4vw 9.6vw; }
+  .step-btn { width: 8vw; height: 7vw; }
+  #feature-panel { border-width: 44px 28px 40px 28px; width: min(560px, calc(100vw - 16px)); }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  :root { --bar-h: 62px; }
+  .meter:not(.meter-bet) { width: 116px; height: 56px; padding: 21px 6px 4px 40px; }
+  .meter-bet > div { width: 106px; height: 56px; padding: 21px 5px 4px 37px; }
+  .meter-label { font-size: 7px; }
+  .meter-value { font-size: 12px; }
+  .icon-btn { width: 40px; height: 35px; }
+  .step-btn { width: 30px; height: 24px; }
+  #btn-spin { width: 74px; height: 68px; margin-top: -14px; }
+  #feature-panel { border-width: 40px 26px 36px 26px; }
+}
+/* Mini-player S: settings and rules move to a top-right cluster, Buy Bonus is hidden, meters shrink. */
+@media (max-width: 560px) and (orientation: landscape) {
+  .ctl-left { position: fixed; top: 6px; right: 6px; gap: 4px; }
+  .ctl-left .icon-btn { width: 32px; height: 28px; }
+  #btn-buy { display: none !important; }
+  .ctl-meters { gap: 3px; }
+  .meter:not(.meter-bet) { width: 82px; height: 42px; padding: 15px 3px 2px 29px; }
+  .meter-bet > div { width: 76px; height: 42px; padding: 15px 3px 2px 27px; }
+  .meter-value { font-size: 9px; }
+  .meter-label { display: none; }
+  .step-btn { width: 22px; height: 18px; }
+  #btn-spin { width: 60px; height: 56px; margin-top: -10px; }
+}

@@ -278,15 +278,35 @@ const LETTER_COLORS = {
   T: ['#B8F2FF', '#3AC2FF', '#0E6CC8', '#06306A'],
 };
 
+/** Dark tile plate matching the painted symbol tiles (art/source/symbols-sheet.webp). */
+function plate() {
+  const rim = id('pr'), face = id('pf'), glow = id('pg');
+  return {
+    defs: [
+      linear(rim, [[0, '#6A24A8'], [0.5, '#4A1580'], [1, '#2E0A58']]),
+      radial(face, [[0, '#24123F'], [0.75, '#110828'], [1, '#08051A']]),
+      radial(glow, [[0, '#9D66FF', 0.16], [1, '#9D66FF', 0]]),
+    ],
+    body: [
+      `<rect x="4" y="4" width="504" height="504" rx="46" fill="url(#${rim})" stroke="#1A0533" stroke-width="6"/>`,
+      `<rect x="24" y="24" width="464" height="464" rx="32" fill="url(#${face})" stroke="#2A0A50" stroke-width="5"/>`,
+      `<rect x="34" y="34" width="444" height="444" rx="26" fill="url(#${glow})"/>`,
+    ],
+  };
+}
+
 function letter(ch) {
   const [c0, c1, c2, c3] = LETTER_COLORS[ch];
   const fill = id('lf'), top = id('lt'), sh = id('s'), clip = id('cl'), glow = id('f');
   const d = LETTERS[ch];
-  return svg(S, S, [dropShadow(sh, 12, 6, 0.6), glowFilter(glow, c1, 12, 0.6),
+  const p = plate();
+  return svg(S, S, [...p.defs, dropShadow(sh, 12, 6, 0.6), glowFilter(glow, c1, 12, 0.6),
     linear(fill, [[0, c0], [0.35, c1], [0.75, c2], [1, c3]]),
     linear(top, [[0, '#ffffff', 0.75], [1, '#ffffff', 0]]),
     `<clipPath id="${clip}"><path d="${d}" fill-rule="evenodd"/></clipPath>`,
   ], [
+    ...p.body,
+    `<g transform="translate(256 262) scale(0.86) translate(-256 -256)">`,
     `<g filter="url(#${glow})"><g filter="url(#${sh})">`,
     `<path d="${d}" fill-rule="evenodd" fill="${C.outline}" stroke="${C.outline}" stroke-width="34" stroke-linejoin="round"/>`,
     `<path d="${d}" fill-rule="evenodd" fill="url(#${fill})"/>`,
@@ -297,7 +317,8 @@ function letter(ch) {
     `</g>`,
     `<path d="${d}" fill-rule="evenodd" fill="none" stroke="${C.outline}" stroke-width="10" stroke-linejoin="round"/>`,
     `</g></g>`,
-    sparkle(ch === 'T' ? 440 : 400, 92, 22),
+    `</g>`,
+    sparkle(ch === 'T' ? 440 : 420, 76, 14),
   ]);
 }
 

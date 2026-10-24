@@ -1,21 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-<defs><filter id="s74" x="-30%" y="-30%" width="160%" height="160%">
+<defs><linearGradient id="pr80" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6A24A8" stop-opacity="1"/><stop offset="0.5" stop-color="#4A1580" stop-opacity="1"/><stop offset="1" stop-color="#2E0A58" stop-opacity="1"/></linearGradient><radialGradient id="pf81" cx="0.5" cy="0.5" r="0.5" fx="0.5" fy="0.5"><stop offset="0" stop-color="#24123F" stop-opacity="1"/><stop offset="0.75" stop-color="#110828" stop-opacity="1"/><stop offset="1" stop-color="#08051A" stop-opacity="1"/></radialGradient><radialGradient id="pg82" cx="0.5" cy="0.5" r="0.5" fx="0.5" fy="0.5"><stop offset="0" stop-color="#9D66FF" stop-opacity="0.16"/><stop offset="1" stop-color="#9D66FF" stop-opacity="0"/></radialGradient><filter id="s77" x="-30%" y="-30%" width="160%" height="160%">
 <feGaussianBlur in="SourceAlpha" stdDeviation="6"/><feOffset dy="12" result="o"/>
 <feFlood flood-color="#000" flood-opacity="0.6"/><feComposite in2="o" operator="in" result="s"/>
-<feMerge><feMergeNode in="s"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="f76" x="-50%" y="-50%" width="200%" height="200%">
+<feMerge><feMergeNode in="s"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="f79" x="-50%" y="-50%" width="200%" height="200%">
 <feGaussianBlur in="SourceAlpha" stdDeviation="12" result="b"/>
 <feFlood flood-color="#FF4A3A" flood-opacity="0.6"/>
 <feComposite in2="b" operator="in" result="g"/>
-<feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter><linearGradient id="lf72" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFB0A0" stop-opacity="1"/><stop offset="0.35" stop-color="#FF4A3A" stop-opacity="1"/><stop offset="0.75" stop-color="#B0161C" stop-opacity="1"/><stop offset="1" stop-color="#5E0810" stop-opacity="1"/></linearGradient><linearGradient id="lt73" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="0.75"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></linearGradient><clipPath id="cl75"><path d="M98 64 H196 V214 L298 64 H414 L290 238 L424 448 H306 L196 278 V448 H98 Z" fill-rule="evenodd"/></clipPath></defs>
-<g filter="url(#f76)"><g filter="url(#s74)">
+<feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter><linearGradient id="lf75" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFB0A0" stop-opacity="1"/><stop offset="0.35" stop-color="#FF4A3A" stop-opacity="1"/><stop offset="0.75" stop-color="#B0161C" stop-opacity="1"/><stop offset="1" stop-color="#5E0810" stop-opacity="1"/></linearGradient><linearGradient id="lt76" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="0.75"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></linearGradient><clipPath id="cl78"><path d="M98 64 H196 V214 L298 64 H414 L290 238 L424 448 H306 L196 278 V448 H98 Z" fill-rule="evenodd"/></clipPath></defs>
+<rect x="4" y="4" width="504" height="504" rx="46" fill="url(#pr80)" stroke="#1A0533" stroke-width="6"/>
+<rect x="24" y="24" width="464" height="464" rx="32" fill="url(#pf81)" stroke="#2A0A50" stroke-width="5"/>
+<rect x="34" y="34" width="444" height="444" rx="26" fill="url(#pg82)"/>
+<g transform="translate(256 262) scale(0.86) translate(-256 -256)">
+<g filter="url(#f79)"><g filter="url(#s77)">
 <path d="M98 64 H196 V214 L298 64 H414 L290 238 L424 448 H306 L196 278 V448 H98 Z" fill-rule="evenodd" fill="#150A20" stroke="#150A20" stroke-width="34" stroke-linejoin="round"/>
-<path d="M98 64 H196 V214 L298 64 H414 L290 238 L424 448 H306 L196 278 V448 H98 Z" fill-rule="evenodd" fill="url(#lf72)"/>
-<g clip-path="url(#cl75)">
-<rect x="0" y="40" width="512" height="200" fill="url(#lt73)" opacity="0.6"/>
+<path d="M98 64 H196 V214 L298 64 H414 L290 238 L424 448 H306 L196 278 V448 H98 Z" fill-rule="evenodd" fill="url(#lf75)"/>
+<g clip-path="url(#cl78)">
+<rect x="0" y="40" width="512" height="200" fill="url(#lt76)" opacity="0.6"/>
 <path d="M98 64 H196 V214 L298 64 H414 L290 238 L424 448 H306 L196 278 V448 H98 Z" fill="none" stroke="#5E0810" stroke-width="22" opacity="0.55" transform="translate(0 10)"/>
 <path d="M98 64 H196 V214 L298 64 H414 L290 238 L424 448 H306 L196 278 V448 H98 Z" fill="none" stroke="#ffffff" stroke-width="8" opacity="0.5" transform="translate(-3 -4)"/>
 </g>
 <path d="M98 64 H196 V214 L298 64 H414 L290 238 L424 448 H306 L196 278 V448 H98 Z" fill-rule="evenodd" fill="none" stroke="#150A20" stroke-width="10" stroke-linejoin="round"/>
 </g></g>
-<path d="M400 70 Q404.84 87.16 422 92 Q404.84 96.84 400 114 Q395.16 96.84 378 92 Q395.16 87.16 400 70Z" fill="#ffffff" opacity="0.9"/>
+</g>
+<path d="M420 62 Q423.08 72.92 434 76 Q423.08 79.08 420 90 Q416.92 79.08 406 76 Q416.92 72.92 420 62Z" fill="#ffffff" opacity="0.9"/>
 </svg>

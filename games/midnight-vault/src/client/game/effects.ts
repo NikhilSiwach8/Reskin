@@ -407,26 +407,34 @@ export class Props extends Container {
   }
 
   // ----- Vault door
+  /** The painted vault door covers the grid, rattles, then swings open on its left hinge. */
   async openVault(reduced: boolean): Promise<void> {
     const w = CELL * REELS;
+    const h = CELL * ROWS;
+    const size = w * 1.06;
     this.door.visible = true;
-    this.door.x = w / 2;
-    this.door.y = (CELL * ROWS) / 2;
-    this.door.width = this.door.height = w * 1.04;
+    this.door.anchor.set(0, 0.5);
+    this.door.x = (w - size) / 2;
+    this.door.y = h / 2;
+    this.door.width = this.door.height = size;
+    const base = this.door.scale.x;
     this.door.alpha = 1;
     this.door.rotation = 0;
-    await this.tweener.wait(250);
+    this.door.tint = 0xffffff;
     if (reduced) {
+      await this.tweener.wait(300);
       await this.tweener.run(500, (p) => (this.door.alpha = 1 - p));
     } else {
-      await this.tweener.run(600, (p) => (this.door.rotation = p * Math.PI), ease.inOutQuad);
-      await this.tweener.run(700, (p) => {
-        this.door.x = w / 2 + p * w * 1.2;
-        this.door.rotation = Math.PI + p * Math.PI * 2;
+      await this.tweener.run(500, (p) => (this.door.rotation = Math.sin(p * Math.PI * 6) * 0.015 * (1 - p)), ease.linear);
+      this.particles.burst(w / 2, h / 2, 24, tex('fx_spark'), { speed: 0.5, scale: 0.4 });
+      await this.tweener.run(800, (p) => {
+        this.door.scale.x = base * (1 - p);
+        this.door.tint = Math.round(255 - 120 * p) * 0x10101;
       }, ease.inCubic);
     }
     this.door.visible = false;
-    this.particles.burst(w / 2, (CELL * ROWS) / 2, 40, tex('fx_coin'), { speed: 0.8, gravity: 1, scale: 0.4, life: 1400 });
+    this.door.scale.x = base;
+    this.particles.burst(w / 2, h / 2, 40, tex('fx_coin'), { speed: 0.8, gravity: 1, scale: 0.4, life: 1400 });
   }
 
   /** Expanding ring used for level-ups, strikes and the Relic Overload shockwave. */

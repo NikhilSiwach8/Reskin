@@ -1,15 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
-<defs><linearGradient id="gold211" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF1B0" stop-opacity="1"/><stop offset="0.25" stop-color="#F5C95A" stop-opacity="1"/><stop offset="0.55" stop-color="#D7A544" stop-opacity="1"/><stop offset="0.8" stop-color="#9A6A1F" stop-opacity="1"/><stop offset="1" stop-color="#6B4410" stop-opacity="1"/></linearGradient><linearGradient id="golddk212" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B8862E" stop-opacity="1"/><stop offset="1" stop-color="#5A3608" stop-opacity="1"/></linearGradient><filter id="gw214" x="-50%" y="-50%" width="200%" height="200%">
+<defs><linearGradient id="gold223" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF1B0" stop-opacity="1"/><stop offset="0.25" stop-color="#F5C95A" stop-opacity="1"/><stop offset="0.55" stop-color="#D7A544" stop-opacity="1"/><stop offset="0.8" stop-color="#9A6A1F" stop-opacity="1"/><stop offset="1" stop-color="#6B4410" stop-opacity="1"/></linearGradient><linearGradient id="golddk224" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B8862E" stop-opacity="1"/><stop offset="1" stop-color="#5A3608" stop-opacity="1"/></linearGradient><filter id="gw226" x="-50%" y="-50%" width="200%" height="200%">
 <feGaussianBlur in="SourceAlpha" stdDeviation="10" result="b"/>
 <feFlood flood-color="#F5A13A" flood-opacity="1"/>
 <feComposite in2="b" operator="in" result="g"/>
-<feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="s215" x="-30%" y="-30%" width="160%" height="160%">
+<feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="s227" x="-30%" y="-30%" width="160%" height="160%">
 <feGaussianBlur in="SourceAlpha" stdDeviation="5"/><feOffset dy="6" result="o"/>
 <feFlood flood-color="#000" flood-opacity="0.6"/><feComposite in2="o" operator="in" result="s"/>
-<feMerge><feMergeNode in="s"/><feMergeNode in="SourceGraphic"/></feMerge></filter><radialGradient id="fc213" cx="0.5" cy="0.5" r="0.5" fx="0.5" fy="0.5"><stop offset="0" stop-color="#3A2560" stop-opacity="1"/><stop offset="1" stop-color="#140C22" stop-opacity="1"/></radialGradient></defs>
-<g filter="url(#s215)">
-<polygon points="248.0,128.0 231.9,188.0 188.0,231.9 128.0,248.0 68.0,231.9 24.1,188.0 8.0,128.0 24.1,68.0 68.0,24.1 128.0,8.0 188.0,24.1 231.9,68.0" fill="url(#gold211)" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="8"/>
-<circle cx="128" cy="128" r="90" fill="url(#fc213)" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="6"/>
+<feMerge><feMergeNode in="s"/><feMergeNode in="SourceGraphic"/></feMerge></filter><radialGradient id="fc225" cx="0.5" cy="0.5" r="0.5" fx="0.5" fy="0.5"><stop offset="0" stop-color="#3A2560" stop-opacity="1"/><stop offset="1" stop-color="#140C22" stop-opacity="1"/></radialGradient></defs>
+<g filter="url(#s227)">
+<polygon points="248.0,128.0 231.9,188.0 188.0,231.9 128.0,248.0 68.0,231.9 24.1,188.0 8.0,128.0 24.1,68.0 68.0,24.1 128.0,8.0 188.0,24.1 231.9,68.0" fill="url(#gold223)" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="8"/>
+<circle cx="128" cy="128" r="90" fill="url(#fc225)" stroke="#150A20" stroke-linejoin="round" stroke-linecap="round" stroke-width="6"/>
 </g>
-<g filter="url(#gw214)"><circle cx="128" cy="128" r="62" fill="#1E1238" stroke="#D7A544" stroke-width="10"/><path d="M128 128 V82 M128 128 L160 148" stroke="#F5A13A" stroke-width="10" stroke-linecap="round"/><circle cx="128" cy="76" r="8" fill="#7DFFA8"/></g>
+<g filter="url(#gw226)"><circle cx="128" cy="128" r="62" fill="#1E1238" stroke="#D7A544" stroke-width="10"/><path d="M128 128 V82 M128 128 L160 148" stroke="#F5A13A" stroke-width="10" stroke-linecap="round"/><circle cx="128" cy="76" r="8" fill="#7DFFA8"/></g>
 </svg>

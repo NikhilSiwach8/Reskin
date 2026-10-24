@@ -10,7 +10,7 @@ The repository contains everything that makes up a Stake Engine game:
 | Math pipeline | Simulates rounds, writes Stake RGS files (`index.json`, `books_*.jsonl.zst`, `lookUpTable_*_0.csv`) and a math report | `src/math/` |
 | Game client | PixiJS 8 + DOM UI static web app that replays RGS outcomes | `src/client/`, `index.html` |
 | Local RGS | Vite dev-server mock of the documented Stake RGS API, serving the generated books | `src/rgs/mockRgs.ts` |
-| Art | Original vector art set with an SVG to WebP render pipeline | `tools/art/`, `art/svg/`, `public/assets/` |
+| Art | Supplied painted art cut into individual assets, plus vector pieces, rendered to WebP | `art/source/`, `tools/import-painted.py`, `tools/art/`, `public/assets/` |
 | Tests | 39 unit tests (vitest) and a 12-scenario browser smoke test (Playwright) | `tests/`, `tools/smoke.mjs` |
 | Docs | Rules and feature-state documentation, asset manifest, math report | `docs/` |
 
@@ -43,7 +43,8 @@ Useful launch parameters: `social=true` (stake.us wording), `currency=EUR`, `lan
 | `npm run math:publish` | 100,000 books per mode in `math-output/publish`, plus `public/math.json` for the rules panel |
 | `npm run math -- --books N --out DIR --seed S --target 0.96` | Custom run |
 | `npm run build` | Typecheck and build the static client into `dist/` |
-| `npm run art` | Rebuild SVG sources, renders and runtime WebP/atlas from `tools/art/*.mjs` |
+| `python3 tools/import-painted.py` | Cut the painted sources into `art/painted/` and `src/client/ui/img/` |
+| `npm run art` | Rebuild renders and runtime WebP/atlas (painted sources first, then `tools/art/*.mjs`) |
 | `npm run art:painted` | Optional painted-art pass through the OpenAI Images API (see Art) |
 | `node src/math/tune.ts base 200000` | Raw (unweighted) feature statistics for tuning; run with `node --experimental-strip-types` |
 
@@ -85,9 +86,15 @@ Base-game feature frequencies in the published set: The Thirteenth Hour 1 in 71,
 
 ## Art
 
-The supplied concept board (1536x1024) is too small to cut usable assets from, and the OpenAI image API in this environment had no credits. So every asset was hand-authored as layered vector art in code (`tools/art/*.mjs`), following the concept's direction and the brief's palette. `npm run art` renders them through headless Chromium to high-resolution PNGs, then to runtime WebP plus a symbol atlas. See [docs/ASSETS.md](docs/ASSETS.md) for the full manifest.
+The game uses the supplied painted artwork (`art/source/`): symbol tiles, logo, UI sheet, the haunted-bank exterior and the vault-breach interior. `python3 tools/import-painted.py` (Pillow + NumPy) cuts it into individual assets:
 
-For a painted, more detailed look, run `OPENAI_API_KEY=... npm run art:painted -- --reference path/to/concept.png`. It writes `art/painted/<name>.png`, and `npm run art` then uses those instead of the vector renders. Review every image before shipping: Stake requires unique assets with no text or third-party marks.
+- **Symbols:** the nine high symbols are painted tiles with their plates (the glows are painted over the plates, so the plates stay as the tile style). The relic tile also provides the high-resolution art for expanded relic blocks, the Phantom sprite and the Vault Breach door. The portal and chain-lock tiles become the Phantom portal and the Lockdown lock.
+- **Low symbols A, K, Q, J, 10:** vector gem letters on plates matching the painted tiles. The painted letters on the asset board are too small (about 70 px) to use.
+- **Backgrounds:** the bank exterior (base game; the board sits in its archway) and the vault interior (The Vault Breach). Cursed Fortune, Phantom Payday and Midnight Countdown use the vault interior with only its green tones shifted (greener, violet and amber). The Phantom Payday and Midnight Countdown keys are recoloured the same way.
+- **Logo and UI:** the transparent logo; the spin button, buttons, meter panels and feature-panel frame from the UI sheet, with the background keyed out.
+- **Still vector:** reel border, reel panel, chains, clock dial and hand, Ledger seals and particles (`tools/art/*.mjs`).
+
+`npm run art` renders everything to runtime WebP plus a symbol atlas, preferring painted sources (run the import script first on a fresh checkout; `art/painted/` is regenerated and not committed). See [docs/ASSETS.md](docs/ASSETS.md) for the full manifest. `npm run art:painted` (OpenAI Images API) can generate painted versions of the remaining vector assets.
 
 ## Verified
 
@@ -102,7 +109,7 @@ Checked in this environment (headless Chromium at 1600x900, 1280x720, 800x450, 8
 ## Unfinished / not verified
 
 - **Not deployed to Stake Engine.** No Stake Engine account was available here. The client and math are built to the documented RGS contract and tested against the local mock, but not against the real RGS or dashboard.
-- **Art is vector, not painted.** The style follows the concept but is simpler than the concept board's painted look (especially the frame and bonus backgrounds). The painted pass is ready to run but has not been run.
+- **Art:** the supplied painted art covers symbols, logo, UI and backgrounds. The low symbols, reel border, chains, clock and seals are still vector. Three bonus backgrounds are colour variants of the vault interior rather than separate paintings.
 - **Sound is procedural.** Original synthesised effects and an ambient bed; no composed music track.
 - **Devices.** Only headless Chromium was tested (including phone and mini-player viewport sizes). Real iOS/Android devices, Safari and Firefox still need testing.
 - **Official Web SDK not used.** Stake accepts any static stack; this client is custom PixiJS rather than the Svelte-based Web SDK.
