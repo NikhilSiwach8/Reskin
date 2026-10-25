@@ -251,16 +251,19 @@ export class WinLayer extends Container {
       this.orbs.addChild(o);
       return o;
     });
+    const token = this.token;
     await this.tweener.run(ms, (p) => {
+      if (token !== this.token) return;
       this.lines.clear();
       wins.forEach((w, i) => {
         const { head, path } = along(pts[i], p);
         this.strokePath(path, LINE_COLORS[(w.line - 1) % LINE_COLORS.length], 1);
+        if (orbs[i].destroyed) return;
         orbs[i].position.set(head.x, head.y);
         orbs[i].alpha = p < 0.9 ? 1 : (1 - p) * 10;
       });
     }, ease.inOutQuad);
-    orbs.forEach((o) => o.destroy());
+    orbs.forEach((o) => o.destroyed || o.destroy());
   }
 
   /** A glowing gold frame behind a winning cell that pops in and then breathes. */
@@ -284,7 +287,7 @@ export class WinLayer extends Container {
     const token = this.token;
     void this.tweener.wait(delay).then(async () => {
       if (token !== this.token) return;
-      await this.tweener.run(260, (q) => { root.alpha = Math.min(1, q * 1.6); root.scale.set(0.6 + q * 0.4); }, ease.outBack);
+      await this.tweener.run(260, (q) => { if (root.destroyed) return; root.alpha = Math.min(1, q * 1.6); root.scale.set(0.6 + q * 0.4); }, ease.outBack);
       // gentle breathing while the win is on screen (driven by a long tween so slam stop ends it)
       let t = 0;
       const breathe = () => {
@@ -373,7 +376,7 @@ export class WinLayer extends Container {
     root.scale.set(0.4);
     root.alpha = 0;
     this.labels.addChild(root);
-    void this.tweener.run(320, (q) => { root.scale.set(0.4 + q * 0.6); root.alpha = Math.min(1, q * 2); }, ease.outBack);
+    void this.tweener.run(320, (q) => { if (root.destroyed) return; root.scale.set(0.4 + q * 0.6); root.alpha = Math.min(1, q * 2); }, ease.outBack);
   }
 }
 

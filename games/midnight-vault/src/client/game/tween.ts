@@ -40,7 +40,15 @@ export class Tweener {
     for (const a of [...this.active]) {
       a.elapsed += dt * this.speed;
       const t = Math.min(1, a.elapsed / a.duration);
-      a.update(t);
+      try {
+        a.update(t);
+      } catch (e) {
+        // A presentation error must never stall a round: end this tween and carry on.
+        console.warn('animation error', e);
+        this.active.delete(a);
+        a.resolve();
+        continue;
+      }
       if (t >= 1) {
         this.active.delete(a);
         a.resolve();
@@ -76,7 +84,11 @@ export class Tweener {
   /** Completes every running tween immediately (slam stop / skip). */
   finishAll(): void {
     for (const a of [...this.active]) {
-      a.update(1);
+      try {
+        a.update(1);
+      } catch (e) {
+        console.warn('animation error', e);
+      }
       this.active.delete(a);
       a.resolve();
     }

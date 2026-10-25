@@ -28,7 +28,7 @@ for (const [i, [mode, scenario]] of scenarios.entries()) {
   const page = await browser.newPage({ viewport });
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
-  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  page.on('console', (m) => (m.type() === 'error' || m.text().includes('animation error')) && errors.push(m.text()));
   let round = null;
   page.on('response', async (r) => {
     if (r.url().includes('/rgs/dev/force')) round = await r.json().catch(() => null);
