@@ -3,9 +3,10 @@
 // scenario. The round goes through the normal play -> validate -> present -> end-round path,
 // so the harness never bypasses outcome validation or balance handling.
 
+import type { ModeName } from '../../engine/round.ts';
 import type { RgsClient, RgsRound } from '../rgs.ts';
 
-const SCENARIOS: [string, 'base' | 'bonus', string][] = [
+const SCENARIOS: [string, ModeName, string][] = [
   ['Loss', 'base', 'loss'],
   ['Line win', 'base', 'win'],
   ['Relic expansion', 'base', 'relic'],
@@ -15,11 +16,11 @@ const SCENARIOS: [string, 'base' | 'bonus', string][] = [
   ['Spectral Respin', 'base', 'spectralRespin'],
   ['Thirteenth Hour', 'base', 'thirteenthHour'],
   ['Three Keys (base)', 'base', 'threeKeys'],
-  ['Cursed Fortune', 'bonus', 'cursedFortune'],
-  ['Phantom Payday', 'bonus', 'phantomPayday'],
-  ['Midnight Countdown', 'bonus', 'midnightCountdown'],
-  ['Vault Breach', 'bonus', 'vaultBreach'],
-  ['Max win', 'bonus', 'wincap'],
+  ['Buy Cursed Fortune', 'cursed', 'cursedFortune'],
+  ['Buy Phantom Payday', 'phantom', 'phantomPayday'],
+  ['Buy Midnight Countdown', 'midnight', 'midnightCountdown'],
+  ['Vault Breach (base)', 'base', 'vaultBreach'],
+  ['Max win', 'cursed', 'wincap'],
 ];
 
 type Request = (rgs: RgsClient, amount: number, mode: string) => Promise<{ balance: { amount: number; currency: string }; round: RgsRound }>;
@@ -34,7 +35,7 @@ const PREVIEWS: [string, string][] = [
   ['Intro splash', 'intro'],
 ];
 
-export function mountHarness(run: (mode: 'base' | 'bonus', request: Request) => Promise<void>, preview: (what: string) => void): void {
+export function mountHarness(run: (mode: ModeName, request: Request) => Promise<void>, preview: (what: string) => void): void {
   const panel = document.createElement('details');
   panel.id = 'dev-harness';
   panel.innerHTML = `<summary>DEV</summary><div class="dev-grid">${SCENARIOS.map(([label, mode, s]) => `<button data-mode="${mode}" data-s="${s}">${label}</button>`).join('')}${PREVIEWS.map(([label, p]) => `<button data-preview="${p}">${label}</button>`).join('')}</div>`;
@@ -45,7 +46,7 @@ export function mountHarness(run: (mode: 'base' | 'bonus', request: Request) => 
   const style = document.createElement('style');
   style.textContent = '#dev-harness .dev-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px}#dev-harness button{background:#20152F;color:#E8E1CF;border:1px solid #9D66FF;border-radius:4px;padding:4px;font:11px monospace}';
   document.head.appendChild(style);
-  panel.querySelectorAll<HTMLButtonElement>('button[data-s]').forEach((b) => b.addEventListener('click', () => void run(b.dataset.mode as 'base' | 'bonus', force(b.dataset.s!))));
+  panel.querySelectorAll<HTMLButtonElement>('button[data-s]').forEach((b) => b.addEventListener('click', () => void run(b.dataset.mode as ModeName, force(b.dataset.s!))));
   panel.querySelectorAll<HTMLButtonElement>('button[data-preview]').forEach((b) => b.addEventListener('click', () => preview(b.dataset.preview!)));
   document.body.appendChild(panel);
 }

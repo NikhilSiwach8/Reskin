@@ -193,8 +193,30 @@ button:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
 .settings input, #modal-auto input { width: 20px; height: 20px; accent-color: var(--green); }
 .choice-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; }
-.buy-keys { display: flex; justify-content: center; gap: 12px; }
-.buy-keys img { height: 120px; }
+.buy-intro { margin: 0 0 12px; opacity: 0.85; }
+.buy-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.buy-option {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 10px; cursor: pointer;
+  background: linear-gradient(#24183a, #140d22); color: var(--text, #e8e1cf); font: inherit; text-align: center;
+  border: 2px solid rgba(215, 165, 68, 0.35); border-radius: 12px; transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+.buy-option img { height: 96px; filter: drop-shadow(0 0 10px rgba(125, 255, 168, 0.35)); }
+.buy-option b { font-family: var(--font-display, serif); color: #f5c95a; font-size: 17px; }
+.buy-option .bo-desc { font-size: 12px; opacity: 0.85; flex: 1; }
+.buy-option .bo-price { font-size: 20px; font-weight: 800; color: var(--green, #7dffa8); }
+.buy-option .bo-mult { font-size: 11px; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.08em; }
+.buy-option:hover:not(:disabled) { transform: translateY(-2px); border-color: #f5c95a; }
+.buy-option[aria-checked='true'] { border-color: var(--green, #7dffa8); box-shadow: 0 0 18px rgba(125, 255, 168, 0.45); }
+.buy-option:disabled { opacity: 0.45; cursor: not-allowed; }
+@media (max-width: 640px) {
+  .buy-options { grid-template-columns: 1fr; gap: 8px; }
+  .buy-option { display: grid; grid-template-columns: 56px 1fr auto; grid-template-areas: 'img name price' 'img desc mult'; text-align: left; align-items: center; column-gap: 10px; row-gap: 2px; padding: 8px 10px; }
+  .buy-option img { grid-area: img; height: 56px; }
+  .buy-option b { grid-area: name; font-size: 15px; }
+  .buy-option .bo-desc { grid-area: desc; font-size: 11px; }
+  .buy-option .bo-price { grid-area: price; font-size: 16px; text-align: right; }
+  .buy-option .bo-mult { grid-area: mult; text-align: right; }
+}
 
 /* ------------------------------------------------ portrait / small screens */
 @media (orientation: portrait) {

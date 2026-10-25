@@ -1,8 +1,8 @@
 // Round orchestration: produces one complete, self-contained book (event list + payout)
 // for a bet. The client replays these events; it never decides an outcome.
 import {
-  BONUS_BUY_FOUR_KEYS,
-  BONUS_BUY_PATHS,
+  BET_MODES,
+  BONUS_BUY_KEYS,
   FEATURES,
   RELIC_TABLES,
   REELS,
@@ -438,7 +438,7 @@ export function forcedKeyBoard(rng: Rng, keys: number): Board {
   return board;
 }
 
-export type ModeName = 'base' | 'bonus';
+export type ModeName = 'base' | 'cursed' | 'phantom' | 'midnight';
 
 export interface PlayOptions {
   /** Force a starting board (test harness / forced outcomes). */
@@ -453,9 +453,10 @@ export function playRound(id: number, mode: ModeName, rng: Rng, opts: PlayOption
     if (mode === 'base') {
       playSpin(round, opts.board ?? drawBoard(rng, 'base'), opts.forcedPath);
     } else {
-      const keys = rng.chance(BONUS_BUY_FOUR_KEYS) ? 4 : 3;
-      const path = opts.forcedPath ?? (rng.weighted(BONUS_BUY_PATHS) as BonusPath);
-      playSpin(round, opts.board ?? forcedKeyBoard(rng, keys), path);
+      // A bonus buy opens the bought path directly; nothing about the path is random.
+      const path = BET_MODES.find((m) => m.name === mode)?.path;
+      if (!path) throw new Error(`unknown mode ${mode}`);
+      playSpin(round, opts.board ?? forcedKeyBoard(rng, BONUS_BUY_KEYS), opts.forcedPath ?? path);
     }
   } catch (e) {
     if (!(e instanceof WincapReached)) throw e;

@@ -132,12 +132,13 @@
     </div>
 
     <div class="modal" id="modal-buy" hidden role="dialog" aria-modal="true" aria-labelledby="buy-title">
-      <div class="modal-card">
+      <div class="modal-card modal-wide">
         <header><h2 id="buy-title">Buy Bonus</h2><button class="close-btn" data-close aria-label="Close">×</button></header>
         <div class="modal-body">
-          <div class="buy-keys"><img src="assets/key_cursed_fortune.webp" alt="" /><img src="assets/key_phantom_payday.webp" alt="" /><img src="assets/key_midnight_countdown.webp" alt="" /></div>
-          <p id="buy-text"></p>
-          <div class="modal-actions"><button class="pill-btn" data-close>Cancel</button><button class="pill-btn primary" id="buy-confirm">Buy</button></div>
+          <p class="buy-intro">Choose the bonus you want. Each one starts with 8 free spins.</p>
+          <div class="buy-options" id="buy-options" role="radiogroup" aria-label="Bonus to buy"></div>
+          <p id="buy-text" aria-live="polite"></p>
+          <div class="modal-actions"><button class="pill-btn" data-close>Cancel</button><button class="pill-btn primary" id="buy-confirm" disabled>Buy</button></div>
         </div>
       </div>
     </div>

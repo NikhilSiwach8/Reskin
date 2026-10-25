@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { FEATURES, PAYLINES, REEL_SETS, REELS, ROWS, SPACED_SYMBOLS, SYMBOLS, WINCAP } from '../src/engine/config.ts';
+import { BET_MODES, FEATURES, PAYLINES, REEL_SETS, REELS, ROWS, SPACED_SYMBOLS, SYMBOLS, WINCAP } from '../src/engine/config.ts';
 import { evaluateLines, lineMultiplier } from '../src/engine/evaluate.ts';
 import { Grid } from '../src/engine/grid.ts';
 import { buildStrips } from '../src/engine/reels.ts';
 import { expandRelics, overloadLevel, relicSurge } from '../src/engine/relics.ts';
 import { Rng } from '../src/engine/rng.ts';
-import { detectFeature, forcedKeyBoard, mostCommonLow, playRound, Round, runLockdown } from '../src/engine/round.ts';
+import { detectFeature, forcedKeyBoard, mostCommonLow, playRound, Round, runLockdown, type ModeName } from '../src/engine/round.ts';
 import type { Board, Book, GameEvent, SymbolId } from '../src/engine/types.ts';
 import { validateBook } from '../src/engine/validate.ts';
 
@@ -24,7 +24,7 @@ function events<T extends GameEvent['type']>(book: Book, type: T): Extract<GameE
   return book.events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
-function findBook(mode: 'base' | 'bonus', pred: (b: Book) => boolean, seed = 1, limit = 200000): Book {
+function findBook(mode: ModeName, pred: (b: Book) => boolean, seed = 1, limit = 200000): Book {
   const rng = new Rng(seed);
   for (let i = 0; i < limit; i++) {
     const b = playRound(i, mode, rng);
@@ -32,6 +32,8 @@ function findBook(mode: 'base' | 'bonus', pred: (b: Book) => boolean, seed = 1, 
   }
   throw new Error('no matching book found');
 }
+
+const BUY = ['cursed', 'phantom', 'midnight'] as const;
 
 describe('configuration', () => {
   it('defines 15 distinct paylines inside the 5x5 grid', () => {
@@ -315,7 +317,7 @@ describe('Three Keys to the Vault', () => {
     const rng = new Rng(4);
     let checked = 0;
     for (let i = 0; i < 3000 && checked < 40; i++) {
-      const book = playRound(i, 'bonus', rng);
+      const book = playRound(i, BUY[i % 3], rng);
       const path = events(book, 'bonusPath')[0];
       if (!path || path.path === 'vaultBreach' || book.tags.includes('wincap')) continue;
       const spins = events(book, 'freeSpin');
@@ -334,7 +336,7 @@ describe('Three Keys to the Vault', () => {
 
   it('keeps Relic Overload charge monotonic and flags level-ups correctly', () => {
     const rng = new Rng(12);
-    const book = playRound(1, 'bonus', rng, { forcedPath: 'cursedFortune' });
+    const book = playRound(1, 'cursed', rng);
     let charge = 0;
     let level = 0;
     for (const o of events(book, 'overload')) {
@@ -354,17 +356,32 @@ describe('Three Keys to the Vault', () => {
   });
 });
 
+describe('bonus buys', () => {
+  it('each buy mode always opens its own path with 8 free spins', () => {
+    for (const def of BET_MODES.filter((m) => m.path)) {
+      const rng = new Rng(31);
+      for (let i = 0; i < 60; i++) {
+        const book = playRound(i, def.name as ModeName, rng);
+        const path = events(book, 'bonusPath');
+        expect(path).toHaveLength(1);
+        expect(path[0].path).toBe(def.path);
+        expect(path[0].spins).toBe(FEATURES.threeKeys.spinsByKeys[3]);
+      }
+    }
+  });
+});
+
 describe('books', () => {
   it('are deterministic for a seed', () => {
-    const a = playRound(1, 'bonus', new Rng(42));
-    const b = playRound(1, 'bonus', new Rng(42));
+    const a = playRound(1, 'phantom', new Rng(42));
+    const b = playRound(1, 'phantom', new Rng(42));
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));
   });
 
   it('are valid, integer-precise and never exceed the win cap', () => {
-    for (const mode of ['base', 'bonus'] as const) {
+    for (const mode of ['base', ...BUY] as const) {
       const rng = new Rng(mode === 'base' ? 100 : 200);
-      for (let i = 0; i < (mode === 'base' ? 4000 : 400); i++) {
+      for (let i = 0; i < (mode === 'base' ? 4000 : 200); i++) {
         const book = playRound(i, mode, rng);
         const v = validateBook(book);
         if (!v.ok) throw new Error(`${mode} book ${i}: ${v.errors.slice(0, 3).join('; ')}`);
@@ -378,7 +395,7 @@ describe('books', () => {
     const rng = new Rng(77);
     let book: Book | undefined;
     for (let i = 0; i < 100000 && !book; i++) {
-      const b = playRound(i, 'bonus', rng, { forcedPath: 'cursedFortune' });
+      const b = playRound(i, 'cursed', rng);
       if (b.criteria === 'wincap') book = b;
     }
     expect(book).toBeDefined();

@@ -10,8 +10,8 @@ const { chromium } = createRequire(import.meta.url)('playwright');
 
 const ALL = [
   ['base', 'loss'], ['base', 'win'], ['base', 'relic'], ['base', 'lockdown'], ['base', 'phantomHeist'],
-  ['base', 'spectralRespin'], ['base', 'thirteenthHour'], ['bonus', 'cursedFortune'], ['bonus', 'phantomPayday'],
-  ['bonus', 'midnightCountdown'], ['bonus', 'vaultBreach'], ['bonus', 'wincap'],
+  ['base', 'spectralRespin'], ['base', 'thirteenthHour'], ['cursed', 'cursedFortune'], ['phantom', 'phantomPayday'],
+  ['midnight', 'midnightCountdown'], ['base', 'vaultBreach'], ['cursed', 'wincap'],
 ];
 const wanted = process.argv.slice(2);
 const scenarios = wanted.length ? ALL.filter(([, s]) => wanted.includes(s)) : ALL;
@@ -34,7 +34,7 @@ for (const [i, [mode, scenario]] of scenarios.entries()) {
     if (r.url().includes('/rgs/dev/force')) round = await r.json().catch(() => null);
   });
   await page.goto(`http://localhost:5199/?sessionID=smoke-${scenario}-${Date.now()}&rgs_url=localhost:5199/rgs&lang=en&currency=USD`);
-  await page.waitForSelector('#loading', { state: 'hidden', timeout: 30000 });
+  await page.waitForSelector('#loading', { state: 'hidden', timeout: 120000 }); // the mock RGS loads every book set on first use
   // dismiss the intro splash
   await page.waitForSelector('#splash-intro', { state: 'visible', timeout: 10000 }).then(() => page.evaluate(() => document.querySelector('#splash-intro-go').click())).catch(() => {});
   // Turbo keeps long bonus rounds short; results must still settle identically.
@@ -46,7 +46,7 @@ for (const [i, [mode, scenario]] of scenarios.entries()) {
   await page.waitForTimeout(400);
   const end = money(await page.textContent('#meter-balance .meter-value'));
   const win = money(await page.textContent('#meter-win .meter-value'));
-  const cost = mode === 'bonus' ? 100 : 1;
+  const cost = round?.round?.costMultiplier ?? NaN;
   const payout = round?.round?.payoutMultiplier ?? NaN;
   const expected = +(start - cost + payout).toFixed(2);
   const ok = errors.length === 0 && Math.abs(end - expected) < 0.005 && Math.abs(win - payout) < 0.005;

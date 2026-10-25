@@ -4,7 +4,8 @@ import '@fontsource/cinzel/900.css';
 import '@fontsource/cinzel-decorative/900.css';
 import './ui/styles.css';
 import { Application } from 'pixi.js';
-import { BET_MODES } from '../engine/config.ts';
+import { BET_MODES, BUY_MODES } from '../engine/config.ts';
+import type { ModeName } from '../engine/round.ts';
 import type { Board, GameEvent } from '../engine/types.ts';
 import { validateBook } from '../engine/validate.ts';
 import { loadAssets } from './assets.ts';
@@ -34,6 +35,13 @@ const launch = {
   event: params.get('event') ?? '',
 };
 setSocial(launch.social);
+
+/** Key artwork shown on each bonus-buy card. */
+const BUY_ART: Record<string, string> = {
+  cursed: 'assets/key_cursed_fortune.webp',
+  phantom: 'assets/key_phantom_payday.webp',
+  midnight: 'assets/key_midnight_countdown.webp',
+};
 
 const IDLE_BOARD: Board = [
   ['A', 'GB', 'Q', 'TC', 'K'],
@@ -92,14 +100,23 @@ class Game {
       stopAutoplay: () => this.stopAutoplay(),
       turbo: (on) => this.setTurbo(on),
       mute: () => this.toggleMute(),
-      buy: () => void this.spin('bonus'),
+      buy: (mode) => void this.spin(mode as ModeName),
       settings: (s) => this.applySettings(s),
       replayPlay: () => void this.playReplay(),
       openRules: () => this.openRules(),
       autoplaySummary: (n) => t(`${n} rounds at ${this.fmtMoney(this.bet)} each. Autoplay stops if your balance is too low.`),
-      buyText: () => {
-        const cost = this.bet * BET_MODES[1].cost;
-        return t(`Buy the bonus for ${this.fmtMoney(cost)} (${BET_MODES[1].cost}x your bet of ${this.fmtMoney(this.bet)})?`);
+      buyOptions: () => BUY_MODES.map((m) => ({
+        mode: m.name,
+        label: m.label,
+        desc: m.description,
+        cost: m.cost,
+        price: this.fmtMoney(this.bet * m.cost),
+        art: BUY_ART[m.name],
+        affordable: this.bet * m.cost <= this.balance,
+      })),
+      buyText: (mode) => {
+        const m = BUY_MODES.find((b) => b.name === mode)!;
+        return t(`Buy ${m.label} for ${this.fmtMoney(this.bet * m.cost)} (${m.cost}x your bet of ${this.fmtMoney(this.bet)})?`);
       },
     });
   }
@@ -218,7 +235,7 @@ class Game {
     this.onSpinButton();
   }
 
-  private async spin(mode: 'base' | 'bonus', devRequest?: DevRequest): Promise<void> {
+  private async spin(mode: ModeName, devRequest?: DevRequest): Promise<void> {
     if (this.busy || !this.config) return;
     const cost = this.bet * (BET_MODES.find((m) => m.name === mode)?.cost ?? 1);
     if (cost > this.balance) {
@@ -392,7 +409,7 @@ class Game {
   }
 
   /** Development harness hook (local mock RGS only; never mounted in production builds). */
-  async devScenario(mode: 'base' | 'bonus', request: DevRequest): Promise<void> {
+  async devScenario(mode: ModeName, request: DevRequest): Promise<void> {
     await this.spin(mode, request);
   }
 

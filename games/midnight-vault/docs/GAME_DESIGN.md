@@ -5,7 +5,7 @@ This document describes the rules as implemented. The single source of truth for
 ## 1. Overview
 
 - 5 reels x 5 rows, 15 fixed paylines, wins pay left to right from reel 1.
-- Bet modes: **base** (1x bet) and **bonus** (Buy Bonus, 100x bet).
+- Bet modes: **base** (1x bet) and three bonus buys the player chooses between: **cursed** (Cursed Fortune, 110x), **phantom** (Phantom Payday, 90x) and **midnight** (Midnight Countdown, 100x). Each buy opens its own path directly with 3 Keys (8 free spins); all modes are weighted to 96% RTP.
 - Maximum win: **5,000x bet** in every mode. A round that reaches it ends immediately and pays exactly 5,000x.
 - All amounts in the engine and the books are integers in *centi-bet* units (100 = 1x bet). The RGS reports `payoutMultiplier` as `centi / 100`. The client multiplies by the integer bet (RGS micro-units), so no floating-point money arithmetic is involved.
 
@@ -101,7 +101,7 @@ The Phantom steals the most common low symbol (ties go to the higher payer, orde
 | Item | Rule |
 |---|---|
 | Trigger | 3 VK: 8 spins, 4 VK: 10 spins. The trigger spin is paid first. |
-| Path | Random: Cursed Fortune 40%, Phantom Payday 35%, Midnight Countdown 25%. Bonus buy: 37 / 35 / 26, plus Vault Breach 2%. |
+| Path | Base-game trigger: the vault chooses Cursed Fortune 40%, Phantom Payday 35%, Midnight Countdown 25%. Bonus buy: the player picks the path (no randomness); prices follow each path's simulated value. |
 | Retrigger | 3+ VK in one free spin: +4 spins; total capped at 30. |
 | End | Spins exhausted, or win cap. Returns to the base game. |
 
@@ -128,7 +128,7 @@ The clock starts at IX. Each CL or LG landing advances it 1 hour. Reaching XIII 
 
 ## 7. The Vault Breach
 
-Trigger: 5 VK in the base game, or the 2% Vault Breach path of the bonus buy. 9 spins, no retriggers.
+Trigger: 5 VK in the base game only (it cannot be bought). 9 spins, no retriggers.
 
 | Stage | Spins | Rule |
 |---|---|---|

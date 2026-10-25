@@ -6,10 +6,10 @@ import { BET_MODES, WINCAP } from '../engine/config.ts';
 
 const arg = process.argv[2] ?? 'base';
 const forced = ['cursedFortune', 'phantomPayday', 'midnightCountdown', 'vaultBreach'].includes(arg) ? (arg as BonusPath) : undefined;
-const mode = (forced ? 'bonus' : arg) as ModeName;
+const mode = (forced ? 'cursed' : arg) as ModeName; // a forced path overrides the bought one
 const n = Number(process.argv[3] ?? 20000);
 const seed = Number(process.argv[4] ?? 7);
-const cost = BET_MODES.find((m) => m.name === mode)!.cost;
+const cost = forced ? 100 : BET_MODES.find((m) => m.name === mode)!.cost;
 const rng = new Rng(seed);
 let sum = 0, hits = 0, caps = 0, sq = 0;
 const tags = new Map<string, { n: number; win: number; max: number }>();

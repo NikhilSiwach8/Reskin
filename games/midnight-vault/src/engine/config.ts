@@ -219,19 +219,31 @@ export interface BetModeDef {
   cost: number;
   label: string;
   description: string;
+  /** Bonus path a bonus-buy mode opens directly (undefined for the base game). */
+  path?: 'cursedFortune' | 'phantomPayday' | 'midnightCountdown';
 }
 
+// Each bonus path can be bought directly. Prices follow each path's own simulated value
+// (Cursed Fortune is the most volatile, Midnight Countdown the steadiest), and every mode
+// is weighted to the same 96% RTP.
 export const BET_MODES: BetModeDef[] = [
   { name: 'base', cost: 1, label: 'Spin', description: 'Standard spin at 1x bet.' },
   {
-    name: 'bonus', cost: 100, label: 'Buy Bonus',
-    description: 'Costs 100x bet. Starts the round with 3 or 4 Vault Keys, opening Three Keys to the Vault (small chance of The Vault Breach).',
+    name: 'cursed', cost: 110, label: 'Cursed Fortune', path: 'cursedFortune',
+    description: '8 free spins of Cursed Fortune: relics charge Relic Overload. Highest volatility; the only buy that can reach the max win.',
+  },
+  {
+    name: 'phantom', cost: 90, label: 'Phantom Payday', path: 'phantomPayday',
+    description: '8 free spins of Phantom Payday: every Phantom marks symbols and the Phantom Seal upgrades the transformations.',
+  },
+  {
+    name: 'midnight', cost: 100, label: 'Midnight Countdown', path: 'midnightCountdown',
+    description: '8 free spins of Midnight Countdown: every Clock advances the hour towards the Midnight Strike.',
   },
 ];
 
-/** Path weights for the bonus buy, which can also open The Vault Breach. */
-export const BONUS_BUY_PATHS: Weighted<string> = [
-  ['cursedFortune', 37], ['phantomPayday', 35], ['midnightCountdown', 26], ['vaultBreach', 2],
-];
-/** Probability that a bonus buy starts with 4 keys instead of 3. */
-export const BONUS_BUY_FOUR_KEYS = 0.1;
+/** Bonus-buy modes. */
+export const BUY_MODES = BET_MODES.filter((m) => m.path);
+
+/** Vault Keys a bought bonus starts with (3 Keys = 8 free spins). */
+export const BONUS_BUY_KEYS = 3;

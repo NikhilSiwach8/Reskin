@@ -39,7 +39,7 @@ function parseArgs(argv: string[]): Args {
     out: get('out', 'math-output/dev'),
     seed: Number(get('seed', '1313')),
     target: Number(get('target', '0.96')),
-    modes: get('modes', 'base,bonus').split(',') as ModeName[],
+    modes: get('modes', BET_MODES.map((m) => m.name).join(',')).split(',') as ModeName[],
     forcedWincaps: Number(get('wincaps', '25')),
     forcedAttempts: Number(get('wincap-attempts', '600000')),
     forcedBreach: Number(get('breach', '300')),
@@ -86,7 +86,7 @@ class BookSink {
 
 async function runMode(mode: ModeName, args: Args): Promise<ModeStats> {
   const def = BET_MODES.find((m) => m.name === mode)!;
-  const rng = new Rng(args.seed ^ (mode === 'base' ? 0x0b5e : 0xb0b5));
+  const rng = new Rng(args.seed ^ (mode === 'base' ? 0x0b5e : 0xb0b5 + BET_MODES.indexOf(def)));
   const t0 = Date.now();
   const sink = new BookSink(join(args.out, `books_${mode}.jsonl.tmp`));
   for (let i = 1; i <= args.books; i++) sink.add(playRound(i, mode, rng));
@@ -95,20 +95,22 @@ async function runMode(mode: ModeName, args: Args): Promise<ModeStats> {
   const naturalCaps = books.filter((b) => b.criteria === 'wincap').length;
   const naturalPath = books.filter((b) => b.tags.includes('cursedFortune')).length;
 
-  // Forced win-cap search. Cursed Fortune is the main natural route to the cap,
-  // so we play extra Cursed Fortune rounds and keep the ones that reach it. The
-  // conditional hit rate times the natural Cursed Fortune frequency estimates the
-  // natural win-cap probability used for the lookup-table weights.
+  // Forced win-cap search. Cursed Fortune is the only route to the cap (Phantom Payday and
+  // Midnight Countdown cannot reach it), so the base game and the Cursed Fortune buy play
+  // extra Cursed Fortune rounds and keep the ones that reach it. The conditional hit rate
+  // times the natural Cursed Fortune frequency estimates the natural win-cap probability
+  // used for the lookup-table weights.
   let attempts = 0;
   let hits = 0;
   const frng = new Rng(args.seed ^ 0xcafe ^ (mode === 'base' ? 1 : 2));
-  while (hits < args.forcedWincaps && attempts < args.forcedAttempts) {
+  const searchCap = mode === 'base' || def.path === 'cursedFortune';
+  while (searchCap && hits < args.forcedWincaps && attempts < args.forcedAttempts) {
     attempts++;
     const id = books.length + 1;
     const book =
       mode === 'base'
         ? playRound(id, 'base', frng, { board: forcedKeyBoard(frng, 3), forcedPath: 'cursedFortune' })
-        : playRound(id, 'bonus', frng, { forcedPath: 'cursedFortune' });
+        : playRound(id, mode, frng);
     if (book.criteria === 'wincap') {
       book.tags.push('forced');
       sink.add(book);
@@ -118,7 +120,7 @@ async function runMode(mode: ModeName, args: Args): Promise<ModeStats> {
   const pPath = naturalPath / natural;
   const pCapGivenPath = attempts ? hits / attempts : 0;
   const estimate = Math.max(naturalCaps / natural, pPath * pCapGivenPath);
-  if (hits === 0 && naturalCaps === 0) console.warn(`[${mode}] no win-cap book found; max win not reachable in this book set`);
+  if (searchCap && hits === 0 && naturalCaps === 0) console.warn(`[${mode}] no win-cap book found; max win not reachable in this book set`);
 
   // The Vault Breach (5 Keys) is far rarer in the base game than one book in the natural
   // sample, but the rules promise it, so forced 5-Key rounds are added. Its probability is

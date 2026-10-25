@@ -1,7 +1,7 @@
 // Game rules / paytable panel, generated from the engine configuration so the rules
 // can never drift from the math. RTP and max-win figures come from the published math
 // report (math.json) and are only shown when that report exists.
-import { BET_MODES, BONUS_BUY_FOUR_KEYS, FEATURES, PAYLINES, RELIC_TABLES, SURGE_MULT, SYMBOL_ORDER, SYMBOLS, WINCAP } from '../../engine/config.ts';
+import { BET_MODES, BUY_MODES, FEATURES, PAYLINES, RELIC_TABLES, SURGE_MULT, SYMBOL_ORDER, SYMBOLS, WINCAP } from '../../engine/config.ts';
 import type { SymbolId } from '../../engine/types.ts';
 import { localizeTree } from './text.ts';
 
@@ -38,7 +38,9 @@ export function buildRules(container: HTMLElement, opts: { math?: MathSummary; b
     ? opts.math.modes
         .map((m) => {
           const def = BET_MODES.find((b) => b.name === m.mode);
-          return `<tr><td>${def?.label ?? m.mode}</td><td>${m.cost}x bet</td><td>${pct(m.rtp)}</td><td>${(WINCAP / 100).toLocaleString('en-US')}x bet</td></tr>`;
+          const label = def?.path ? `Buy ${def.label}` : (def?.label ?? m.mode);
+          // Max win is the largest payout in the mode's published books (only Cursed Fortune can reach the cap).
+          return `<tr><td>${label}</td><td>${m.cost}x bet</td><td>${pct(m.rtp)}</td><td>${Math.min(m.maxWin, WINCAP / 100).toLocaleString('en-US')}x bet</td></tr>`;
         })
         .join('')
     : '';
@@ -117,7 +119,9 @@ export function buildRules(container: HTMLElement, opts: { math?: MathSummary; b
 </section>
 ${opts.disabledBuy ? '' : `<section>
   <h3>Buy Bonus</h3>
-  <p>The bonus can be bought for ${BET_MODES[1].cost}x the bet. A bought bonus starts with 3 Vault Keys (4 Keys with a ${Math.round(BONUS_BUY_FOUR_KEYS * 100)}% chance), and the vault chooses Cursed Fortune, Phantom Payday or Midnight Countdown, or with a small chance The Vault Breach.</p>
+  <p>Each bonus path can be bought directly. You choose the path; the vault does not choose for you. Every bought bonus starts with 3 Vault Keys and ${FEATURES.threeKeys.spinsByKeys[3]} free spins, with the normal retriggers.</p>
+  <ul>${BUY_MODES.map((m) => `<li><b>${m.label}</b>: ${m.cost}x the bet. ${m.description}</li>`).join('')}</ul>
+  <p>The Vault Breach cannot be bought; it opens only when 5 Vault Keys land in the base game.</p>
 </section>`}
 <section>
   <h3>Return to player and maximum win</h3>

@@ -12,12 +12,25 @@ export interface HudHandlers {
   stopAutoplay: () => void;
   turbo: (on: boolean) => void;
   mute: () => void;
-  buy: () => void;
+  buy: (mode: string) => void;
+  buyOptions: () => BuyOption[];
   settings: (s: Settings) => void;
   replayPlay: () => void;
   openRules: () => void;
   autoplaySummary: (count: number) => string;
-  buyText: () => string;
+  buyText: (mode: string) => string;
+}
+
+export interface BuyOption {
+  mode: string;
+  label: string;
+  desc: string;
+  /** Formatted price at the current bet. */
+  price: string;
+  /** Cost as a multiple of the bet. */
+  cost: number;
+  art: string;
+  affordable: boolean;
 }
 
 export interface Settings {
@@ -53,6 +66,7 @@ export class Hud {
   private toastTimer = 0;
   private autoCount = 25;
   spinState: SpinButtonState = 'idle';
+  private buyMode = '';
 
   constructor(handlers: HudHandlers) {
     this.h = handlers;
@@ -64,13 +78,11 @@ export class Hud {
     $('#btn-turbo').addEventListener('click', () => this.h.turbo($('#btn-turbo').getAttribute('aria-pressed') !== 'true'));
     $('#btn-info').addEventListener('click', () => this.h.openRules());
     $('#btn-menu').addEventListener('click', () => this.open('#modal-settings'));
-    $('#btn-buy').addEventListener('click', () => {
-      $('#buy-text').textContent = this.h.buyText();
-      this.open('#modal-buy');
-    });
+    $('#btn-buy').addEventListener('click', () => this.openBuy());
     $('#buy-confirm').addEventListener('click', () => {
+      if (!this.buyMode) return;
       this.close('#modal-buy');
-      this.h.buy();
+      this.h.buy(this.buyMode);
     });
     $('#btn-auto').addEventListener('click', () => {
       if ($('#btn-auto').classList.contains('running')) {
@@ -249,6 +261,49 @@ export class Hud {
     b.disabled = state === 'disabled';
     b.classList.toggle('spinning', state === 'spinning' || state === 'skip');
     b.setAttribute('aria-label', t(state === 'skip' ? 'Show result' : 'Spin'));
+  }
+
+  /** Bonus buy: one card per bonus path; picking a card, then Buy, confirms the purchase. */
+  private openBuy(): void {
+    const list = $('#buy-options');
+    list.replaceChildren();
+    this.buyMode = '';
+    const confirm = $('#buy-confirm') as HTMLButtonElement;
+    confirm.disabled = true;
+    confirm.textContent = t('Buy');
+    $('#buy-text').textContent = '';
+    for (const o of this.h.buyOptions()) {
+      const card = document.createElement('button');
+      card.className = 'buy-option';
+      card.dataset.mode = o.mode;
+      card.setAttribute('role', 'radio');
+      card.setAttribute('aria-checked', 'false');
+      card.disabled = !o.affordable;
+      const img = document.createElement('img');
+      img.src = o.art;
+      img.alt = '';
+      const name = document.createElement('b');
+      name.textContent = t(o.label);
+      const desc = document.createElement('span');
+      desc.className = 'bo-desc';
+      desc.textContent = t(o.desc);
+      const price = document.createElement('span');
+      price.className = 'bo-price';
+      price.textContent = o.price;
+      const mult = document.createElement('span');
+      mult.className = 'bo-mult';
+      mult.textContent = o.affordable ? `${o.cost}x ${t('bet')}` : t('Insufficient balance');
+      card.append(img, name, desc, price, mult);
+      card.addEventListener('click', () => {
+        this.buyMode = o.mode;
+        list.querySelectorAll('.buy-option').forEach((c) => c.setAttribute('aria-checked', String(c === card)));
+        confirm.disabled = false;
+        confirm.textContent = `${t('Buy')} ${t(o.label)}`;
+        $('#buy-text').textContent = this.h.buyText(o.mode);
+      });
+      list.appendChild(card);
+    }
+    this.open('#modal-buy');
   }
 
   setControlsLocked(locked: boolean, opts: { buyAvailable: boolean; autoAvailable: boolean; turboAvailable: boolean }): void {
