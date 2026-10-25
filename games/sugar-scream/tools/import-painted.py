@@ -1,7 +1,8 @@
 """Turns the supplied painted art in art/source/ into runtime assets in public/assets/.
 
 Symbols are art/source/sym_<ID>.(webp|png); buttons are art/source/btn_<name>.(webp|png)
-(btn_spin, btn_spin_active, btn_auto, btn_turbo, btn_menu, btn_sound, btn_minus, btn_plus).
+(btn_spin, btn_spin_active, btn_auto, btn_turbo, btn_menu, btn_sound, btn_mute, btn_minus,
+btn_plus, btn_buy, btn_ante).
 
 Each sym_<ID>.(webp|png) source is trimmed to its visible pixels, centred on a square
 canvas with a little padding (so every symbol has the same visual size), resized to
@@ -39,10 +40,19 @@ def sources(prefix: str):
     return [p for p in sorted(SRC.glob(f"{prefix}_*.*")) if p.suffix.lower() in (".webp", ".png")]
 
 
+# Wide plaques keep their aspect ratio; round buttons are square.
+WIDE = {"buy": 640, "ante": 640}
+
 buttons = []
 for path in sources("btn"):
     name = path.stem.split("_", 1)[1]
-    fit(path, 384, 0.0).save(OUT / f"btn_{name}.webp", "WEBP", quality=90, method=6)
+    if name in WIDE:
+        im = Image.open(path).convert("RGBA")
+        im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 8 else 0).getbbox())
+        im = im.resize((WIDE[name], round(im.height * WIDE[name] / im.width)), Image.LANCZOS)
+    else:
+        im = fit(path, 384, 0.0)
+    im.save(OUT / f"btn_{name}.webp", "WEBP", quality=90, method=6)
     buttons.append(name)
     print(f"btn_{name}: {path.name} -> public/assets/btn_{name}.webp")
 

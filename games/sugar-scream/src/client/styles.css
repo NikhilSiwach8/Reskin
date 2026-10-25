@@ -79,6 +79,16 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outl
 #btn-spin.painted #spin-label { visibility: hidden; }
 #btn-spin.painted.auto #spin-label { visibility: visible; text-shadow: 0 0 6px #000, 0 2px 0 #4a0030; }
 @keyframes spinglow { to { transform: rotate(360deg); } }
+#btn-sound.painted.muted { background-image: var(--img-active, var(--img)) !important; }
+.side-btn.painted { justify-content: center; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.45)); }
+#btn-buy.painted { aspect-ratio: 640 / 285; padding: 6% 14% 0; }
+#btn-buy.painted span:not(.big) { display: none; }
+#btn-buy.painted .big { font-size: clamp(18px, 2.2vw, 34px); }
+#ante.painted { aspect-ratio: 640 / 210; padding: 0 33% 0 24%; align-items: flex-start; gap: 0; }
+#ante.painted input { position: absolute; opacity: 0; pointer-events: none; }
+#ante.painted .small { display: none; }
+#ante.painted .big { font-size: clamp(13px, 1.4vw, 22px); }
+#ante.painted:not(.on) { filter: saturate(0.55) brightness(0.85) drop-shadow(0 6px 10px rgba(0, 0, 0, 0.45)); }
 
 /* ------------------------------------------------------------------ overlays */
 #banner { position: fixed; left: 50%; top: calc(var(--board-top) + var(--board-h) / 2); transform: translate(-50%, -50%); text-align: center; z-index: 6; pointer-events: none; animation: pop 0.35s ease-out; }
@@ -157,6 +167,11 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outl
   #side-left { top: auto; bottom: calc(min(190px, 30vh) + 6px); right: auto; left: 50%; transform: translateX(-50%); flex-direction: row; width: auto; }
   #tumble-win { display: none !important; }
   body.in-free #side-right { display: none; }
+  #side-right { align-items: center; gap: 6px; }
+  #btn-buy.painted { width: 140px; }
+  #btn-buy.painted .big { font-size: 22px; }
+  #ante.painted { width: 190px; }
+  #ante.painted .big { font-size: 14px; }
   #side-left .panel { padding: 4px 10px; min-width: 96px; }
   #side-left .panel-value { font-size: 22px; }
   #side-left .panel-title { font-size: 11px; letter-spacing: 0; }

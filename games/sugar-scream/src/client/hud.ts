@@ -105,7 +105,7 @@ export class Hud {
   private applyButtonArt(): void {
     const map: [string, string, string?][] = [
       ['#btn-spin', 'spin', 'spin_active'], ['#btn-auto', 'auto'], ['#btn-turbo', 'turbo'], ['#btn-menu', 'menu'],
-      ['#btn-sound', 'sound'], ['#bet-minus', 'minus'], ['#bet-plus', 'plus'],
+      ['#btn-sound', 'sound', 'mute'], ['#bet-minus', 'minus'], ['#bet-plus', 'plus'], ['#btn-buy', 'buy'], ['#ante', 'ante'],
     ];
     for (const [sel, name, active] of map) {
       const src = buttonSrc(name);
@@ -182,6 +182,7 @@ export class Hud {
 
   setMuted(m: boolean): void {
     $('#btn-sound').textContent = m ? '🔇' : '🔊';
+    $('#btn-sound').classList.toggle('muted', m);
     $('#btn-sound').setAttribute('aria-label', m ? t('Unmute') : t('Mute'));
   }
 
