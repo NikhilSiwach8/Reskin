@@ -86,7 +86,7 @@ Checked in this environment (headless Chromium at 1600x900, 390x844, 360x640 and
 
 - **Not deployed to Stake Engine** (no account here). Built against the documented RGS contract and tested against the local mock only.
 - **Math is not certified.** Figures are exact for the published book set; the win-cap probability is a simulation estimate.
-- **Art:** all paying symbols and the Skull Lollipop are painted. The Jack-o'-Lantern, background, UI and splash art are still vector.
+- **Art:** every symbol, the board frame, all backgrounds, the main buttons and panels, the Trick-or-Treat doors and the loading and intro screens are painted. Still vector: the witch sprite, ghost, and the free-spin intro, feature-complete and win screens (drawn with CSS and text).
 - **Sound is procedural** (Web Audio synthesis), with no composed music.
 - **Devices:** only headless Chromium was tested. Real phones, Safari and Firefox still need testing.
 - **English only**; other `lang` values fall back to English.
