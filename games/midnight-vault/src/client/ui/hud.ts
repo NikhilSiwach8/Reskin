@@ -516,6 +516,10 @@ export class Hud {
     void b.offsetWidth;
     b.classList.add('show');
     await wait(ms);
+    // fade out instead of vanishing
+    b.classList.add('out');
+    await wait(document.body.classList.contains('reduced-motion') ? 0 : 260);
+    b.classList.remove('show', 'out');
     b.hidden = true;
   }
 

@@ -1,6 +1,6 @@
 // Visual layers on top of the reels: relic blocks, paylines, particles and feature props.
 import { Container, Graphics, Sprite, Text, Texture, TilingSprite } from 'pixi.js';
-import { PAYLINES, REELS, ROWS } from '../../engine/config.ts';
+import { REELS, ROWS } from '../../engine/config.ts';
 import type { Cell, LineWin, RelicBlock } from '../../engine/types.ts';
 import { symbolTexture, tex } from '../assets.ts';
 import { CELL, type ReelGrid } from './reels.ts';
@@ -156,30 +156,39 @@ const overlaps = (a: RelicBlock, b: RelicBlock) => cellsOf(a).some((c) => inside
 
 type Pt = { x: number; y: number };
 
-/** Points of a payline from the left edge of reel 1 to the right edge of reel 5. */
-const linePoints = (win: LineWin): Pt[] => {
-  const pts = PAYLINES[win.line - 1].map((row, reel) => center({ reel, row }));
-  return [{ x: pts[0].x - CELL / 2, y: pts[0].y }, ...pts, { x: pts[4].x + CELL / 2, y: pts[4].y }];
+/**
+ * Path of a line win through exactly the winning symbols, following the payline: the centres of
+ * the winning cells, extended a little before the first and after the last symbol.
+ */
+const winPath = (win: LineWin): Pt[] => {
+  const cells = [...win.cells].sort((a, b) => a.reel - b.reel);
+  const pts = cells.map(center);
+  const ext = CELL * 0.4;
+  return [{ x: pts[0].x - ext, y: pts[0].y }, ...pts, { x: pts[pts.length - 1].x + ext, y: pts[pts.length - 1].y }];
 };
+
+const pathLength = (pts: Pt[]) => pts.slice(1).reduce((sum, p, i) => sum + Math.hypot(p.x - pts[i].x, p.y - pts[i].y), 0);
 
 /** Point at fraction t along a polyline, plus the polyline up to that point. */
 function along(pts: Pt[], t: number): { head: Pt; path: Pt[] } {
-  const seg = pts.slice(1).map((p, i) => Math.hypot(p.x - pts[i].x, p.y - pts[i].y));
-  let left = seg.reduce((a, b) => a + b, 0) * Math.max(0, Math.min(1, t));
+  let left = pathLength(pts) * Math.max(0, Math.min(1, t));
   const path = [pts[0]];
-  for (let i = 0; i < seg.length; i++) {
-    if (left >= seg[i]) {
-      left -= seg[i];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const seg = Math.hypot(pts[i + 1].x - pts[i].x, pts[i + 1].y - pts[i].y);
+    if (left >= seg) {
+      left -= seg;
       path.push(pts[i + 1]);
       continue;
     }
-    const k = seg[i] ? left / seg[i] : 0;
+    const k = seg ? left / seg : 0;
     const head = { x: pts[i].x + (pts[i + 1].x - pts[i].x) * k, y: pts[i].y + (pts[i + 1].y - pts[i].y) * k };
     path.push(head);
     return { head, path };
   }
   return { head: pts[pts.length - 1], path };
 }
+
+const easeInOutSine = (t: number) => -(Math.cos(Math.PI * t) - 1) / 2;
 
 export interface WinPresentOptions {
   turbo: boolean;
@@ -188,15 +197,25 @@ export interface WinPresentOptions {
   reduced?: boolean;
 }
 
+interface DrawnLine {
+  win: LineWin;
+  pts: Pt[];
+  /** 0..1 portion drawn. */
+  t: number;
+  alpha: number;
+}
+
 /**
- * Win presentation: winning symbols light up in a left-to-right ripple inside gold frames,
- * each payline traces itself with a glowing orb, and the line win pops up on a plate.
+ * Line pays: a bright line draws across the winning symbols, following the exact payline path.
+ * Each symbol lights up as the line reaches it, then the line win appears at the end of the line.
+ * Several winning lines are shown one after another, then together.
  */
 export class WinLayer extends Container {
   private frames = new Container();
   private lines = new Graphics();
-  private orbs = new Container();
+  private heads = new Container();
   private labels = new Container();
+  private drawn: DrawnLine[] = [];
   private tweener: Tweener;
   private grid: ReelGrid;
   private token = 0;
@@ -205,13 +224,19 @@ export class WinLayer extends Container {
     super();
     this.tweener = tweener;
     this.grid = grid;
-    this.addChild(this.frames, this.lines, this.orbs, this.labels);
+    this.addChild(this.frames, this.lines, this.heads, this.labels);
+  }
+
+  /** True while a win is on screen. */
+  get hasContent(): boolean {
+    return this.frames.children.length > 0 || this.drawn.length > 0;
   }
 
   clear(): void {
     this.token++;
+    this.drawn = [];
     this.lines.clear();
-    for (const layer of [this.frames, this.orbs, this.labels]) layer.removeChildren().forEach((c) => c.destroy({ children: true }));
+    for (const layer of [this.frames, this.heads, this.labels]) layer.removeChildren().forEach((c) => c.destroy({ children: true }));
     for (const v of this.grid.allViews()) {
       v.dim(false);
       v.highlight(false);
@@ -219,164 +244,182 @@ export class WinLayer extends Container {
     }
   }
 
-  private strokePath(path: Pt[], color: number, alpha: number): void {
-    if (path.length < 2) return;
-    const draw = () => {
-      this.lines.moveTo(path[0].x, path[0].y);
-      for (const p of path.slice(1)) this.lines.lineTo(p.x, p.y);
-    };
-    draw();
-    this.lines.stroke({ color: 0x150a20, width: 16, alpha: alpha * 0.75, join: 'round', cap: 'round' });
-    draw();
-    this.lines.stroke({ color, width: 12, alpha: alpha * 0.35, join: 'round', cap: 'round' });
-    draw();
-    this.lines.stroke({ color, width: 5, alpha, join: 'round', cap: 'round' });
-    draw();
-    this.lines.stroke({ color: 0xffffff, width: 1.5, alpha: alpha * 0.8, join: 'round', cap: 'round' });
+  /** Redraws every line at its current progress and opacity. */
+  private redraw(): void {
+    this.lines.clear();
+    for (const d of this.drawn) {
+      if (d.alpha <= 0 || d.t <= 0) continue;
+      const { path } = along(d.pts, d.t);
+      const color = LINE_COLORS[(d.win.line - 1) % LINE_COLORS.length];
+      const stroke = (width: number, c: number, alpha: number) => {
+        this.lines.moveTo(path[0].x, path[0].y);
+        for (const p of path.slice(1)) this.lines.lineTo(p.x, p.y);
+        this.lines.stroke({ color: c, width, alpha: alpha * d.alpha, join: 'round', cap: 'round' });
+      };
+      stroke(22, color, 0.18); // soft outer glow
+      stroke(11, 0x150a20, 0.55); // dark edge keeps the line readable on any symbol
+      stroke(7, color, 1); // colour
+      stroke(2.5, 0xffffff, 0.95); // bright core
+    }
   }
 
-  private drawLine(win: LineWin, alpha = 1): void {
-    this.strokePath(linePoints(win), LINE_COLORS[(win.line - 1) % LINE_COLORS.length], alpha);
-  }
-
-  /** Draws one or more lines growing from left to right with a glowing orb at each head. */
-  private async traceLines(wins: LineWin[], ms: number): Promise<void> {
-    const pts = wins.map(linePoints);
-    const orbs = wins.map((w) => {
-      const o = new Sprite(glowTexture());
-      o.anchor.set(0.5);
-      o.blendMode = 'add';
-      o.tint = LINE_COLORS[(w.line - 1) % LINE_COLORS.length];
-      o.width = o.height = 70;
-      this.orbs.addChild(o);
-      return o;
-    });
-    const token = this.token;
-    await this.tweener.run(ms, (p) => {
-      if (token !== this.token) return;
-      this.lines.clear();
-      wins.forEach((w, i) => {
-        const { head, path } = along(pts[i], p);
-        this.strokePath(path, LINE_COLORS[(w.line - 1) % LINE_COLORS.length], 1);
-        if (orbs[i].destroyed) return;
-        orbs[i].position.set(head.x, head.y);
-        orbs[i].alpha = p < 0.9 ? 1 : (1 - p) * 10;
-      });
-    }, ease.inOutQuad);
-    orbs.forEach((o) => o.destroyed || o.destroy());
-  }
-
-  /** A glowing gold frame behind a winning cell that pops in and then breathes. */
-  private frameCell(c: Cell, delay: number, color: number): void {
+  /** A glowing frame behind a winning cell. */
+  private frameCell(c: Cell, color: number): void {
+    const key = `${c.reel},${c.row}`;
+    if (this.frames.children.some((f) => f.label === key)) return;
     const root = new Container();
+    root.label = key;
     const p = center(c);
     root.position.set(p.x, p.y);
     const glow = new Sprite(glowTexture());
     glow.anchor.set(0.5);
     glow.blendMode = 'add';
     glow.tint = color;
-    glow.width = glow.height = CELL * 1.5;
+    glow.alpha = 0.5;
+    glow.width = glow.height = CELL * 1.35;
     const f = new Graphics()
-      .roundRect(-CELL / 2 + 5, -CELL / 2 + 5, CELL - 10, CELL - 10, 18).fill({ color: 0x150a20, alpha: 0.35 })
-      .roundRect(-CELL / 2 + 5, -CELL / 2 + 5, CELL - 10, CELL - 10, 18).stroke({ color: 0xffd36a, width: 4 })
-      .roundRect(-CELL / 2 + 10, -CELL / 2 + 10, CELL - 20, CELL - 20, 14).stroke({ color, width: 2, alpha: 0.8 });
+      .roundRect(-CELL / 2 + 6, -CELL / 2 + 6, CELL - 12, CELL - 12, 18).fill({ color: 0x150a20, alpha: 0.3 })
+      .roundRect(-CELL / 2 + 6, -CELL / 2 + 6, CELL - 12, CELL - 12, 18).stroke({ color: 0xffd36a, width: 3.5 });
     root.addChild(glow, f);
-    root.scale.set(0.6);
+    root.scale.set(0.8);
     root.alpha = 0;
-    this.frames.addChild(root);
-    const token = this.token;
-    void this.tweener.wait(delay).then(async () => {
-      if (token !== this.token) return;
-      await this.tweener.run(260, (q) => { if (root.destroyed) return; root.alpha = Math.min(1, q * 1.6); root.scale.set(0.6 + q * 0.4); }, ease.outBack);
-      // gentle breathing while the win is on screen (driven by a long tween so slam stop ends it)
-      let t = 0;
-      const breathe = () => {
-        if (token !== this.token || root.destroyed) return;
-        void this.tweener.run(1200, (q) => {
-          if (root.destroyed) return;
-          glow.alpha = 0.55 + Math.sin((t + q) * Math.PI * 2) * 0.25;
-        }, ease.linear).then(() => { t++; if (t < 6) breathe(); });
-      };
-      breathe();
-    });
+    this.frames.addChildAt(root, 0);
+    void this.tweener.run(280, (q) => { if (root.destroyed) return; root.alpha = q; root.scale.set(0.8 + q * 0.2); }, ease.outBack);
   }
 
-  /** Symbol pop: overshooting scale with a soft settle. */
-  private pop(cell: Cell, delay: number, size = 0.2): Promise<void> {
+  /** Soft symbol pop as the line reaches it. */
+  private pop(cell: Cell, size = 0.12): Promise<void> {
     const v = this.grid.view(cell);
-    return this.tweener.wait(delay).then(() =>
-      this.tweener.run(420, (q) => v.scale.set(1 + Math.sin(q * Math.PI) * size * (1 - q * 0.5) + q * 0.04), ease.linear));
+    return this.tweener.run(380, (q) => v.scale.set(1 + Math.sin(q * Math.PI) * size), easeInOutSine);
+  }
+
+  /**
+   * Draws one or more lines from left to right. Each winning symbol lights up (frame, pop, sparks)
+   * at the moment the line's head reaches it.
+   */
+  private async draw(wins: LineWin[], ms: number, opts: WinPresentOptions, token: number): Promise<void> {
+    const items = wins.map((win) => {
+      const d: DrawnLine = { win, pts: winPath(win), t: 0, alpha: 1 };
+      this.drawn.push(d);
+      const head = new Sprite(glowTexture());
+      head.anchor.set(0.5);
+      head.blendMode = 'add';
+      head.width = head.height = 56;
+      this.heads.addChild(head);
+      // fraction of the path at which each winning symbol is reached
+      const total = pathLength(d.pts);
+      const marks = [...win.cells].sort((a, b) => a.reel - b.reel).map((c, i) => ({ c, at: pathLength(d.pts.slice(0, i + 2)) / total, done: false }));
+      return { d, head, marks, color: LINE_COLORS[(win.line - 1) % LINE_COLORS.length] };
+    });
+    await this.tweener.run(ms, (p) => {
+      if (token !== this.token) return;
+      for (const it of items) {
+        it.d.t = p;
+        const { head } = along(it.d.pts, p);
+        if (!it.head.destroyed) {
+          it.head.position.set(head.x, head.y);
+          it.head.alpha = p < 0.85 ? 1 : (1 - p) / 0.15;
+        }
+        for (const m of it.marks) {
+          if (m.done || p < m.at) continue;
+          m.done = true;
+          this.frameCell(m.c, it.color);
+          void this.pop(m.c);
+          if (opts.particles && !opts.reduced) {
+            const cp = center(m.c);
+            opts.particles.burst(cp.x, cp.y, opts.turbo ? 2 : 5, tex('fx_spark'), { speed: 0.3, scale: 0.26, life: 520 });
+          }
+        }
+      }
+      this.redraw();
+    }, easeInOutSine);
+    items.forEach((it) => it.head.destroyed || it.head.destroy());
+  }
+
+  /** Fades the given lines (and labels) to a target opacity. */
+  private fadeLines(lines: DrawnLine[], to: number, ms: number, token: number): Promise<void> {
+    const from = lines.map((d) => d.alpha);
+    const labels = [...this.labels.children];
+    return this.tweener.run(ms, (q) => {
+      if (token !== this.token) return;
+      lines.forEach((d, i) => (d.alpha = from[i] + (to - from[i]) * q));
+      for (const l of labels) if (!l.destroyed) l.alpha = 1 - q;
+      this.redraw();
+    }, ease.inOutQuad);
   }
 
   async present(wins: LineWin[], formatWin: (centi: number) => string, opts: WinPresentOptions): Promise<void> {
     if (!wins.length) return;
     this.clear();
     const token = this.token;
-    const cells = new Map<string, Cell>();
-    for (const w of wins) for (const c of w.cells) cells.set(`${c.reel},${c.row}`, c);
+    const winning = new Set(wins.flatMap((w) => w.cells.map((c) => `${c.reel},${c.row}`)));
     for (let reel = 0; reel < REELS; reel++) {
       for (let row = 0; row < ROWS; row++) {
-        const on = cells.has(`${reel},${row}`);
+        const on = winning.has(`${reel},${row}`);
         this.grid.view({ reel, row }).dim(!on);
         this.grid.view({ reel, row }).highlight(on);
       }
     }
     opts.relics.pulse(wins.flatMap((w) => w.cells));
-    const wave = opts.turbo ? 25 : 70;
-    const color = LINE_COLORS[(wins[0].line - 1) % LINE_COLORS.length];
-    // ripple left to right: frame, pop and sparks per winning cell
-    const pops = [...cells.values()].map((c) => {
-      const delay = c.reel * wave;
-      this.frameCell(c, delay, color);
-      if (opts.particles && !opts.reduced) {
-        const p = center(c);
-        void this.tweener.wait(delay + 80).then(() => token === this.token && opts.particles!.burst(p.x, p.y, opts.turbo ? 3 : 7, tex('fx_spark'), { speed: 0.35, scale: 0.28, life: 600 }));
-      }
-      return this.pop(c, delay);
-    });
-    const tracing = this.traceLines(wins, opts.turbo ? 260 : 520);
-    await Promise.all([...pops, tracing]);
-    if (token !== this.token) return;
-    if (opts.turbo || wins.length === 1) {
+
+    if (opts.turbo) {
+      // turbo: every line draws at once
+      await this.draw(wins, 300, opts, token);
+      if (token !== this.token) return;
       if (wins.length === 1) this.lineLabel(wins[0], formatWin);
-      await this.tweener.wait(opts.turbo ? 200 : 750);
+      await this.tweener.wait(220);
       return;
     }
-    // cycle through the lines one at a time
-    for (const w of wins.slice(0, 6)) {
+
+    // one line at a time: draw, show its win, then fade it back so the next one reads clearly
+    const solo = wins.slice(0, 6);
+    for (const [i, w] of solo.entries()) {
       if (token !== this.token) return;
-      this.labels.removeChildren().forEach((c) => c.destroy({ children: true }));
-      const tr = this.traceLines([w], 320);
+      await this.draw([w], 520, opts, token);
+      if (token !== this.token) return;
       this.lineLabel(w, formatWin);
-      await Promise.all([tr, ...w.cells.map((c, k) => this.pop(c, k * 45, 0.14))]);
-      await this.tweener.wait(180);
+      await this.tweener.wait(wins.length === 1 ? 700 : 420);
+      if (wins.length > 1 && i < solo.length - 1) await this.fadeLines(this.drawn, 0.22, 220, token);
     }
-    if (token !== this.token) return;
-    this.lines.clear();
-    for (const w of wins) this.drawLine(w, 0.5);
+    // remaining lines (if many) draw together
+    const rest = wins.slice(6);
+    if (rest.length && token === this.token) {
+      await this.fadeLines(this.drawn, 0.22, 200, token);
+      await this.draw(rest, 520, opts, token);
+    }
+    // finish with every winning line visible together
+    if (wins.length > 1 && token === this.token) {
+      const fromAlpha = this.drawn.map((d) => d.alpha);
+      await this.tweener.run(260, (q) => {
+        if (token !== this.token) return;
+        this.drawn.forEach((d, k) => (d.alpha = fromAlpha[k] + (0.75 - fromAlpha[k]) * q));
+        this.redraw();
+      }, ease.inOutQuad);
+    }
   }
 
-  /** Line win amount on a dark plate with a gold rim, popping in near the last winning symbol. */
+  /** Line win amount on a dark plate with a gold rim, at the end of the line. */
   private lineLabel(w: LineWin, formatWin: (centi: number) => string): void {
-    const last = w.cells[w.cells.length - 1];
-    const p = center(last);
+    this.labels.removeChildren().forEach((c) => c.destroy({ children: true }));
+    const cells = [...w.cells].sort((a, b) => a.reel - b.reel);
+    const p = center(cells[cells.length - 1]);
     const root = new Container();
     const t = new Text({ text: formatWin(w.win), style: textStyle(32) });
     t.anchor.set(0.5);
     const pw = t.width + 40;
     const ph = t.height + 14;
     const plate = new Graphics()
-      .roundRect(-pw / 2, -ph / 2, pw, ph, ph / 2).fill({ color: 0x150a20, alpha: 0.88 })
+      .roundRect(-pw / 2, -ph / 2, pw, ph, ph / 2).fill({ color: 0x150a20, alpha: 0.9 })
       .roundRect(-pw / 2, -ph / 2, pw, ph, ph / 2).stroke({ color: 0xffd36a, width: 3 })
       .roundRect(-pw / 2 + 5, -ph / 2 + 5, pw - 10, ph - 10, (ph - 10) / 2).stroke({ color: LINE_COLORS[(w.line - 1) % LINE_COLORS.length], width: 1.5, alpha: 0.8 });
     root.addChild(plate, t);
-    // keep the plate inside the board
+    // keep the plate inside the board, just below the last winning symbol
     const half = pw / 2 + 6;
-    root.position.set(Math.max(half, Math.min(CELL * REELS - half, p.x)), Math.max(ph, Math.min(CELL * ROWS - ph, p.y + CELL * 0.32)));
-    root.scale.set(0.4);
+    root.position.set(Math.max(half, Math.min(CELL * REELS - half, p.x)), Math.max(ph, Math.min(CELL * ROWS - ph, p.y + CELL * 0.34)));
+    root.scale.set(0.6);
     root.alpha = 0;
     this.labels.addChild(root);
-    void this.tweener.run(320, (q) => { if (root.destroyed) return; root.scale.set(0.4 + q * 0.6); root.alpha = Math.min(1, q * 2); }, ease.outBack);
+    void this.tweener.run(300, (q) => { if (root.destroyed) return; root.scale.set(0.6 + q * 0.4); root.alpha = Math.min(1, q * 2); }, ease.outBack);
   }
 }
 

@@ -145,9 +145,11 @@ button:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
   color: #fff1b0; -webkit-text-stroke: 2px #150a20; text-shadow: 0 0 30px rgba(125, 255, 168, 0.65), 0 5px 0 #150a20;
 }
 .banner-sub { margin-top: 8px; font-family: var(--serif); font-weight: 800; font-size: clamp(18px, 3vw, 34px); color: var(--green); text-shadow: 0 3px 0 #150a20; }
-#banner.show { animation: banner-in 0.45s cubic-bezier(0.2, 1.6, 0.4, 1) both; }
+#banner.show { animation: banner-in 0.5s cubic-bezier(0.22, 1.25, 0.36, 1) both; }
+#banner.show.out { animation: banner-out 0.26s ease-in both; }
+@keyframes banner-out { from { opacity: 1; transform: translate(-50%, -50%) scale(1); } to { opacity: 0; transform: translate(-50%, -50%) scale(1.06); } }
 #banner.big .banner-title { color: #ffd36a; text-shadow: 0 0 40px rgba(245, 161, 58, 0.8), 0 6px 0 #150a20; }
-@keyframes banner-in { from { opacity: 0; transform: translate(-50%, -50%) scale(0.6); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+@keyframes banner-in { from { opacity: 0; transform: translate(-50%, -50%) scale(0.82); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
 
 #keys-choice {
   position: fixed; inset: 0; z-index: 19; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;

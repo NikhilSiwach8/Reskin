@@ -74,7 +74,6 @@ export class SymbolView extends Container {
   private dimLevel = 0;
   dim(on: boolean): void {
     this.dimTarget = on ? 1 : 0;
-    if (!on) this.applyDim(0);
   }
 
   private applyDim(level: number): void {
@@ -323,11 +322,13 @@ export class ReelGrid extends Container {
   update(dt: number): void {
     this.time += dt;
     this.glowTime += dt;
+    // reel motion follows the tween pace (slightly slower in bonuses) so stops stay velocity-matched
+    const mdt = dt * this.tweener.speed;
     for (const r of this.reels) {
       if (r.spinning) {
         // ease the speed towards its target (acceleration, or the anticipation slow-down)
-        r.vel += (r.targetVel - r.vel) * Math.min(1, dt / (r.targetVel > r.vel ? 140 : 260));
-        r.advance(r.vel * dt);
+        r.vel += (r.targetVel - r.vel) * Math.min(1, mdt / (r.targetVel > r.vel ? 140 : 260));
+        r.advance(r.vel * mdt);
       } else for (const v of r.rowViews()) v.idle(this.time, this.reducedMotion, dt);
       r.setBlur(!this.reducedMotion);
     }

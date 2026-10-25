@@ -37,6 +37,9 @@ const WIN_TIERS: WinTier[] = [
 ];
 const BIG_WIN = 2000;
 
+/** Animation pace inside bonuses (tween speed): a little slower than the base game. */
+const BONUS_PACE = 0.8;
+
 const SPLASH: Record<BonusPath, { art: string; background: string; desc: string }> = {
   cursedFortune: {
     art: 'assets/key_cursed_fortune.webp', background: 'assets/bg_cursed_fortune.webp',
@@ -103,6 +106,32 @@ export class Player {
     return this.turbo ? turbo : normal;
   }
 
+  /** Like ms(), for DOM timings (banners) that the tween pace does not scale. */
+  private dms(normal: number, turbo = normal * 0.35): number {
+    return this.ms(normal, turbo) / this.stage.tweener.speed;
+  }
+
+  /** Bonuses play a little slower (never in turbo); the base game runs at normal pace. */
+  private setPace(): void {
+    this.stage.tweener.speed = this.path && !this.turbo ? BONUS_PACE : 1;
+  }
+
+  /** Fades the previous spin's wins and relics out instead of cutting them. */
+  private async fadeOutBoard(): Promise<void> {
+    const { stage } = this;
+    const layers = [stage.wins, stage.relics];
+    if (!stage.wins.hasContent && stage.relics.children.length === 0) {
+      stage.props.clearChains();
+      return;
+    }
+    for (const v of stage.reels.allViews()) v.dim(false);
+    await stage.tweener.run(this.ms(240, 80), (p) => layers.forEach((l) => (l.alpha = 1 - p)), ease.inOutQuad);
+    stage.wins.clear();
+    stage.relics.clear();
+    stage.props.clearChains();
+    layers.forEach((l) => (l.alpha = 1));
+  }
+
   /** Starts the base-game spin animation before the RGS answers (pure presentation). */
   startSpin(): void {
     this.stage.wins.clear();
@@ -130,8 +159,14 @@ export class Player {
     this.bonusWin = 0;
     this.path = null;
     this.inSequence = false;
-    for (const e of events) {
-      await this.handle(e);
+    this.setPace();
+    try {
+      for (const e of events) {
+        await this.handle(e);
+      }
+    } finally {
+      this.path = null;
+      this.setPace();
     }
     this.reelsSpinning = false;
   }
@@ -141,9 +176,7 @@ export class Player {
     switch (e.type) {
       case 'reveal': {
         if (!this.reelsSpinning) {
-          stage.wins.clear();
-          stage.relics.clear();
-          stage.props.clearChains();
+          await this.fadeOutBoard();
           stage.reels.start({ turbo: this.turbo });
           audio.play('spin');
           await stage.tweener.wait(this.ms(420, 120));
@@ -213,7 +246,7 @@ export class Player {
             button: 'Continue',
             autoMs: this.featureSplashMs(),
           });
-        } else await hud.banner(FEATURE_NAMES[e.feature], sub, this.ms(1500, 700));
+        } else await hud.banner(FEATURE_NAMES[e.feature], sub, this.dms(1500, 700));
         break;
       }
 
@@ -305,7 +338,7 @@ export class Player {
         audio.play('strike');
         await stage.props.strikeClock(this.ctx.reduced());
         hud.setHour(e.hour);
-        await hud.banner('The clock strikes XIII', `Relic Surge ${e.surgeSize}x${e.surgeSize}`, this.ms(1300, 600));
+        await hud.banner('The clock strikes XIII', `Relic Surge ${e.surgeSize}x${e.surgeSize}`, this.dms(1300, 600));
         break;
       }
 
@@ -313,7 +346,7 @@ export class Player {
         if (e.levelUp) {
           audio.play('surge');
           stage.props.shockwave((CELL * REELS) / 2, (CELL * ROWS) / 2, 0x7dffa8);
-          await hud.banner('Relic Overload', `Level ${e.level}`, this.ms(1000, 450));
+          await hud.banner('Relic Overload', `Level ${e.level}`, this.dms(1000, 450));
         }
         break;
       }
@@ -328,6 +361,7 @@ export class Player {
 
       case 'bonusPath': {
         this.path = e.path;
+        this.setPace();
         this.inSequence = true;
         this.bonusWin = 0;
         audio.play('bonusEnter');
@@ -357,8 +391,9 @@ export class Player {
       }
 
       case 'freeSpin': {
+        this.setPace();
         hud.setSpins(e.index, e.total, e.label === 'Thirteenth Hour' ? 'Special spins' : undefined);
-        if (e.label === 'Final Countdown') await hud.banner('Final Countdown Spin', '', this.ms(900, 400));
+        if (e.label === 'Final Countdown') await hud.banner('Final Countdown Spin', '', this.dms(900, 400));
         await stage.tweener.wait(this.ms(250, 60));
         break;
       }
@@ -366,18 +401,18 @@ export class Player {
       case 'retrigger': {
         audio.play('retrigger');
         await this.pulseCells(e.cells);
-        await hud.banner(`+${e.added} Free Spins`, '', this.ms(1200, 500));
+        await hud.banner(`+${e.added} Free Spins`, '', this.dms(1200, 500));
         break;
       }
 
       case 'breachStage': {
         if (e.stage === 1) {
-          await hud.banner('The Vault Breach', 'The Seal Breaks', this.ms(1600, 700));
+          await hud.banner('The Vault Breach', 'The Seal Breaks', this.dms(1600, 700));
           audio.play('door');
           await stage.props.openVault(this.ctx.reduced());
           await stage.setBackground('bg_final_heist');
         } else {
-          await hud.banner(e.name, e.spins > 1 ? `${e.spins} spins` : '', this.ms(1300, 550));
+          await hud.banner(e.name, e.spins > 1 ? `${e.spins} spins` : '', this.dms(1300, 550));
         }
         break;
       }
@@ -386,8 +421,10 @@ export class Player {
         const prev = this.total;
         this.total = e.totalWin;
         if (this.inSequence) {
-          this.bonusWin += e.spinWin;
-          hud.setBonusWin(this.ctx.fmt(this.bonusWin));
+          // the bonus total rolls up alongside the win instead of jumping
+          const from = this.bonusWin;
+          const to = (this.bonusWin += e.spinWin);
+          void stage.tweener.run(this.ms(700, 200), (p) => hud.setBonusWin(this.ctx.fmt(Math.round(from + (to - from) * p))), ease.outQuad);
         }
         const big = e.spinWin >= BIG_WIN;
         audio.play(big ? 'bigWin' : 'win');
@@ -428,6 +465,7 @@ export class Player {
         hud.hideFeature();
         this.path = null;
         this.inSequence = false;
+        this.setPace();
         break;
       }
 
@@ -440,6 +478,7 @@ export class Player {
         hud.hideFeature();
         await stage.setBackground('bg_bank');
         this.path = null;
+        this.setPace();
         break;
       }
 
