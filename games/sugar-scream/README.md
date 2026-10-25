@@ -51,6 +51,7 @@ Launch parameters: `social=true` (stake.us wording), `currency=EUR`, `lang=de` (
 | `npm run art` | Rewrite the SVG assets in `public/assets/` |
 | `npm run art:painted` | Import painted art: drop `sym_<ID>.webp`/`.png` (transparent) into `art/source/`; the game uses it instead of the SVG |
 | `npm run build` | Typecheck and build the static client into `dist/` |
+| `npm run check:build` | Play the production build from a CDN-style sub-folder; fails on any 404, page error or balance mismatch |
 
 ## Math summary
 
@@ -69,7 +70,7 @@ Ante Bet triggers free spins about 1.7 times as often (1 in 215) and Trick or Tr
 
 ## Deploying to Stake Engine
 
-Build the upload zips with `npm run math:publish && npm run build && npm run release`. This verifies every book and lookup row, then writes two zips to `release/`, each under 50 MB:
+Build the upload zips with `npm run math:publish && npm run build && npm run release`. This verifies every book and lookup row, then checks the production build (`npm run check:build`: it serves `dist/` from a CDN-style sub-folder, plays spins and both buys, and fails on any missing asset, page error or balance mismatch). Finally it writes two zips to `release/`, each under 50 MB:
 
 - `sugar-scream-math.zip` (about 41 MB): `index.json`, plus `books_<mode>.jsonl.zst` and `lookUpTable_<mode>_0.csv` for `base`, `ante`, `bonus` and `fullmoon`.
 - `sugar-scream-frontend.zip` (about 8 MB): the static build, with `index.html` at the root.

@@ -4,6 +4,13 @@ import { bgSrc, buttonSrc, panelSrc, symbolSrc } from './assets.ts';
 import { localizeTree, t } from './text.ts';
 
 export const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+/**
+ * CSS url() for an asset path. Resolved to an absolute URL against the page, because a
+ * relative url() inside a CSS variable is resolved against the stylesheet that uses it,
+ * which in the production build lives in dist/assets/ (giving assets/assets/... 404s).
+ */
+export const cssUrl = (src: string) => `url("${new URL(src, document.baseURI).href}")`;
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
 
 export interface Settings {
@@ -112,9 +119,9 @@ export class Hud {
       if (!src) continue;
       const el = $(sel);
       el.classList.add('painted');
-      el.style.setProperty('--img', `url(${src})`);
+      el.style.setProperty('--img', cssUrl(src));
       const act = active && buttonSrc(active);
-      if (act) el.style.setProperty('--img-active', `url(${act})`);
+      if (act) el.style.setProperty('--img-active', cssUrl(act));
     }
     const panels: [string, string][] = [['#meter-balance', 'meter'], ['#meter-win', 'meter'], ['#meter-bet', 'meter'], ['#cauldron', 'free']];
     for (const [sel, name] of panels) {
@@ -122,7 +129,7 @@ export class Hud {
       if (!src) continue;
       const el = $(sel);
       el.classList.add('painted-panel');
-      el.style.setProperty('--img', `url(${src})`);
+      el.style.setProperty('--img', cssUrl(src));
     }
     // Preload painted screens shown mid-round so they never pop in late.
     const later = [
@@ -137,7 +144,7 @@ export class Hud {
       const src = bgSrc(name);
       if (!src) continue;
       $(sel).classList.add('painted-bg');
-      $(sel).style.setProperty('--bg', `url(${src})`);
+      $(sel).style.setProperty('--bg', cssUrl(src));
     }
   }
 
@@ -287,7 +294,7 @@ export class Hud {
   splash(title: string, sub: string, button: string, autoMs: number | null, art?: string | null): Promise<void> {
     this.splashOpen = true;
     $('#splash').classList.toggle('painted-bg', !!art);
-    if (art) $('#splash').style.setProperty('--bg', `url(${art})`);
+    if (art) $('#splash').style.setProperty('--bg', cssUrl(art));
     $('#splash').dataset.art = art?.match(/bg_(\w+)\./)?.[1] ?? '';
     $('#splash-title').textContent = t(title);
     $('#splash-sub').textContent = t(sub);
@@ -388,7 +395,7 @@ export class Hud {
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'door';
-      b.style.backgroundImage = `url(${panelSrc('door') ?? 'assets/door.svg'})`;
+      b.style.backgroundImage = cssUrl(panelSrc('door') ?? 'assets/door.svg');
       b.setAttribute('aria-label', t(`Door ${i + 1}`));
       doors.appendChild(b);
       buttons.push(b);
@@ -418,7 +425,7 @@ export class Hud {
       if (k.prize === 'treat') total += k.amount;
       if (art) {
         // painted reveal: the door swings open on its prize, with the amount on a ribbon
-        door.style.backgroundImage = `url(${art})`;
+        door.style.backgroundImage = cssUrl(art);
         prize.className = `prize ${k.prize} over-art`;
         prize.innerHTML = `<span></span>`;
         prize.querySelector('span')!.textContent = label;

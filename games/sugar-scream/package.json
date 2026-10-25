@@ -19,8 +19,9 @@
     "art": "node tools/render-art.mjs",
     "art:painted": "python3 tools/import-painted.py",
     "test:e2e": "node tools/smoke.mjs",
+    "check:build": "node tools/check-build.mjs",
     "verify:math": "node --experimental-strip-types tools/verify-math.ts math-output/publish",
-    "release": "npm run verify:math && python3 tools/package-release.py"
+    "release": "npm run verify:math && npm run check:build && python3 tools/package-release.py"
   },
   "dependencies": {
     "@fontsource/creepster": "^5.2.5",
