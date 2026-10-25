@@ -3,7 +3,7 @@
 import { Application, Container, Graphics, Sprite, Text, type Ticker } from 'pixi.js';
 import { REELS, ROWS } from '../../engine/config.ts';
 import type { Board, Cell, MultCell, SymbolId } from '../../engine/types.ts';
-import { isPainted, symbolTexture, tex } from '../assets.ts';
+import { hasTexture, isPainted, symbolTexture, tex } from '../assets.ts';
 import { Tweener, ease } from './tween.ts';
 
 /** Board design units: one cell is S x S. */
@@ -55,7 +55,6 @@ export class Scene {
   private readonly gridMask = new Graphics();
   private views: CellView[][] = [];
   private readonly ticker: Ticker;
-  private moonTint = 0xffffff;
   reduced = false;
   private readonly app: Application;
 
@@ -92,7 +91,7 @@ export class Scene {
   layout(): void {
     const w = this.app.screen.width;
     const h = this.app.screen.height;
-    const scale = Math.max(w / 1920, h / 1080);
+    const scale = Math.max(w / (this.bg.texture.width || 1920), h / (this.bg.texture.height || 1080));
     this.bg.scale.set(scale);
     this.bg.position.set(w / 2, h / 2);
     const portrait = h > w;
@@ -134,8 +133,12 @@ export class Scene {
   }
 
   setMode(mode: 'base' | 'cauldron' | 'fullMoon'): void {
-    this.moonTint = mode === 'fullMoon' ? 0xffb0a0 : mode === 'cauldron' ? 0xd8c8ff : 0xffffff;
-    this.bg.tint = this.moonTint;
+    // A painted feature background when one exists, else the base scene tinted for the feature.
+    const name = mode === 'base' ? 'bg' : mode === 'fullMoon' ? 'bg_fullmoon' : 'bg_cauldron';
+    const own = mode === 'base' || hasTexture(name);
+    this.bg.texture = tex(own ? name : 'bg');
+    this.bg.tint = own ? 0xffffff : mode === 'fullMoon' ? 0xffb0a0 : 0xd8c8ff;
+    this.layout();
   }
 
   /** Current symbols fall out of the bottom of the board, reel by reel. */

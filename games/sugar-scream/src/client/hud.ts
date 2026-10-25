@@ -1,6 +1,6 @@
 // DOM user interface: meters, buttons, dialogs, banners, win screens and the Trick or Treat doors.
 import type { KnockPrize } from '../engine/types.ts';
-import { buttonSrc, symbolSrc } from './assets.ts';
+import { buttonSrc, panelSrc, symbolSrc } from './assets.ts';
 import { localizeTree, t } from './text.ts';
 
 export const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
@@ -115,6 +115,14 @@ export class Hud {
       el.style.setProperty('--img', `url(${src})`);
       const act = active && buttonSrc(active);
       if (act) el.style.setProperty('--img-active', `url(${act})`);
+    }
+    const panels: [string, string][] = [['#meter-balance', 'meter'], ['#meter-win', 'meter'], ['#meter-bet', 'meter'], ['#cauldron', 'free']];
+    for (const [sel, name] of panels) {
+      const src = panelSrc(name);
+      if (!src) continue;
+      const el = $(sel);
+      el.classList.add('painted-panel');
+      el.style.setProperty('--img', `url(${src})`);
     }
   }
 

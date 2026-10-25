@@ -2,7 +2,8 @@
 
 Symbols are art/source/sym_<ID>.(webp|png); buttons are art/source/btn_<name>.(webp|png)
 (btn_spin, btn_spin_active, btn_auto, btn_turbo, btn_menu, btn_sound, btn_mute, btn_minus,
-btn_plus, btn_buy, btn_ante).
+btn_plus, btn_buy, btn_ante); backgrounds are bg_<base|cauldron|fullmoon> and UI panels
+panel_<free|meter>.
 
 Each sym_<ID>.(webp|png) source is trimmed to its visible pixels, centred on a square
 canvas with a little padding (so every symbol has the same visual size), resized to
@@ -56,6 +57,28 @@ for path in sources("btn"):
     buttons.append(name)
     print(f"btn_{name}: {path.name} -> public/assets/btn_{name}.webp")
 
+# Backgrounds (bg_base, bg_cauldron, bg_fullmoon) keep their size; UI panels keep their aspect.
+backgrounds = []
+for path in sources("bg"):
+    name = path.stem.split("_", 1)[1]
+    im = Image.open(path).convert("RGB")
+    if im.width > 1920:
+        im = im.resize((1920, round(im.height * 1920 / im.width)), Image.LANCZOS)
+    im.save(OUT / f"bg_{name}.webp", "WEBP", quality=82, method=6)
+    backgrounds.append(name)
+    print(f"bg_{name}: {path.name} -> public/assets/bg_{name}.webp ({im.width}x{im.height})")
+
+panels = []
+for path in sources("panel"):
+    name = path.stem.split("_", 1)[1]
+    im = Image.open(path).convert("RGBA")
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 8 else 0).getbbox())
+    width = 800 if im.width > im.height else 480
+    im = im.resize((width, round(im.height * width / im.width)), Image.LANCZOS)
+    im.save(OUT / f"panel_{name}.webp", "WEBP", quality=90, method=6)
+    panels.append(name)
+    print(f"panel_{name}: {path.name} -> public/assets/panel_{name}.webp ({im.width}x{im.height})")
+
 painted = []
 for path in sources("sym"):
     sid = path.stem.split("_", 1)[1]
@@ -72,5 +95,5 @@ for path in sources("sym"):
     painted.append(sid)
     print(f"sym_{sid}: {path.name} -> public/assets/sym_{sid}.webp")
 
-(ROOT / "src" / "client" / "painted.json").write_text(json.dumps({"symbols": sorted(painted), "buttons": sorted(buttons)}) + "\n")
-print(f"{len(painted)} painted symbols, {len(buttons)} buttons")
+(ROOT / "src" / "client" / "painted.json").write_text(json.dumps({"symbols": sorted(painted), "buttons": sorted(buttons), "backgrounds": sorted(backgrounds), "panels": sorted(panels)}) + "\n")
+print(f"{len(painted)} symbols, {len(buttons)} buttons, {len(backgrounds)} backgrounds, {len(panels)} panels")

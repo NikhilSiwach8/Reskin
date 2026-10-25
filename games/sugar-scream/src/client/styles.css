@@ -90,6 +90,12 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outl
 #ante.painted .big { font-size: clamp(13px, 1.4vw, 22px); }
 #ante.painted:not(.on) { filter: saturate(0.55) brightness(0.85) drop-shadow(0 6px 10px rgba(0, 0, 0, 0.45)); }
 
+/* painted UI panels */
+.meter.painted-panel { background: var(--img) center / 100% 100% no-repeat; border: none; padding: 7px 26px; min-width: 150px; }
+.meter.bet.painted-panel { padding: 6px 16px; }
+#cauldron.painted-panel { background: var(--img) center / contain no-repeat; border: none; box-shadow: none; aspect-ratio: 480 / 690; display: flex; flex-direction: column; justify-content: center; padding-top: 38%; }
+#cauldron.painted-panel img { display: none; }
+
 /* ------------------------------------------------------------------ overlays */
 #banner { position: fixed; left: 50%; top: calc(var(--board-top) + var(--board-h) / 2); transform: translate(-50%, -50%); text-align: center; z-index: 6; pointer-events: none; animation: pop 0.35s ease-out; }
 #banner-title { font-family: var(--fh); font-size: clamp(28px, 8vw, 84px); white-space: nowrap; color: var(--gold); text-shadow: 0 0 20px #ff4fb0, 0 5px 0 #5a1300; letter-spacing: 2px; }
@@ -166,6 +172,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outl
 @media (orientation: portrait) {
   #side-left { top: auto; bottom: calc(min(190px, 30vh) + 6px); right: auto; left: 50%; transform: translateX(-50%); flex-direction: row; width: auto; }
   #tumble-win { display: none !important; }
+  #cauldron.painted-panel { background: linear-gradient(180deg, rgba(60, 10, 90, 0.9), rgba(20, 4, 40, 0.92)); border: 3px solid var(--lime); aspect-ratio: auto; padding: 4px 10px; }
+  .meter.painted-panel { min-width: 0; padding: 5px 12px; }
   body.in-free #side-right { display: none; }
   #side-right { align-items: center; gap: 6px; }
   #btn-buy.painted { width: 140px; }
