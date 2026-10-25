@@ -17,7 +17,7 @@ Theme, art, names and code are original; only the game format is borrowed. See [
 | Math pipeline | Simulates rounds, writes Stake RGS files (`index.json`, `books_*.jsonl.zst`, `lookUpTable_*_0.csv`) and a math report | `src/math/` |
 | Game client | PixiJS 8 + DOM UI static web app that replays RGS outcomes | `src/client/`, `index.html` |
 | Local RGS | Vite dev-server mock of the Stake RGS API, serving the generated books | `src/rgs/mockRgs.ts` |
-| Art | Painted symbol art (imported from `art/source/` by `tools/import-painted.py`) plus original vector art written as SVG by a script for everything not painted yet | `art/source/`, `tools/import-painted.py`, `tools/render-art.mjs`, `public/assets/` |
+| Art | Painted art in `art/source/`, imported to WebP by `tools/import-painted.py` (symbols, buttons, panels, backgrounds, screens, effects). Vector SVG fallbacks come from `tools/render-art.mjs` | `art/source/`, `tools/import-painted.py`, `tools/render-art.mjs`, `public/assets/` |
 | Tests | 21 unit tests (vitest) and a 12-scenario browser smoke test (Playwright) | `tests/`, `tools/smoke.mjs` |
 
 ## Quick start
@@ -86,7 +86,7 @@ Checked in this environment (headless Chromium at 1600x900, 390x844, 360x640 and
 
 - **Not deployed to Stake Engine** (no account here). Built against the documented RGS contract and tested against the local mock only.
 - **Math is not certified.** Figures are exact for the published book set; the win-cap probability is a simulation estimate.
-- **Art:** every symbol, the board frame, all backgrounds, the main buttons and panels, the Trick-or-Treat doors and the loading and intro screens are painted. The Trick-or-Treat doors open onto painted Treat, Trick and Golden Lollipop reveals, and both free-spin intros are painted. Still drawn in code: the witch sprite, the feature-complete screen and the win screens.
+- **Art:** the game uses the supplied painted art throughout: all 11 symbols, the board frame, backgrounds for the base game and both free-spin modes, every HUD button and panel, the Trick-or-Treat street, doors and reveals, the loading, intro, free-spin intro and feature-complete screens, the five win screens (Big, Mega, Monster, Sugar Scream, Max Win), the Witch's Spell witch, and the spell and candy-pop effects. The vector SVGs in `public/assets/` remain only as fallbacks.
 - **Sound is procedural** (Web Audio synthesis), with no composed music.
 - **Devices:** only headless Chromium was tested. Real phones, Safari and Firefox still need testing.
 - **English only**; other `lang` values fall back to English.

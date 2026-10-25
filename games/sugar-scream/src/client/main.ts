@@ -8,7 +8,7 @@ import { BET_MODES, BUY_MODES } from '../engine/config.ts';
 import type { ModeName } from '../engine/round.ts';
 import type { Board, GameEvent } from '../engine/types.ts';
 import { validateBook } from '../engine/validate.ts';
-import { loadAssets, symbolSrc } from './assets.ts';
+import { loadAssets, panelSrc, symbolSrc } from './assets.ts';
 import { Audio } from './audio.ts';
 import { Player } from './game/player.ts';
 import { Scene } from './game/scene.ts';
@@ -35,7 +35,7 @@ const launch = {
 };
 setSocial(launch.social);
 
-const BUY_ART: Record<string, string> = { bonus: 'assets/cauldron.svg', fullmoon: symbolSrc('JK') };
+const BUY_ART: Record<string, string> = { bonus: panelSrc('cauldron_icon') ?? 'assets/cauldron.svg', fullmoon: symbolSrc('JK') };
 
 const IDLE_BOARD: Board = [
   ['CC', 'PU', 'BH', 'EY', 'BT'],

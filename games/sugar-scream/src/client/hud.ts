@@ -124,6 +124,14 @@ export class Hud {
       el.classList.add('painted-panel');
       el.style.setProperty('--img', `url(${src})`);
     }
+    // Preload painted screens shown mid-round so they never pop in late.
+    const later = [
+      ...['win_big', 'win_mega', 'win_monster', 'win_sugar', 'win_max', 'door_treat', 'door_trick', 'door_lollipop'].map(panelSrc),
+      ...['fs_cauldron', 'fs_fullmoon', 'feature_end', 'tot'].map(bgSrc),
+    ];
+    for (const src of later) if (src) new Image().src = src;
+    const pot = panelSrc('cauldron_icon');
+    if (pot) $<HTMLImageElement>('#cauldron img').src = pot;
     // Full-screen painted backdrops for the loading, intro and Trick or Treat screens.
     for (const [sel, name] of [['#loading', 'loading'], ['#intro', 'intro'], ['#tot', 'tot']] as const) {
       const src = bgSrc(name);
@@ -315,10 +323,27 @@ export class Hud {
   }
 
   /** Big / Mega / Sugar Rush win screen with a count-up. Tap to skip. */
-  winScreen(tiers: { title: string; until: number }[], amount: (p: number) => string, x: string, ms: number): Promise<void> {
+  winScreen(tiers: { title: string; until: number; art?: string | null }[], amount: (p: number) => string, x: string, ms: number): Promise<void> {
     const el = $('#winscreen');
     el.classList.remove('hidden');
     $('#win-x').textContent = x;
+    // painted tier lettering when imported, else the text title
+    let shown = '';
+    const showTier = (tier: { title: string; art?: string | null }) => {
+      if (shown === tier.title) return;
+      shown = tier.title;
+      const img = $<HTMLImageElement>('#win-art');
+      img.classList.toggle('hidden', !tier.art);
+      $('#win-title').classList.toggle('hidden', !!tier.art);
+      if (tier.art) {
+        img.src = tier.art;
+        img.alt = t(tier.title);
+        img.style.animation = 'none';
+        void img.offsetWidth;
+        img.style.animation = '';
+      }
+      $('#win-title').textContent = t(tier.title);
+    };
     return new Promise((resolve) => {
       const start = performance.now();
       let finished = false;
@@ -326,7 +351,7 @@ export class Hud {
         if (finished) return;
         finished = true;
         $('#win-amount').textContent = amount(1);
-        $('#win-title').textContent = t(tiers[tiers.length - 1].title);
+        showTier(tiers[tiers.length - 1]);
         this.skipOverlay = () => close();
         setTimeout(close, 1100);
       };
@@ -340,7 +365,7 @@ export class Hud {
         if (finished) return;
         const p = Math.min(1, (performance.now() - start) / ms);
         $('#win-amount').textContent = amount(p);
-        $('#win-title').textContent = t((tiers.find((tier) => p <= tier.until) ?? tiers[tiers.length - 1]).title);
+        showTier(tiers.find((tier) => p <= tier.until) ?? tiers[tiers.length - 1]);
         if (p >= 1) finish();
         else requestAnimationFrame(frame);
       };

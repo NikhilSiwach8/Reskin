@@ -224,6 +224,7 @@ export class Scene {
   async explode(cells: Cell[]): Promise<void> {
     const jobs = cells.map((c) => {
       const v = this.views[c.reel][c.row];
+      this.flash('p_fx_pop', v.root.x, v.root.y, 1.15);
       this.burst(v.root.x, v.root.y, v.symbol === 'BH' ? 0xff3355 : v.symbol === 'SL' ? 0x8dff3a : v.symbol === 'WP' || v.symbol === 'BT' ? 0xc070ff : 0xffc040, 10);
       return this.tween.run(220, (p) => { v.root.scale.set(1 + p * 0.4); v.root.alpha = 1 - p; }, ease.outQuad);
     });
@@ -267,9 +268,11 @@ export class Scene {
 
   /** The Witch flies over the board and her spell turns cells into one candy. */
   async spell(cells: Cell[], symbol: SymbolId): Promise<void> {
-    const witch = new Sprite(tex('witch'));
+    const painted = hasTexture('p_witch');
+    const witch = new Sprite(tex(painted ? 'p_witch' : 'witch'));
     witch.anchor.set(0.5);
-    witch.scale.set(0.9);
+    if (painted) witch.scale.set(760 / witch.texture.width);
+    else witch.scale.set(0.9);
     witch.position.set(-300, BOARD_H * 0.3);
     this.fx.addChild(witch);
     const trail = () => {
@@ -286,6 +289,7 @@ export class Scene {
       const v = this.views[c.reel][c.row];
       await this.tween.wait(i * 60);
       this.burst(v.root.x, v.root.y, 0xc070ff, 8);
+      this.flash('p_fx_spell', v.root.x, v.root.y, 1.5);
       await this.tween.run(160, (p) => v.root.scale.set(1 - p * 0.9), ease.inQuad);
       v.set(symbol, 0);
       await this.tween.run(260, (p) => v.root.scale.set(0.1 + p * 0.9), ease.outBack);
@@ -355,6 +359,22 @@ export class Scene {
     this.fx.addChild(g);
     const vy = 1 + Math.random() * 2;
     void this.tween.run(600, (p) => { g.alpha = 1 - p; g.y += vy; }, ease.linear).then(() => g.destroy());
+  }
+
+  /** A painted effect sprite that pops, spins slightly and fades (skipped if not imported). */
+  private flash(name: string, x: number, y: number, size: number): void {
+    if (this.reduced || !hasTexture(name)) return;
+    const f = new Sprite(tex(name));
+    f.anchor.set(0.5);
+    f.position.set(x, y);
+    f.blendMode = 'add';
+    const base = (S * size) / f.texture.width;
+    this.fx.addChild(f);
+    void this.tween.run(420, (p) => {
+      f.scale.set(base * (0.4 + p * 0.8));
+      f.rotation = p * 0.5;
+      f.alpha = p < 0.3 ? 1 : 1 - (p - 0.3) / 0.7;
+    }, ease.outQuad).then(() => f.destroy());
   }
 
   burst(x: number, y: number, color: number, n: number): void {

@@ -1,9 +1,9 @@
 // Plays a validated book's events on the scene and HUD. Presentation only: every amount
 // shown comes from the book, and skipping or turbo never changes what is paid.
 import { applyTumble, cellsOf, winningCells } from '../../engine/board.ts';
-import { FREE_SPINS, SYMBOLS } from '../../engine/config.ts';
+import { FREE_SPINS, SYMBOLS, WINCAP } from '../../engine/config.ts';
 import type { Board, GameEvent, SymbolId } from '../../engine/types.ts';
-import { bgSrc } from '../assets.ts';
+import { bgSrc, panelSrc } from '../assets.ts';
 import type { Audio } from '../audio.ts';
 import { Hud, wait, type KnockEvent } from '../hud.ts';
 import { t } from '../text.ts';
@@ -19,10 +19,11 @@ export interface PlayerOptions {
 }
 
 const WIN_TIERS = [
-  { min: 2000, title: 'BIG WIN' },
-  { min: 5000, title: 'MEGA WIN' },
-  { min: 25000, title: 'MONSTER WIN' },
-  { min: 100000, title: 'SUGAR SCREAM!' },
+  { min: 2000, title: 'BIG WIN', art: 'win_big' },
+  { min: 5000, title: 'MEGA WIN', art: 'win_mega' },
+  { min: 25000, title: 'MONSTER WIN', art: 'win_monster' },
+  { min: 100000, title: 'SUGAR SCREAM!', art: 'win_sugar' },
+  { min: WINCAP, title: 'MAX WIN', art: 'win_max' },
 ];
 
 export class Player {
@@ -209,7 +210,7 @@ export class Player {
   private async bigWin(amount: number): Promise<void> {
     this.audio.play('bigWin');
     const reached = WIN_TIERS.filter((tier) => amount >= tier.min);
-    const tiers = reached.map((tier, i) => ({ title: tier.title, until: (i + 1) / reached.length }));
+    const tiers = reached.map((tier, i) => ({ title: tier.title, until: (i + 1) / reached.length, art: panelSrc(tier.art) }));
     const ms = this.o.turbo() || this.skipping ? 1200 : 1800 + reached.length * 1100;
     await this.hud.winScreen(tiers, (p) => this.o.fmt(Math.round(amount * (1 - (1 - p) ** 2))), `${(amount / 100).toLocaleString('en-US')}x`, ms);
   }

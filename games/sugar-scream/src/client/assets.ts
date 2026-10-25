@@ -47,6 +47,8 @@ export async function loadAssets(onProgress: (p: number) => void): Promise<strin
     BACKGROUNDS.has('base') ? { alias: 'bg', src: 'assets/bg_base.webp', data: {} } : { alias: 'bg', src: 'assets/bg.svg', data: { resolution: 1 } },
     ...['cauldron', 'fullmoon'].filter((n) => BACKGROUNDS.has(n)).map((n) => ({ alias: `bg_${n}`, src: `assets/bg_${n}.webp`, data: {} })),
     ...(PANELS.has('board') ? [{ alias: 'frame', src: 'assets/panel_board.webp', data: {} }] : []),
+    // painted witch and effect sprites (optional; the scene falls back to vector / particles)
+    ...['witch', 'fx_spell', 'fx_pop'].filter((n) => PANELS.has(n)).map((n) => ({ alias: `p_${n}`, src: `assets/panel_${n}.webp`, data: {} })),
   ];
   let done = 0;
   const failures: string[] = [];
