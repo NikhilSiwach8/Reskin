@@ -1,6 +1,6 @@
 // Reel grid rendering. The grid only displays boards it is given; it never picks symbols
 // for an outcome (random symbols are shown only while a reel is blurred in motion).
-import { Container, Graphics, Sprite, Text } from 'pixi.js';
+import { BlurFilter, Container, Graphics, Sprite, Text } from 'pixi.js';
 import { REELS, ROWS, SYMBOL_ORDER, SYMBOLS } from '../../engine/config.ts';
 import type { Board, Cell, SymbolId } from '../../engine/types.ts';
 import { isMissing, symbolTexture } from '../assets.ts';
@@ -65,10 +65,22 @@ export class SymbolView extends Container {
     this.sprite.width = this.sprite.height = SYMBOL_SIZE;
     this.highlighted = false;
     this.glow.alpha = 0;
+    this.dimTarget = 0;
+    this.applyDim(0);
   }
 
+  /** Darkens symbols that are not part of a win (eased per frame in idle()). */
+  private dimTarget = 0;
+  private dimLevel = 0;
   dim(on: boolean): void {
-    this.sprite.tint = on ? 0x5a5070 : 0xffffff;
+    this.dimTarget = on ? 1 : 0;
+    if (!on) this.applyDim(0);
+  }
+
+  private applyDim(level: number): void {
+    this.dimLevel = level;
+    const c = Math.round(255 - level * (255 - 0x55));
+    this.sprite.tint = (c << 16) | (c << 8) | Math.min(255, c + Math.round(level * 24));
   }
 
   /** Strong pulsing glow while the symbol is part of a win. */
@@ -78,7 +90,11 @@ export class SymbolView extends Container {
   }
 
   /** Per-frame idle animation while the reel is at rest. */
-  idle(t: number, reduced: boolean): void {
+  idle(t: number, reduced: boolean, dt = 16): void {
+    if (this.dimLevel !== this.dimTarget) {
+      const step = dt / 220;
+      this.applyDim(this.dimTarget > this.dimLevel ? Math.min(this.dimTarget, this.dimLevel + step) : Math.max(this.dimTarget, this.dimLevel - step));
+    }
     const k = t / 1000 + this.phase;
     const base = SYMBOL_SIZE;
     if (this.highlighted) {
@@ -139,6 +155,11 @@ class Reel extends Container {
   cells: SymbolView[] = [];
   pos = 0;
   spinning = false;
+  /** Current speed in cells per ms (presentation only). */
+  vel = 0;
+  /** Speed the reel is easing towards while it spins freely. */
+  targetVel = 0;
+  private blur = new BlurFilter({ strength: 0, quality: 2 });
   private queue: SymbolId[] = [];
   private lastBase = 0;
 
@@ -161,6 +182,18 @@ class Reel extends Container {
   /** Visible symbol views in row order. */
   rowViews(): SymbolView[] {
     return this.cells.slice(1, ROWS + 1);
+  }
+
+  /** Vertical motion blur proportional to speed; removed entirely at rest so symbols stay crisp. */
+  setBlur(enabled: boolean): void {
+    const strength = enabled ? Math.min(14, this.vel * 260) : 0;
+    if (strength < 0.6) {
+      if (this.filters) this.filters = null;
+      return;
+    }
+    this.blur.strengthX = 0;
+    this.blur.strengthY = strength;
+    if (!this.filters) this.filters = [this.blur];
   }
 
   advance(delta: number): void {
@@ -199,6 +232,15 @@ class Reel extends Container {
   }
 }
 
+/**
+ * Deceleration curve from 0 to 1 that leaves with slope `v0` (so the reel keeps its current
+ * speed at the start of the stop, without a jolt) and arrives with slope 0. Monotonic for v0 <= 3.
+ */
+function stopCurve(v0: number): (t: number) => number {
+  const a = v0 - 3; // 1 - (1-t)^3 has slope 3 at t=0; the extra term corrects it to v0
+  return (t) => 1 - (1 - t) ** 3 + a * t * (1 - t) ** 2;
+}
+
 function randomFiller(): SymbolId {
   // Presentation-only blur symbols while a reel is moving.
   return FILLER[Math.floor(Math.random() * FILLER.length)];
@@ -214,7 +256,10 @@ export class ReelGrid extends Container {
   readonly reels: Reel[] = [];
   private tweener: Tweener;
   private speed = 0;
+  private turbo = false;
   private glow = new Graphics();
+  private glowTime = 0;
+  private anticipating = new Set<number>();
   private time = 0;
   reducedMotion = false;
   board: Board;
@@ -249,31 +294,54 @@ export class ReelGrid extends Container {
     return this.reels.flatMap((r) => r.rowViews());
   }
 
-  /** Starts spinning (all reels or a subset). Returns immediately. */
+  /** Starts spinning (all reels or a subset): staggered, with a short wind-up and acceleration. */
   start(opts: SpinOptions = {}): void {
     const which = opts.reels ?? [0, 1, 2, 3, 4];
     for (const v of this.allViews()) v.reset();
-    for (const i of which) this.reels[i].spinning = true;
-    this.speed = opts.turbo ? 0.06 : 0.034;
+    this.turbo = !!opts.turbo;
+    this.speed = opts.turbo ? 0.06 : 0.036;
+    which.forEach((i, k) => {
+      const reel = this.reels[i];
+      reel.spinning = true;
+      reel.vel = 0;
+      reel.targetVel = 0;
+      const delay = this.tweener.reducedMotion ? 0 : k * (opts.turbo ? 25 : 55);
+      void (async () => {
+        await this.tweener.wait(delay);
+        if (!reel.spinning) return;
+        // wind-up: the reel lifts a little before it starts to fall
+        if (!this.tweener.reducedMotion) await this.tweener.run(opts.turbo ? 60 : 110, (p) => (reel.y = -Math.sin(p * Math.PI * 0.5) * 16), ease.outQuad);
+        if (!reel.spinning) return;
+        reel.targetVel = this.speed;
+        await this.tweener.run(opts.turbo ? 60 : 110, (p) => (reel.y = -16 * (1 - p)), ease.inQuad);
+        reel.y = 0;
+      })();
+    });
   }
 
   /** Called every frame by the stage. */
   update(dt: number): void {
     this.time += dt;
+    this.glowTime += dt;
     for (const r of this.reels) {
-      if (r.spinning) r.advance(this.speed * dt);
-      else for (const v of r.rowViews()) v.idle(this.time, this.reducedMotion);
+      if (r.spinning) {
+        // ease the speed towards its target (acceleration, or the anticipation slow-down)
+        r.vel += (r.targetVel - r.vel) * Math.min(1, dt / (r.targetVel > r.vel ? 140 : 260));
+        r.advance(r.vel * dt);
+      } else for (const v of r.rowViews()) v.idle(this.time, this.reducedMotion, dt);
+      r.setBlur(!this.reducedMotion);
     }
+    if (this.anticipating.size) this.drawAnticipation();
   }
 
   /** Stops spinning reels on the given board with a staggered, decelerating landing. */
   async stop(board: Board, opts: SpinOptions & { onReelStop?: (reel: number) => void } = {}): Promise<void> {
     const which = (opts.reels ?? [0, 1, 2, 3, 4]).filter((i) => this.reels[i].spinning);
-    const stagger = opts.turbo ? 50 : 140;
+    const stagger = opts.turbo ? 60 : 160;
     const anticip = new Set(opts.anticipation ?? []);
     let extra = 0;
     const tasks = which.map((i, k) => {
-      if (anticip.has(i)) extra += opts.turbo ? 300 : 900;
+      if (anticip.has(i)) extra += opts.turbo ? 350 : 1100;
       const delay = k * stagger + extra;
       return this.stopReel(i, board[i], delay, anticip.has(i), opts.onReelStop);
     });
@@ -283,25 +351,54 @@ export class ReelGrid extends Container {
 
   private async stopReel(i: number, col: SymbolId[], delay: number, anticipation: boolean, onStop?: (reel: number) => void): Promise<void> {
     const reel = this.reels[i];
-    if (anticipation) this.showAnticipation(i, true);
+    if (anticipation) {
+      // suspense: the reel glows and slows to a crawl before it lands
+      this.anticipating.add(i);
+      void this.tweener.wait(Math.max(0, delay - 700)).then(() => { if (reel.spinning) reel.targetVel = this.speed * 0.4; });
+    }
     await this.tweener.wait(delay);
+    // make sure the reel is at speed (a very quick stop can arrive during the wind-up)
+    if (reel.vel < this.speed * 0.3) reel.vel = this.speed * (anticipation ? 0.4 : 1);
     reel.spinning = false;
+    // land 6 cells on (more for anticipation, so the deceleration is long and readable)
     const target = reel.prepareStop(col);
     const start = reel.pos;
-    await this.tweener.run(anticipation ? 700 : 340, (p) => reel.advance(start + (target - start) * p - reel.pos), ease.outCubic);
-    reel.snapTo(target);
-    if (anticipation) this.showAnticipation(i, false);
-    onStop?.(i);
-    if (!this.tweener.reducedMotion) {
-      for (const v of reel.rowViews()) if (SPECIAL_LAND.includes(v.sym)) void v.land(this.tweener);
-      await this.tweener.run(150, (p) => (reel.y = Math.sin(p * Math.PI) * 14), ease.linear);
-      reel.y = 0;
+    // overshoot past the final row a little, then settle back (never moves back past the target)
+    const over = this.tweener.reducedMotion ? 0 : 0.14;
+    const dist = target + over - start;
+    // duration chosen so the curve leaves at the reel's current speed: v0 * dist / ms = vel
+    const v0 = 2.6;
+    const ms = Math.max(this.turbo ? 160 : 260, Math.min(this.turbo ? 420 : 900, (v0 * dist) / Math.max(0.005, reel.vel)));
+    const curve = stopCurve(v0);
+    const startVel = reel.vel;
+    await this.tweener.run(ms, (p) => {
+      reel.advance(start + dist * curve(p) - reel.pos);
+      reel.vel = startVel * (1 - p) ** 2;
+    }, ease.linear);
+    if (over) {
+      const top = reel.pos;
+      await this.tweener.run(this.turbo ? 90 : 170, (p) => reel.advance(Math.max(target, top - (top - target) * p) - reel.pos), ease.inOutQuad);
     }
+    reel.vel = 0;
+    reel.y = 0;
+    reel.snapTo(target);
+    reel.setBlur(false);
+    if (anticipation) {
+      this.anticipating.delete(i);
+      this.glow.clear();
+    }
+    onStop?.(i);
+    if (!this.tweener.reducedMotion) for (const v of reel.rowViews()) if (SPECIAL_LAND.includes(v.sym)) void v.land(this.tweener);
   }
 
-  private showAnticipation(reel: number, on: boolean): void {
+  /** Pulsing green frame around reels that may complete a feature. */
+  private drawAnticipation(): void {
     this.glow.clear();
-    if (on) this.glow.roundRect(reel * CELL + 4, 4, CELL - 8, CELL * ROWS - 8, 18).stroke({ color: 0x7dffa8, width: 8, alpha: 0.85 });
+    const pulse = 0.55 + Math.sin(this.glowTime / 110) * 0.3;
+    for (const reel of this.anticipating) {
+      this.glow.roundRect(reel * CELL + 4, 4, CELL - 8, CELL * ROWS - 8, 18).stroke({ color: 0x7dffa8, width: 14, alpha: pulse * 0.35 });
+      this.glow.roundRect(reel * CELL + 4, 4, CELL - 8, CELL * ROWS - 8, 18).stroke({ color: 0xc8ffd9, width: 5, alpha: pulse });
+    }
   }
 
   /** Spectral Respin: every non-held cell drops out and a new symbol drops in, reel by reel. */
@@ -310,9 +407,12 @@ export class ReelGrid extends Container {
     for (let reel = 0; reel < REELS; reel++) {
       const views = this.reels[reel].rowViews();
       const moving = views.map((v, row) => ({ v, row })).filter(({ row }) => !heldSet.has(`${reel},${row}`));
-      await this.tweener.run(turbo ? 80 : 160, (p) => moving.forEach(({ v }) => { v.alpha = 1 - p; v.scale.set(1 - p * 0.4); }));
+      const homes = moving.map(({ v }) => v.y);
+      // old symbols fall away, new ones drop in from above and land with a soft bounce
+      await this.tweener.run(turbo ? 90 : 170, (p) => moving.forEach(({ v }, k) => { v.alpha = 1 - p; v.y = homes[k] + p * CELL * 0.5; }), ease.inQuad);
       moving.forEach(({ v, row }) => v.set(board[reel][row]));
-      await this.tweener.run(turbo ? 120 : 220, (p) => moving.forEach(({ v }) => { v.alpha = p; v.scale.set(0.6 + p * 0.4); }), ease.outBack);
+      await this.tweener.run(turbo ? 140 : 260, (p) => moving.forEach(({ v }, k) => { v.alpha = Math.min(1, p * 2); v.y = homes[k] - (1 - p) * CELL * 0.6; }), ease.outBack);
+      moving.forEach(({ v }, k) => { v.y = homes[k]; v.alpha = 1; });
     }
     this.board = board.map((c) => [...c]);
   }

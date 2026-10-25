@@ -1,11 +1,11 @@
 // Replays a book's events. The book (from the RGS) is the authoritative outcome; the player
 // only presents it. Every board shown comes from an event, never from client-side logic.
 import { Graphics } from 'pixi.js';
-import { REELS, ROWS } from '../../engine/config.ts';
+import { FEATURES, REELS, ROWS } from '../../engine/config.ts';
 import type { BonusPath, Cell, GameEvent, LedgerState, SealId, SymbolId } from '../../engine/types.ts';
 import type { Audio } from '../audio.ts';
 import { tex, type TextureName } from '../assets.ts';
-import type { Hud } from '../ui/hud.ts';
+import type { Hud, WinTier } from '../ui/hud.ts';
 import { FEATURE_NAMES } from '../ui/text.ts';
 import { CELL } from './reels.ts';
 import type { Stage } from './stage.ts';
@@ -19,6 +19,23 @@ export interface PlayContext {
   /** True while autoplay runs (splash screens then continue sooner). */
   autoplay: () => boolean;
 }
+
+/** Splash screens for the base-game features (art, short rule summary). */
+const FEATURE_SPLASH: Record<string, { art: string; desc: string }> = {
+  lockdown: { art: 'assets/sym_vaultdoor.webp', desc: 'Reels with a Vault Door lock in chains and the others respin. Every new Vault Door locks its reel and resets the respins.' },
+  phantomHeist: { art: 'assets/fx_phantom.webp', desc: 'The Phantom steals the most common low symbol and turns every copy into one higher symbol, or a wild with a multiplier.' },
+  spectralRespin: { art: 'assets/sym_elixir.webp', desc: 'Elixirs and Relics are held and every other position respins once.' },
+  thirteenthHour: { art: 'assets/fx_clock_face.webp', desc: 'Special spins where every Clock advances the hour. The Final Countdown Spin brings a Relic Surge sized by the hour reached.' },
+};
+
+/** Win-screen tiers in centi-bet (2000 = 20x bet). */
+const WIN_TIERS: WinTier[] = [
+  { name: 'Big Win', at: 0, theme: 'big' },
+  { name: 'Mega Win', at: 5000, theme: 'mega' },
+  { name: 'Epic Win', at: 10000, theme: 'epic' },
+  { name: 'Legendary Win', at: 50000, theme: 'legendary' },
+];
+const BIG_WIN = 2000;
 
 const SPLASH: Record<BonusPath, { art: string; background: string; desc: string }> = {
   cursedFortune: {
@@ -182,7 +199,21 @@ export class Player {
           hud.setBonusWin(this.ctx.fmt(0));
           if (e.feature !== 'thirteenthHour') document.querySelector<HTMLElement>('.fp-spins')!.hidden = true;
         }
-        await hud.banner(FEATURE_NAMES[e.feature], sub, this.ms(1500, 700));
+        const fs = this.path ? undefined : FEATURE_SPLASH[e.feature];
+        if (fs) {
+          audio.play('splash');
+          await hud.bonusSplash({
+            theme: e.feature,
+            background: 'assets/bg_bank.webp',
+            art: fs.art,
+            kicker: 'Feature triggered',
+            title: FEATURE_NAMES[e.feature],
+            value: e.feature === 'thirteenthHour' ? `${FEATURES.thirteenthHour.spins} special spins` : '',
+            desc: fs.desc,
+            button: 'Continue',
+            autoMs: this.featureSplashMs(),
+          });
+        } else await hud.banner(FEATURE_NAMES[e.feature], sub, this.ms(1500, 700));
         break;
       }
 
@@ -358,10 +389,10 @@ export class Player {
           this.bonusWin += e.spinWin;
           hud.setBonusWin(this.ctx.fmt(this.bonusWin));
         }
-        const big = e.spinWin >= 2000;
+        const big = e.spinWin >= BIG_WIN;
         audio.play(big ? 'bigWin' : 'win');
         const counting = this.countWin(prev, this.total, big ? 1600 : 500);
-        await stage.wins.present(e.wins, this.ctx.fmt, { turbo: this.turbo, relics: stage.relics });
+        await stage.wins.present(e.wins, this.ctx.fmt, { turbo: this.turbo, relics: stage.relics, particles: stage.particles, reduced: this.ctx.reduced() });
         if (big) await this.bigWin(e.spinWin);
         await counting;
         break;
@@ -387,7 +418,8 @@ export class Player {
           });
         } else if (e.featureWin > 0) {
           audio.play('bonusEnd');
-          await hud.banner(`${name} complete`, this.ctx.fmt(e.featureWin), this.ms(1800, 800), true);
+          const tiers = e.featureWin >= BIG_WIN ? WIN_TIERS : [{ name: 'Feature Win', at: 0, theme: 'feature' }];
+          await this.winScreen(e.featureWin, tiers, `${name} complete`);
         }
         if (this.path || e.feature === 'thirteenthHour') {
           stage.props.hideClock();
@@ -402,7 +434,7 @@ export class Player {
       case 'wincap': {
         audio.play('bigWin');
         stage.particles.burst((CELL * REELS) / 2, (CELL * ROWS) / 2, 60, tex('fx_coin'), { speed: 0.9, gravity: 1, scale: 0.45, life: 1800 });
-        await hud.banner('Maximum Win', this.ctx.fmt(e.totalWin), this.ms(2600, 1200), true);
+        await this.winScreen(e.totalWin, [{ name: 'Max Win', at: 0, theme: 'max' }], 'The vault is empty');
         stage.props.hideClock();
         stage.props.clearChains();
         hud.hideFeature();
@@ -438,13 +470,34 @@ export class Player {
   }
 
   private async bigWin(amount: number): Promise<void> {
-    const level = amount >= 10000 ? 'Epic Win' : amount >= 5000 ? 'Mega Win' : 'Big Win';
-    const { stage, hud } = this;
-    hud.showBanner(level, this.ctx.fmt(0), true);
-    stage.particles.burst((CELL * REELS) / 2, (CELL * ROWS) / 2, this.ctx.reduced() ? 10 : 50, tex('fx_coin'), { speed: 0.8, gravity: 1, scale: 0.4, life: 1600 });
-    await stage.tweener.run(this.ms(2200, 700), (p) => hud.setBannerSub(this.ctx.fmt(Math.round(amount * p))), ease.outQuad);
-    hud.setBannerSub(this.ctx.fmt(amount));
-    await stage.tweener.wait(this.ms(900, 300));
-    hud.hideBanner();
+    this.stage.particles.burst((CELL * REELS) / 2, (CELL * ROWS) / 2, this.ctx.reduced() ? 10 : 50, tex('fx_coin'), { speed: 0.8, gravity: 1, scale: 0.4, life: 1600 });
+    await this.winScreen(amount, WIN_TIERS);
+  }
+
+  /** Full-screen win celebration; the count runs longer for each tier it climbs through. */
+  private winScreen(amount: number, tiers: WinTier[], kicker?: string): Promise<void> {
+    const reached = tiers.filter((t) => amount >= t.at).length;
+    const fast = this.turbo || this.ctx.autoplay();
+    return this.hud.winScreen({
+      amount,
+      tiers,
+      kicker,
+      format: (v) => this.ctx.fmt(v),
+      caption: (v) => `${(v / 100).toLocaleString('en-US', { maximumFractionDigits: 2 })}x bet`,
+      countMs: fast ? 700 + 250 * reached : 1800 + 1100 * (reached - 1),
+      holdMs: fast ? 700 : 1600,
+      reduced: this.ctx.reduced(),
+      onTier: (_t, i) => {
+        if (i > 0) {
+          this.audio.play('bigWin');
+          if (!this.ctx.reduced()) void this.stage.shake(6 + i * 3, 260);
+        }
+      },
+    });
+  }
+
+  /** How long a base-feature splash waits before continuing on its own. */
+  private featureSplashMs(): number {
+    return this.ctx.autoplay() || this.turbo ? 1400 : 3200;
   }
 }

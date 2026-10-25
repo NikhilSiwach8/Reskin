@@ -154,84 +154,226 @@ const overlaps = (a: RelicBlock, b: RelicBlock) => cellsOf(a).some((c) => inside
 
 // ---------------------------------------------------------------- paylines & wins
 
+type Pt = { x: number; y: number };
+
+/** Points of a payline from the left edge of reel 1 to the right edge of reel 5. */
+const linePoints = (win: LineWin): Pt[] => {
+  const pts = PAYLINES[win.line - 1].map((row, reel) => center({ reel, row }));
+  return [{ x: pts[0].x - CELL / 2, y: pts[0].y }, ...pts, { x: pts[4].x + CELL / 2, y: pts[4].y }];
+};
+
+/** Point at fraction t along a polyline, plus the polyline up to that point. */
+function along(pts: Pt[], t: number): { head: Pt; path: Pt[] } {
+  const seg = pts.slice(1).map((p, i) => Math.hypot(p.x - pts[i].x, p.y - pts[i].y));
+  let left = seg.reduce((a, b) => a + b, 0) * Math.max(0, Math.min(1, t));
+  const path = [pts[0]];
+  for (let i = 0; i < seg.length; i++) {
+    if (left >= seg[i]) {
+      left -= seg[i];
+      path.push(pts[i + 1]);
+      continue;
+    }
+    const k = seg[i] ? left / seg[i] : 0;
+    const head = { x: pts[i].x + (pts[i + 1].x - pts[i].x) * k, y: pts[i].y + (pts[i + 1].y - pts[i].y) * k };
+    path.push(head);
+    return { head, path };
+  }
+  return { head: pts[pts.length - 1], path };
+}
+
+export interface WinPresentOptions {
+  turbo: boolean;
+  relics: RelicLayer;
+  particles?: Particles;
+  reduced?: boolean;
+}
+
+/**
+ * Win presentation: winning symbols light up in a left-to-right ripple inside gold frames,
+ * each payline traces itself with a glowing orb, and the line win pops up on a plate.
+ */
 export class WinLayer extends Container {
+  private frames = new Container();
   private lines = new Graphics();
+  private orbs = new Container();
   private labels = new Container();
   private tweener: Tweener;
   private grid: ReelGrid;
+  private token = 0;
 
   constructor(tweener: Tweener, grid: ReelGrid) {
     super();
     this.tweener = tweener;
     this.grid = grid;
-    this.addChild(this.lines, this.labels);
+    this.addChild(this.frames, this.lines, this.orbs, this.labels);
   }
 
   clear(): void {
+    this.token++;
     this.lines.clear();
-    this.labels.removeChildren().forEach((c) => c.destroy());
+    for (const layer of [this.frames, this.orbs, this.labels]) layer.removeChildren().forEach((c) => c.destroy({ children: true }));
     for (const v of this.grid.allViews()) {
       v.dim(false);
       v.highlight(false);
+      v.scale.set(1);
     }
   }
 
-  private drawLine(win: LineWin, alpha = 1): void {
-    const pts = PAYLINES[win.line - 1].map((row, reel) => center({ reel, row }));
-    const color = LINE_COLORS[(win.line - 1) % LINE_COLORS.length];
-    this.lines.moveTo(pts[0].x - CELL / 2, pts[0].y);
-    for (const p of pts) this.lines.lineTo(p.x, p.y);
-    this.lines.lineTo(pts[4].x + CELL / 2, pts[4].y);
-    this.lines.stroke({ color: 0x150a20, width: 14, alpha: alpha * 0.8 });
-    this.lines.moveTo(pts[0].x - CELL / 2, pts[0].y);
-    for (const p of pts) this.lines.lineTo(p.x, p.y);
-    this.lines.lineTo(pts[4].x + CELL / 2, pts[4].y);
-    this.lines.stroke({ color, width: 6, alpha });
+  private strokePath(path: Pt[], color: number, alpha: number): void {
+    if (path.length < 2) return;
+    const draw = () => {
+      this.lines.moveTo(path[0].x, path[0].y);
+      for (const p of path.slice(1)) this.lines.lineTo(p.x, p.y);
+    };
+    draw();
+    this.lines.stroke({ color: 0x150a20, width: 16, alpha: alpha * 0.75, join: 'round', cap: 'round' });
+    draw();
+    this.lines.stroke({ color, width: 12, alpha: alpha * 0.35, join: 'round', cap: 'round' });
+    draw();
+    this.lines.stroke({ color, width: 5, alpha, join: 'round', cap: 'round' });
+    draw();
+    this.lines.stroke({ color: 0xffffff, width: 1.5, alpha: alpha * 0.8, join: 'round', cap: 'round' });
   }
 
-  /** Shows every winning line at once, then cycles through them. */
-  async present(wins: LineWin[], formatWin: (centi: number) => string, opts: { turbo: boolean; relics: RelicLayer }): Promise<void> {
+  private drawLine(win: LineWin, alpha = 1): void {
+    this.strokePath(linePoints(win), LINE_COLORS[(win.line - 1) % LINE_COLORS.length], alpha);
+  }
+
+  /** Draws one or more lines growing from left to right with a glowing orb at each head. */
+  private async traceLines(wins: LineWin[], ms: number): Promise<void> {
+    const pts = wins.map(linePoints);
+    const orbs = wins.map((w) => {
+      const o = new Sprite(glowTexture());
+      o.anchor.set(0.5);
+      o.blendMode = 'add';
+      o.tint = LINE_COLORS[(w.line - 1) % LINE_COLORS.length];
+      o.width = o.height = 70;
+      this.orbs.addChild(o);
+      return o;
+    });
+    await this.tweener.run(ms, (p) => {
+      this.lines.clear();
+      wins.forEach((w, i) => {
+        const { head, path } = along(pts[i], p);
+        this.strokePath(path, LINE_COLORS[(w.line - 1) % LINE_COLORS.length], 1);
+        orbs[i].position.set(head.x, head.y);
+        orbs[i].alpha = p < 0.9 ? 1 : (1 - p) * 10;
+      });
+    }, ease.inOutQuad);
+    orbs.forEach((o) => o.destroy());
+  }
+
+  /** A glowing gold frame behind a winning cell that pops in and then breathes. */
+  private frameCell(c: Cell, delay: number, color: number): void {
+    const root = new Container();
+    const p = center(c);
+    root.position.set(p.x, p.y);
+    const glow = new Sprite(glowTexture());
+    glow.anchor.set(0.5);
+    glow.blendMode = 'add';
+    glow.tint = color;
+    glow.width = glow.height = CELL * 1.5;
+    const f = new Graphics()
+      .roundRect(-CELL / 2 + 5, -CELL / 2 + 5, CELL - 10, CELL - 10, 18).fill({ color: 0x150a20, alpha: 0.35 })
+      .roundRect(-CELL / 2 + 5, -CELL / 2 + 5, CELL - 10, CELL - 10, 18).stroke({ color: 0xffd36a, width: 4 })
+      .roundRect(-CELL / 2 + 10, -CELL / 2 + 10, CELL - 20, CELL - 20, 14).stroke({ color, width: 2, alpha: 0.8 });
+    root.addChild(glow, f);
+    root.scale.set(0.6);
+    root.alpha = 0;
+    this.frames.addChild(root);
+    const token = this.token;
+    void this.tweener.wait(delay).then(async () => {
+      if (token !== this.token) return;
+      await this.tweener.run(260, (q) => { root.alpha = Math.min(1, q * 1.6); root.scale.set(0.6 + q * 0.4); }, ease.outBack);
+      // gentle breathing while the win is on screen (driven by a long tween so slam stop ends it)
+      let t = 0;
+      const breathe = () => {
+        if (token !== this.token || root.destroyed) return;
+        void this.tweener.run(1200, (q) => {
+          if (root.destroyed) return;
+          glow.alpha = 0.55 + Math.sin((t + q) * Math.PI * 2) * 0.25;
+        }, ease.linear).then(() => { t++; if (t < 6) breathe(); });
+      };
+      breathe();
+    });
+  }
+
+  /** Symbol pop: overshooting scale with a soft settle. */
+  private pop(cell: Cell, delay: number, size = 0.2): Promise<void> {
+    const v = this.grid.view(cell);
+    return this.tweener.wait(delay).then(() =>
+      this.tweener.run(420, (q) => v.scale.set(1 + Math.sin(q * Math.PI) * size * (1 - q * 0.5) + q * 0.04), ease.linear));
+  }
+
+  async present(wins: LineWin[], formatWin: (centi: number) => string, opts: WinPresentOptions): Promise<void> {
     if (!wins.length) return;
-    const winning = new Set(wins.flatMap((w) => w.cells.map((c) => `${c.reel},${c.row}`)));
+    this.clear();
+    const token = this.token;
+    const cells = new Map<string, Cell>();
+    for (const w of wins) for (const c of w.cells) cells.set(`${c.reel},${c.row}`, c);
     for (let reel = 0; reel < REELS; reel++) {
       for (let row = 0; row < ROWS; row++) {
-        const on = winning.has(`${reel},${row}`);
+        const on = cells.has(`${reel},${row}`);
         this.grid.view({ reel, row }).dim(!on);
         this.grid.view({ reel, row }).highlight(on);
       }
     }
-    for (const w of wins) this.drawLine(w);
     opts.relics.pulse(wins.flatMap((w) => w.cells));
-    const views = [...winning].map((k) => {
-      const [reel, row] = k.split(',').map(Number);
-      return this.grid.view({ reel, row });
+    const wave = opts.turbo ? 25 : 70;
+    const color = LINE_COLORS[(wins[0].line - 1) % LINE_COLORS.length];
+    // ripple left to right: frame, pop and sparks per winning cell
+    const pops = [...cells.values()].map((c) => {
+      const delay = c.reel * wave;
+      this.frameCell(c, delay, color);
+      if (opts.particles && !opts.reduced) {
+        const p = center(c);
+        void this.tweener.wait(delay + 80).then(() => token === this.token && opts.particles!.burst(p.x, p.y, opts.turbo ? 3 : 7, tex('fx_spark'), { speed: 0.35, scale: 0.28, life: 600 }));
+      }
+      return this.pop(c, delay);
     });
-    await this.tweener.run(opts.turbo ? 260 : 600, (p) => views.forEach((v) => v.scale.set(1 + Math.sin(p * Math.PI) * 0.12)), ease.linear);
+    const tracing = this.traceLines(wins, opts.turbo ? 260 : 520);
+    await Promise.all([...pops, tracing]);
+    if (token !== this.token) return;
     if (opts.turbo || wins.length === 1) {
       if (wins.length === 1) this.lineLabel(wins[0], formatWin);
-      await this.tweener.wait(opts.turbo ? 200 : 700);
+      await this.tweener.wait(opts.turbo ? 200 : 750);
       return;
     }
+    // cycle through the lines one at a time
     for (const w of wins.slice(0, 6)) {
-      this.lines.clear();
-      this.labels.removeChildren().forEach((c) => c.destroy());
-      this.drawLine(w);
+      if (token !== this.token) return;
+      this.labels.removeChildren().forEach((c) => c.destroy({ children: true }));
+      const tr = this.traceLines([w], 320);
       this.lineLabel(w, formatWin);
-      const cells = w.cells.map((c) => this.grid.view(c));
-      await this.tweener.run(520, (p) => cells.forEach((v) => v.scale.set(1 + Math.sin(p * Math.PI) * 0.1)), ease.linear);
+      await Promise.all([tr, ...w.cells.map((c, k) => this.pop(c, k * 45, 0.14))]);
+      await this.tweener.wait(180);
     }
+    if (token !== this.token) return;
     this.lines.clear();
-    for (const w of wins) this.drawLine(w, 0.55);
+    for (const w of wins) this.drawLine(w, 0.5);
   }
 
+  /** Line win amount on a dark plate with a gold rim, popping in near the last winning symbol. */
   private lineLabel(w: LineWin, formatWin: (centi: number) => string): void {
     const last = w.cells[w.cells.length - 1];
     const p = center(last);
-    const t = new Text({ text: formatWin(w.win), style: textStyle(36) });
+    const root = new Container();
+    const t = new Text({ text: formatWin(w.win), style: textStyle(32) });
     t.anchor.set(0.5);
-    t.x = p.x;
-    t.y = p.y;
-    this.labels.addChild(t);
+    const pw = t.width + 40;
+    const ph = t.height + 14;
+    const plate = new Graphics()
+      .roundRect(-pw / 2, -ph / 2, pw, ph, ph / 2).fill({ color: 0x150a20, alpha: 0.88 })
+      .roundRect(-pw / 2, -ph / 2, pw, ph, ph / 2).stroke({ color: 0xffd36a, width: 3 })
+      .roundRect(-pw / 2 + 5, -ph / 2 + 5, pw - 10, ph - 10, (ph - 10) / 2).stroke({ color: LINE_COLORS[(w.line - 1) % LINE_COLORS.length], width: 1.5, alpha: 0.8 });
+    root.addChild(plate, t);
+    // keep the plate inside the board
+    const half = pw / 2 + 6;
+    root.position.set(Math.max(half, Math.min(CELL * REELS - half, p.x)), Math.max(ph, Math.min(CELL * ROWS - ph, p.y + CELL * 0.32)));
+    root.scale.set(0.4);
+    root.alpha = 0;
+    this.labels.addChild(root);
+    void this.tweener.run(320, (q) => { root.scale.set(0.4 + q * 0.6); root.alpha = Math.min(1, q * 2); }, ease.outBack);
   }
 }
 

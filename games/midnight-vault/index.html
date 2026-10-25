@@ -10,7 +10,8 @@
     <div id="app"></div>
 
     <div id="loading" role="status" aria-live="polite">
-      <div class="loading-title">Midnight Vault</div>
+      <div class="loading-bg" style="background-image: url('assets/bg_bank.webp')"></div>
+      <img class="loading-logo" src="assets/logo.webp" alt="Midnight Vault" />
       <div class="loading-bar"><div class="loading-fill"></div></div>
       <div class="loading-text">Unlocking the vault…</div>
     </div>
@@ -64,6 +65,19 @@
         <div class="sb-desc"></div>
         <button class="pill-btn primary splash-go" id="splash-bonus-go">Start</button>
         <div class="sb-auto"></div>
+      </div>
+    </section>
+
+    <section id="win-screen" hidden aria-live="assertive">
+      <div class="ws-shade"></div>
+      <div class="ws-rays"></div>
+      <div class="ws-coins"></div>
+      <div class="ws-content">
+        <div class="ws-kicker"></div>
+        <div class="ws-tier"></div>
+        <div class="ws-plate"><span class="ws-amount"></span></div>
+        <div class="ws-mult"></div>
+        <div class="ws-hint">Tap to skip</div>
       </div>
     </section>
 

@@ -106,7 +106,10 @@ Checked in this environment (headless Chromium at 1600x900, 1280x720, 800x450, 8
 - Base game, Cursed Relic expansion and multipliers, Lockdown Spin, Phantom Heist, Spectral Respin, The Thirteenth Hour, all three Three Keys paths, retriggers, The Vault Breach (all four stages), max win, big-win presentation.
 - Haunted Ledger and Relic Overload indicators come from engine events.
 - Rules/paytable panel with payline diagrams, RTP per mode, max win, disclaimer; social-mode wording.
-- Intro splash screen (can be skipped) and bonus intro/outro splash screens; animated backgrounds (fog, embers, flickering lights, bats), animated logo, idle symbol animations, relic auras and a swinging vault door.
+- Smooth reels: staggered start with a wind-up, speed-based motion blur, a stop that continues at the reel's current speed and settles with a small overshoot, and a slow suspense crawl on anticipation reels.
+- Win hit animation: winning symbols ripple left to right inside glowing gold frames with sparks, paylines trace themselves with a glowing orb, and line wins pop up on plates; other symbols fade down smoothly.
+- Full-screen win screens: Big, Mega, Epic and Legendary Win step up while the amount counts, plus Feature Win and Max Win, with light rays, falling coins and a bet multiple (tap to skip).
+- Splash screens: branded loading screen, intro splash (can be skipped), base-feature splashes (Lockdown Spin, Phantom Heist, Spectral Respin, The Thirteenth Hour) and bonus intro/outro splashes; animated backgrounds (fog, embers, flickering lights, bats), animated logo, idle symbol animations, relic auras and a swinging vault door.
 - Random jump scares (Phantom lunge, glowing eyes, bat swarm): cosmetic only, chosen on the client, never linked to results or delaying a round, off in turbo, reduced motion, features and replay, and switchable in Settings.
 - Spacebar spin, slam stop, turbo, reduced motion, mute with separate music and effects, autoplay with confirmation, bet replay, active-round resume, missing-asset fallback, production build without dev code.
 

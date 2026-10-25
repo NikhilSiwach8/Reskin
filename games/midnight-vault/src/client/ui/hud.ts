@@ -57,6 +57,27 @@ export interface BonusSplash {
   countUp?: (p: number) => string;
 }
 
+export interface WinTier {
+  name: string;
+  /** Tier is reached once the counted amount gets to this value. */
+  at: number;
+  /** Colour theme (big, mega, epic, legendary, max, feature). */
+  theme: string;
+}
+
+export interface WinScreen {
+  amount: number;
+  tiers: WinTier[];
+  format: (v: number) => string;
+  /** Optional caption under the amount (e.g. "125x bet"). */
+  caption?: (v: number) => string;
+  kicker?: string;
+  countMs: number;
+  holdMs: number;
+  reduced: boolean;
+  onTier?: (tier: WinTier, index: number) => void;
+}
+
 export type SpinButtonState = 'idle' | 'spinning' | 'skip' | 'disabled';
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII'];
@@ -218,6 +239,105 @@ export class Hud {
         }
       };
       el.addEventListener('click', done);
+      window.addEventListener('keydown', key, true);
+      raf = requestAnimationFrame(tick);
+    });
+  }
+
+  /**
+   * Full-screen win celebration. The amount counts up and the title steps up through the tiers
+   * it passes (Big -> Mega -> Epic...). A tap or Space skips to the end; a second tap closes it.
+   */
+  winScreen(o: WinScreen): Promise<void> {
+    const el = $('#win-screen');
+    const tierEl = el.querySelector<HTMLElement>('.ws-tier')!;
+    const amountEl = el.querySelector<HTMLElement>('.ws-amount')!;
+    const multEl = el.querySelector<HTMLElement>('.ws-mult')!;
+    el.querySelector('.ws-kicker')!.textContent = o.kicker ? t(o.kicker) : '';
+    el.querySelector('.ws-hint')!.textContent = t('Tap to skip');
+    const coins = el.querySelector<HTMLElement>('.ws-coins')!;
+    coins.replaceChildren();
+    if (!o.reduced) {
+      const n = o.tiers.length > 1 || o.tiers[0]?.theme !== 'feature' ? 28 : 12;
+      for (let i = 0; i < n; i++) {
+        const c = document.createElement('img');
+        c.src = 'assets/fx_coin.webp';
+        c.alt = '';
+        c.style.left = `${Math.random() * 100}%`;
+        c.style.setProperty('--s', `${28 + Math.random() * 40}px`);
+        c.style.setProperty('--d', `${1.8 + Math.random() * 1.6}s`);
+        c.style.setProperty('--delay', `${-Math.random() * 3}s`);
+        c.style.setProperty('--dx', `${(Math.random() - 0.5) * 30}vw`);
+        c.style.setProperty('--r', `${(Math.random() < 0.5 ? -1 : 1) * (360 + Math.random() * 540)}deg`);
+        coins.appendChild(c);
+      }
+    }
+    el.classList.remove('closing');
+    el.hidden = false;
+    this.splashOpen = true;
+    let tierIndex = -1;
+    const setTier = (i: number) => {
+      if (i === tierIndex) return;
+      tierIndex = i;
+      const tier = o.tiers[i];
+      el.dataset.tier = tier.theme;
+      tierEl.textContent = t(tier.name);
+      tierEl.classList.remove('bump');
+      void tierEl.offsetWidth;
+      tierEl.classList.add('bump');
+      o.onTier?.(tier, i);
+    };
+    const show = (v: number) => {
+      let i = 0;
+      o.tiers.forEach((tr, k) => { if (v >= tr.at) i = k; });
+      setTier(i);
+      amountEl.textContent = o.format(v);
+      multEl.textContent = o.caption ? o.caption(v) : '';
+    };
+    show(0);
+    return new Promise((resolve) => {
+      const start = performance.now();
+      let raf = 0;
+      let counted = false;
+      let endAt = 0;
+      const finishCount = () => {
+        counted = true;
+        show(o.amount);
+        endAt = performance.now();
+        el.querySelector('.ws-hint')!.textContent = '';
+      };
+      const tick = () => {
+        const now = performance.now();
+        if (!counted) {
+          const p = Math.min(1, (now - start) / o.countMs);
+          // ease out so the last digits roll in slowly
+          show(Math.round(o.amount * (1 - (1 - p) ** 2.2)));
+          if (p >= 1) finishCount();
+        } else if (now - endAt >= o.holdMs) return close();
+        raf = requestAnimationFrame(tick);
+      };
+      const close = () => {
+        cancelAnimationFrame(raf);
+        el.removeEventListener('click', press);
+        window.removeEventListener('keydown', key, true);
+        el.classList.add('closing');
+        window.setTimeout(() => {
+          el.hidden = true;
+          el.classList.remove('closing');
+          coins.replaceChildren();
+          this.splashOpen = false;
+          resolve();
+        }, o.reduced ? 0 : 320);
+      };
+      const press = () => (counted ? close() : finishCount());
+      const key = (e: KeyboardEvent) => {
+        if (e.code === 'Space' || e.code === 'Enter') {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          press();
+        }
+      };
+      el.addEventListener('click', press);
       window.addEventListener('keydown', key, true);
       raf = requestAnimationFrame(tick);
     });
@@ -397,25 +517,6 @@ export class Hud {
     b.classList.add('show');
     await wait(ms);
     b.hidden = true;
-  }
-
-  setBannerSub(text: string): void {
-    $('.banner-sub').textContent = text;
-  }
-
-  showBanner(title: string, sub: string, big: boolean): void {
-    const b = $('#banner');
-    $('.banner-title').textContent = t(title);
-    $('.banner-sub').textContent = sub;
-    b.classList.toggle('big', big);
-    b.hidden = false;
-    b.classList.remove('show');
-    void b.offsetWidth;
-    b.classList.add('show');
-  }
-
-  hideBanner(): void {
-    $('#banner').hidden = true;
   }
 
   async keysChoice(path: string, turbo: boolean): Promise<void> {
