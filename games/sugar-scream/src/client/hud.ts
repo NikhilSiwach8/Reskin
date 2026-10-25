@@ -1,6 +1,6 @@
 // DOM user interface: meters, buttons, dialogs, banners, win screens and the Trick or Treat doors.
 import type { KnockPrize } from '../engine/types.ts';
-import { buttonSrc, panelSrc, symbolSrc } from './assets.ts';
+import { bgSrc, buttonSrc, panelSrc, symbolSrc } from './assets.ts';
 import { localizeTree, t } from './text.ts';
 
 export const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
@@ -123,6 +123,13 @@ export class Hud {
       const el = $(sel);
       el.classList.add('painted-panel');
       el.style.setProperty('--img', `url(${src})`);
+    }
+    // Full-screen painted backdrops for the loading, intro and Trick or Treat screens.
+    for (const [sel, name] of [['#loading', 'loading'], ['#intro', 'intro'], ['#tot', 'tot']] as const) {
+      const src = bgSrc(name);
+      if (!src) continue;
+      $(sel).classList.add('painted-bg');
+      $(sel).style.setProperty('--bg', `url(${src})`);
     }
   }
 
@@ -353,7 +360,7 @@ export class Hud {
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'door';
-      b.style.backgroundImage = 'url(assets/door.svg)';
+      b.style.backgroundImage = `url(${panelSrc('door') ?? 'assets/door.svg'})`;
       b.setAttribute('aria-label', t(`Door ${i + 1}`));
       doors.appendChild(b);
       buttons.push(b);

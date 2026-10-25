@@ -1,6 +1,6 @@
 // PixiJS scene: background, board panel, the 6x5 grid of candies and every board animation.
 // Animations only present an outcome that the book has already fixed.
-import { Application, Container, Graphics, Sprite, Text, type Ticker } from 'pixi.js';
+import { Application, Container, Graphics, NineSliceSprite, Sprite, Text, type Ticker } from 'pixi.js';
 import { REELS, ROWS } from '../../engine/config.ts';
 import type { Board, Cell, MultCell, SymbolId } from '../../engine/types.ts';
 import { hasTexture, isPainted, symbolTexture, tex } from '../assets.ts';
@@ -11,6 +11,21 @@ const S = 160;
 const BOARD_W = REELS * S;
 const BOARD_H = ROWS * S;
 const SYMBOL_SIZE = S * 0.86;
+
+/**
+ * Measured on the painted frame (art/source/panel_board.webp, 1374x1145): its 5 divider lines
+ * give a column pitch of 191.75 px and an inner window from x 111 to 1262, y 206 to 918.
+ * The window is wider than a 6x5 grid of square cells, so the frame is nine-sliced and only
+ * its plain middle band (y 215 to 815) is stretched vertically; corners stay undistorted.
+ */
+const BOARD_FRAME = { left: 111, top: 206, bottom: 918, pitch: 191.75, sliceTop: 215, sliceBottom: 330, sliceSide: 140 };
+
+interface FrameBox {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
 
 class CellView {
   readonly root = new Container();
@@ -50,6 +65,8 @@ export class Scene {
   private readonly bg = new Sprite();
   private readonly world = new Container();
   private readonly panel = new Sprite();
+  /** Board-unit box covered by the frame (for layout). */
+  private frameBox: FrameBox = { x: -55, y: -46, w: BOARD_W + 110, h: BOARD_H + 92 };
   private readonly grid = new Container();
   private readonly fx = new Container();
   private readonly gridMask = new Graphics();
@@ -65,14 +82,9 @@ export class Scene {
     this.bg.texture = tex('bg');
     this.bg.anchor.set(0.5);
     app.stage.addChild(this.bg, this.world);
-    this.panel.texture = tex('panel');
-    this.panel.anchor.set(0.5);
-    this.panel.width = BOARD_W + 110;
-    this.panel.height = BOARD_H + 92;
-    this.panel.position.set(BOARD_W / 2, BOARD_H / 2);
     this.gridMask.rect(-10, -6, BOARD_W + 20, BOARD_H + 12).fill(0xffffff);
     this.grid.mask = this.gridMask;
-    this.world.addChild(this.panel, this.gridMask, this.grid, this.fx);
+    this.world.addChild(this.makeFrame(), this.gridMask, this.grid, this.fx);
     this.setBoard(board, []);
     this.layout();
     window.addEventListener('resize', () => this.layout());
@@ -85,6 +97,29 @@ export class Scene {
         if (v.symbol === 'SC' || v.symbol === 'JK') v.sprite.rotation = Math.sin(t * 2 + r + row) * 0.06;
       }));
     });
+  }
+
+  /** The painted candy-cane frame when imported, else the vector panel. */
+  private makeFrame(): Container {
+    if (!hasTexture('frame')) {
+      this.panel.texture = tex('panel');
+      this.panel.anchor.set(0.5);
+      this.panel.width = BOARD_W + 110;
+      this.panel.height = BOARD_H + 92;
+      this.panel.position.set(BOARD_W / 2, BOARD_H / 2);
+      return this.panel;
+    }
+    const t = tex('frame');
+    const f = BOARD_FRAME;
+    const frame = new NineSliceSprite({ texture: t, leftWidth: f.sliceSide, rightWidth: f.sliceSide, topHeight: f.sliceTop, bottomHeight: f.sliceBottom });
+    const k = S / f.pitch; // texture px -> board units
+    const extra = ROWS * f.pitch - (f.bottom - f.top); // window height the grid needs beyond the painted one
+    frame.width = t.width;
+    frame.height = t.height + extra;
+    frame.scale.set(k);
+    frame.position.set(-f.left * k, -f.top * k);
+    this.frameBox = { x: frame.x, y: frame.y, w: t.width * k, h: (t.height + extra) * k };
+    return frame;
   }
 
   /** Lays the board out above the bottom HUD (and beside the side panel on wide screens). */
@@ -101,14 +136,16 @@ export class Scene {
     const side = portrait ? 0 : Math.min(240, w * 0.16);
     const availW = w - side * 2 - 24;
     const availH = h - hudH - top - 16;
-    const k = Math.min(availW / (BOARD_W + 110), availH / (BOARD_H + 92));
+    const fb = this.frameBox;
+    const k = Math.min(availW / fb.w, availH / fb.h);
     this.world.scale.set(k);
-    this.world.position.set((w - BOARD_W * k) / 2, top + (availH - BOARD_H * k) / 2 + 8);
+    // centre the frame (not just the grid) in the available area
+    this.world.position.set((w - fb.w * k) / 2 - fb.x * k, top + (availH - fb.h * k) / 2 - fb.y * k);
     document.documentElement.style.setProperty('--board-top', `${this.world.y}px`);
     document.documentElement.style.setProperty('--board-left', `${this.world.x}px`);
     document.documentElement.style.setProperty('--board-w', `${BOARD_W * k}px`);
     document.documentElement.style.setProperty('--board-h', `${BOARD_H * k}px`);
-    document.documentElement.style.setProperty('--board-pad', `${55 * k}px`);
+    document.documentElement.style.setProperty('--board-pad', `${Math.max(-fb.x, fb.x + fb.w - BOARD_W) * k}px`);
   }
 
   private pos(reel: number, row: number) {

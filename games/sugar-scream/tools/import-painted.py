@@ -2,8 +2,8 @@
 
 Symbols are art/source/sym_<ID>.(webp|png); buttons are art/source/btn_<name>.(webp|png)
 (btn_spin, btn_spin_active, btn_auto, btn_turbo, btn_menu, btn_sound, btn_mute, btn_minus,
-btn_plus, btn_buy, btn_ante); backgrounds are bg_<base|cauldron|fullmoon> and UI panels
-panel_<free|meter>.
+btn_plus, btn_buy, btn_ante); backgrounds are bg_<base|cauldron|fullmoon|tot|loading|intro> and UI
+panels panel_<free|meter|door|board>.
 
 Each sym_<ID>.(webp|png) source is trimmed to its visible pixels, centred on a square
 canvas with a little padding (so every symbol has the same visual size), resized to
@@ -72,6 +72,13 @@ panels = []
 for path in sources("panel"):
     name = path.stem.split("_", 1)[1]
     im = Image.open(path).convert("RGBA")
+    if name == "board":
+        # The board frame is used at its native size: the client maps the frame's measured
+        # inner window (BOARD_FRAME in src/client/game/scene.ts) onto the 6x5 grid.
+        im.save(OUT / f"panel_{name}.webp", "WEBP", quality=90, method=6)
+        panels.append(name)
+        print(f"panel_{name}: {path.name} -> public/assets/panel_{name}.webp ({im.width}x{im.height}, native)")
+        continue
     im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 8 else 0).getbbox())
     width = 800 if im.width > im.height else 480
     im = im.resize((width, round(im.height * width / im.width)), Image.LANCZOS)

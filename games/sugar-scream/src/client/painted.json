@@ -1,1 +1,1 @@
-{"symbols": ["BH", "BT", "CC", "EY", "GM", "PA", "PU", "SC", "SL", "WP"], "buttons": ["ante", "buy", "menu", "minus", "mute", "sound"], "backgrounds": ["base", "cauldron", "fullmoon"], "panels": ["free", "meter"]}
+{"symbols": ["BH", "BT", "CC", "EY", "GM", "PA", "PU", "SC", "SL", "WP"], "buttons": ["ante", "buy", "menu", "minus", "mute", "sound"], "backgrounds": ["base", "cauldron", "fullmoon", "intro", "loading", "tot"], "panels": ["board", "door", "free", "meter"]}

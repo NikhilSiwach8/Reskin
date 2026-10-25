@@ -16,6 +16,11 @@ const PANELS = new Set<string>(painted.panels);
 
 export const isPainted = (id: SymbolId) => PAINTED.has(id);
 
+/** URL of a painted background image (bg_<name>.webp), or null. */
+export function bgSrc(name: string): string | null {
+  return BACKGROUNDS.has(name) ? `assets/bg_${name}.webp` : null;
+}
+
 /** URL of a painted UI panel (panel_free, panel_meter), or null. */
 export function panelSrc(name: string): string | null {
   return PANELS.has(name) ? `assets/panel_${name}.webp` : null;
@@ -41,6 +46,7 @@ export async function loadAssets(onProgress: (p: number) => void): Promise<strin
     // Backgrounds: painted ones where imported, else the vector base scene.
     BACKGROUNDS.has('base') ? { alias: 'bg', src: 'assets/bg_base.webp', data: {} } : { alias: 'bg', src: 'assets/bg.svg', data: { resolution: 1 } },
     ...['cauldron', 'fullmoon'].filter((n) => BACKGROUNDS.has(n)).map((n) => ({ alias: `bg_${n}`, src: `assets/bg_${n}.webp`, data: {} })),
+    ...(PANELS.has('board') ? [{ alias: 'frame', src: 'assets/panel_board.webp', data: {} }] : []),
   ];
   let done = 0;
   const failures: string[] = [];

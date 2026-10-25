@@ -15,10 +15,10 @@
     {
       "mode": "ante",
       "cost": 1.25,
-      "rtp": 0.9600000000438935,
+      "rtp": 0.9599999999996461,
       "maxWin": 5000,
-      "maxWinProbability": 3.6933336000705134e-8,
-      "hitRate": 0.43130248069060356
+      "maxWinProbability": 4.7333327999091785e-8,
+      "hitRate": 0.44849544344814524
     },
     {
       "mode": "bonus",
