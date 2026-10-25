@@ -276,8 +276,11 @@ export class Hud {
   }
 
   /** A full-screen card; resolves on the button, or after `autoMs` (autoplay / turbo / replay). */
-  splash(title: string, sub: string, button: string, autoMs: number | null): Promise<void> {
+  splash(title: string, sub: string, button: string, autoMs: number | null, art?: string | null): Promise<void> {
     this.splashOpen = true;
+    $('#splash').classList.toggle('painted-bg', !!art);
+    if (art) $('#splash').style.setProperty('--bg', `url(${art})`);
+    $('#splash').dataset.art = art?.match(/bg_(\w+)\./)?.[1] ?? '';
     $('#splash-title').textContent = t(title);
     $('#splash-sub').textContent = t(sub);
     const go = $<HTMLButtonElement>('#splash-go');
@@ -385,14 +388,20 @@ export class Hud {
       door.classList.add('knocked');
       await wait(auto ? 150 : 350);
       const prize = document.createElement('div');
-      prize.className = `prize ${k.prize}`;
-      if (k.prize === 'treat') {
-        total += k.amount;
-        prize.innerHTML = `<img class="icon" src="${symbolSrc('PU')}" alt=""><span>${fmt(k.amount)}</span>`;
-      } else if (k.prize === 'trick') {
-        prize.innerHTML = `<img class="icon" src="assets/ghost.svg" alt=""><span>${t('BOO!')}</span>`;
+      const art = panelSrc(`door_${k.prize}`);
+      const label = k.prize === 'treat' ? fmt(k.amount) : k.prize === 'trick' ? t('BOO!') : t('Free Spins!');
+      if (k.prize === 'treat') total += k.amount;
+      if (art) {
+        // painted reveal: the door swings open on its prize, with the amount on a ribbon
+        door.style.backgroundImage = `url(${art})`;
+        prize.className = `prize ${k.prize} over-art`;
+        prize.innerHTML = `<span></span>`;
+        prize.querySelector('span')!.textContent = label;
       } else {
-        prize.innerHTML = `<img class="icon" src="${symbolSrc('SC')}" alt=""><span>${t('Free Spins!')}</span>`;
+        const icon = k.prize === 'treat' ? symbolSrc('PU') : k.prize === 'trick' ? 'assets/ghost.svg' : symbolSrc('SC');
+        prize.className = `prize ${k.prize}`;
+        prize.innerHTML = `<img class="icon" src="${icon}" alt=""><span></span>`;
+        prize.querySelector('span')!.textContent = label;
       }
       door.appendChild(prize);
       onReveal(k);

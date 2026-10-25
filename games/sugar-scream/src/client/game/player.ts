@@ -3,6 +3,7 @@
 import { applyTumble, cellsOf, winningCells } from '../../engine/board.ts';
 import { FREE_SPINS, SYMBOLS } from '../../engine/config.ts';
 import type { Board, GameEvent, SymbolId } from '../../engine/types.ts';
+import { bgSrc } from '../assets.ts';
 import type { Audio } from '../audio.ts';
 import { Hud, wait, type KnockEvent } from '../hud.ts';
 import { t } from '../text.ts';
@@ -166,7 +167,7 @@ export class Player {
           const sub = e.kind === 'fullMoon'
             ? `${e.spins} free spins\nThe Cauldron starts at x${e.cauldron} and every Jack-o'-Lantern counts double.`
             : `${e.spins} free spins\nJack-o'-Lanterns on winning spins fill the Cauldron, which multiplies every later win.`;
-          await this.hud.splash(def.name, sub, 'Start', autoMs());
+          await this.hud.splash(def.name, sub, 'Start', autoMs(), bgSrc(e.kind === 'fullMoon' ? 'fs_fullmoon' : 'fs_cauldron'));
           this.scene.setMode(e.kind);
           this.hud.showFree(def.name, 0, e.spins);
           this.hud.setCauldron(e.cauldron);
@@ -187,7 +188,7 @@ export class Player {
           break;
         case 'freeSpinsEnd':
           this.audio.play('end');
-          await this.hud.splash(`${FREE_SPINS[e.kind].name} complete`, `Feature win\n${this.o.fmt(e.featureWin)}`, 'Collect', autoMs());
+          await this.hud.splash(`${FREE_SPINS[e.kind].name} complete`, `Feature win\n${this.o.fmt(e.featureWin)}`, 'Collect', autoMs(), bgSrc('feature_end'));
           this.scene.setMode('base');
           this.hud.hideFree();
           this.hud.setTumble(null);

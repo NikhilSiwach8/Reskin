@@ -104,6 +104,14 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outl
 #intro.painted-bg .splash-card { background: linear-gradient(180deg, rgba(40, 6, 70, 0.82), rgba(14, 2, 30, 0.86)); backdrop-filter: blur(3px); max-width: min(560px, 46vw); }
 #tot.painted-bg { background: linear-gradient(rgba(10, 0, 25, 0.35), rgba(10, 0, 25, 0.6)), var(--bg) center / cover no-repeat, #0b0326; }
 
+#splash.painted-bg { justify-content: flex-start; padding-top: 6vh; }
+#splash.painted-bg[data-art='fs_fullmoon'] { justify-content: center; align-items: flex-end; padding: 0 5vw 0 0; }
+#splash.painted-bg[data-art='fs_fullmoon'] .splash-card { max-width: min(520px, 42vw); }
+#splash.painted-bg .splash-card { background: linear-gradient(180deg, rgba(40, 6, 70, 0.72), rgba(14, 2, 30, 0.8)); backdrop-filter: blur(2px); }
+.door .prize.over-art { inset: auto 4% 6% 4%; border-radius: 14px; padding: 4px 2px; background: rgba(30, 4, 50, 0.82); border: 2px solid var(--gold); color: var(--gold); box-shadow: none; }
+.door .prize.over-art.trick { color: #cfe3ff; border-color: #8fb6ff; }
+.door .prize.over-art.lollipop { color: #fff; border-color: #ff7ad8; background: rgba(180, 30, 214, 0.85); }
+
 /* ------------------------------------------------------------------ overlays */
 #banner { position: fixed; left: 50%; top: calc(var(--board-top) + var(--board-h) / 2); transform: translate(-50%, -50%); text-align: center; z-index: 6; pointer-events: none; animation: pop 0.35s ease-out; }
 #banner-title { font-family: var(--fh); font-size: clamp(28px, 8vw, 84px); white-space: nowrap; color: var(--gold); text-shadow: 0 0 20px #ff4fb0, 0 5px 0 #5a1300; letter-spacing: 2px; }
@@ -182,6 +190,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outl
   #tumble-win { display: none !important; }
   #intro.painted-bg { align-items: center; padding-left: 0; }
   #intro.painted-bg .splash-card { max-width: 92vw; }
+  #splash.painted-bg[data-art='fs_fullmoon'] { justify-content: flex-start; align-items: center; padding: 6vh 0 0; }
+  #splash.painted-bg[data-art='fs_fullmoon'] .splash-card { max-width: 92vw; }
   #cauldron.painted-panel { background: linear-gradient(180deg, rgba(60, 10, 90, 0.9), rgba(20, 4, 40, 0.92)); border: 3px solid var(--lime); aspect-ratio: auto; padding: 4px 10px; }
   .meter.painted-panel { min-width: 0; padding: 5px 12px; }
   body.in-free #side-right { display: none; }
