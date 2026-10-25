@@ -52,13 +52,15 @@ for (const viewport of [{ width: 1600, height: 900 }, { width: 390, height: 844 
   await page.goto(`http://localhost:5197${PREFIX}index.html?sessionID=build-${Date.now()}&rgs_url=localhost:5197/rgs&lang=en&currency=USD`);
   await page.waitForSelector('#loading', { state: 'hidden', timeout: 120000 });
   await page.evaluate(() => document.querySelector('#intro-go')?.click());
-  await page.click('#btn-turbo');
+  await page.click('#btn-turbo', { force: true });
   const settle = async (label) => {
     // dialogs (free-spin intro / outro) continue by themselves in turbo
     await page.waitForFunction(() => !document.querySelector('#btn-spin').classList.contains('spinning'), null, { timeout: 300000, polling: 300 })
       .catch(() => problems.push(`${label}: round did not finish`));
     await page.waitForTimeout(300);
   };
+  // the spin and buy buttons animate continuously, so clicks must not wait for them to be "stable"
+  const tap = (sel) => page.click(sel, { force: true });
   const play = async (label, start) => {
     const before = money(await page.textContent('#meter-balance .meter-value'));
     lastRound = null;
@@ -72,16 +74,15 @@ for (const viewport of [{ width: 1600, height: 900 }, { width: 390, height: 844 
     console.log(`  ${label.padEnd(16)} ${r.mode.padEnd(8)} payout ${r.payoutMultiplier}x  balance ${before} -> ${after}`);
   };
   console.log(`${viewport.width}x${viewport.height}`);
-  for (let i = 1; i <= 4; i++) await play(`spin ${i}`, () => page.click('#btn-spin'));
+  for (let i = 1; i <= 4; i++) await play(`spin ${i}`, () => tap('#btn-spin'));
   for (const [n, label] of [[1, 'buy cauldron'], [2, 'buy full moon']]) {
     await play(label, async () => {
-      await page.click('#btn-buy');
-      await page.click(`#buy-options .buy-option:nth-child(${n}) button`);
-      await page.click('#confirm-yes');
+      await tap('#btn-buy');
+      await tap(`#buy-options .buy-option:nth-child(${n}) button`);
+      await tap('#confirm-yes');
     });
   }
-  await page.click('#btn-menu');
-  await page.click('#btn-rules');
+  await page.click('#btn-info', { force: true });
   await page.waitForTimeout(500);
   if (!(await page.textContent('#rules-body')).includes('96.00%')) problems.push('rules panel shows no RTP');
   const ok = problems.length === 0;

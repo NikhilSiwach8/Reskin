@@ -4,6 +4,7 @@ import { Application, Container, Graphics, NineSliceSprite, Sprite, Text, type T
 import { REELS, ROWS } from '../../engine/config.ts';
 import type { Board, Cell, MultCell, SymbolId } from '../../engine/types.ts';
 import { hasTexture, isPainted, symbolTexture, tex } from '../assets.ts';
+import { Ambience, type AmbientMode } from './ambience.ts';
 import { Tweener, ease } from './tween.ts';
 
 /** Board design units: one cell is S x S. */
@@ -32,6 +33,11 @@ class CellView {
   readonly sprite = new Sprite();
   label: Text | null = null;
   symbol: SymbolId;
+  /** Sprite scale that makes the symbol SYMBOL_SIZE wide; idle animation multiplies it. */
+  baseScale = 1;
+  /** Idle "wiggle" countdown (seconds left, 0 = none). */
+  wiggle = 0;
+  glow: Graphics | null = null;
 
   constructor(symbol: SymbolId, mult: number) {
     this.symbol = symbol;
@@ -43,8 +49,10 @@ class CellView {
   set(symbol: SymbolId, mult: number): void {
     this.symbol = symbol;
     this.sprite.texture = symbolTexture(symbol);
+    this.sprite.tint = 0xffffff;
     this.sprite.width = SYMBOL_SIZE;
     this.sprite.height = SYMBOL_SIZE;
+    this.baseScale = this.sprite.scale.x;
     this.label?.destroy();
     this.label = null;
     if (symbol === 'JK' && mult > 0) {
@@ -58,12 +66,31 @@ class CellView {
       this.root.addChild(this.label);
     }
   }
+
+  /** A soft additive halo behind the symbol (winning cells). */
+  showGlow(color: number): Graphics {
+    if (!this.glow) {
+      this.glow = new Graphics();
+      for (let i = 4; i >= 1; i--) this.glow.circle(0, 0, S * 0.14 * i).fill({ color, alpha: 0.16 });
+      this.glow.blendMode = 'add';
+      this.root.addChildAt(this.glow, 0);
+    }
+    this.glow.visible = true;
+    return this.glow;
+  }
+
+  hideGlow(): void {
+    if (this.glow) this.glow.visible = false;
+  }
 }
 
 export class Scene {
   readonly tween: Tweener;
-  private readonly bg = new Sprite();
+  private readonly ambience: Ambience;
   private readonly world = new Container();
+  private readonly frameGlow = new Graphics();
+  private readonly lantern = new Graphics();
+  private glowColor = 0xff4fb0;
   private readonly panel = new Sprite();
   /** Board-unit box covered by the frame (for layout). */
   private frameBox: FrameBox = { x: -55, y: -46, w: BOARD_W + 110, h: BOARD_H + 92 };
@@ -79,24 +106,92 @@ export class Scene {
     this.app = app;
     this.ticker = app.ticker;
     this.tween = new Tweener(app.ticker);
-    this.bg.texture = tex('bg');
-    this.bg.anchor.set(0.5);
-    app.stage.addChild(this.bg, this.world);
+    this.ambience = new Ambience(app, tex('bg'));
+    app.stage.addChild(this.ambience.root, this.world);
     this.gridMask.rect(-10, -6, BOARD_W + 20, BOARD_H + 12).fill(0xffffff);
     this.grid.mask = this.gridMask;
-    this.world.addChild(this.makeFrame(), this.gridMask, this.grid, this.fx);
+    const frame = this.makeFrame();
+    this.frameGlow.blendMode = 'add';
+    this.lantern.blendMode = 'add';
+    this.world.addChild(this.frameGlow, frame, this.lantern, this.gridMask, this.grid, this.fx);
+    this.drawFrameGlow();
     this.setBoard(board, []);
     this.layout();
     window.addEventListener('resize', () => this.layout());
-    // idle bob of the Jack-o'-Lanterns and Lollipops
-    let t = 0;
-    this.ticker.add((tk) => {
-      t += tk.deltaMS / 1000;
-      if (this.reduced) return;
-      this.views.forEach((col, r) => col.forEach((v, row) => {
-        if (v.symbol === 'SC' || v.symbol === 'JK') v.sprite.rotation = Math.sin(t * 2 + r + row) * 0.06;
-      }));
-    });
+    this.ticker.add((tk) => this.idle(Math.min(tk.deltaMS, 50) / 1000));
+  }
+
+  private t = 0;
+  private nextWiggle = 1.5;
+
+  /** Idle life: symbols breathe, a random one wiggles now and then, lanterns flicker, the frame glows. */
+  private idle(dt: number): void {
+    this.ambience.reduced = this.reduced;
+    if (this.reduced) {
+      this.frameGlow.alpha = 0.5;
+      this.lantern.alpha = 0.5;
+      return;
+    }
+    this.t += dt;
+    const t = this.t;
+    this.frameGlow.alpha = 0.45 + Math.sin(t * 1.8) * 0.25;
+    this.lantern.alpha = 0.55 + Math.sin(t * 9) * 0.12 + Math.sin(t * 23) * 0.08 + (Math.random() < 0.03 ? -0.3 : 0);
+    this.nextWiggle -= dt;
+    if (this.nextWiggle <= 0) {
+      const col = this.views[Math.floor(Math.random() * this.views.length)];
+      const v = col?.[Math.floor(Math.random() * col.length)];
+      if (v && !v.root.destroyed) v.wiggle = 0.7;
+      this.nextWiggle = 0.8 + Math.random() * 1.6;
+    }
+    this.views.forEach((col, r) => col.forEach((v, row) => {
+      if (v.root.destroyed) return;
+      const phase = t * 2.1 + r * 0.7 + row * 1.1;
+      let sx = 1 + Math.sin(phase) * 0.025;
+      let sy = 1 + Math.cos(phase) * 0.025;
+      let rot = v.symbol === 'SC' || v.symbol === 'JK' ? Math.sin(t * 2 + r + row) * 0.07 : 0;
+      if (v.wiggle > 0) {
+        v.wiggle = Math.max(0, v.wiggle - dt);
+        const k = v.wiggle / 0.7;
+        rot += Math.sin(v.wiggle * 40) * 0.16 * k;
+        sx += Math.sin(v.wiggle * 26) * 0.08 * k;
+        sy -= Math.sin(v.wiggle * 26) * 0.08 * k;
+      }
+      v.sprite.scale.set(v.baseScale * sx, v.baseScale * sy);
+      v.sprite.rotation = rot;
+      // Jack-o'-Lanterns flicker like candlelight
+      if (v.symbol === 'JK') {
+        const f = 0.82 + Math.sin(t * 11 + r) * 0.08 + Math.sin(t * 27 + row) * 0.06;
+        const c = Math.round(255 * Math.min(1, f + 0.1));
+        v.sprite.tint = (255 << 16) | (c << 8) | Math.round(c * 0.85);
+      }
+    }));
+  }
+
+  /** Pulsing coloured halo around the frame and the flicker glow over the frame's pumpkin. */
+  private drawFrameGlow(): void {
+    const fb = this.frameBox;
+    this.frameGlow.clear();
+    for (let i = 1; i <= 5; i++) {
+      const pad = i * 9;
+      this.frameGlow.roundRect(fb.x - pad + 30, fb.y - pad + 30, fb.w + pad * 2 - 60, fb.h + pad * 2 - 60, 60 + pad).stroke({ color: this.glowColor, width: 12, alpha: 0.12 });
+    }
+    this.lantern.clear();
+    if (hasTexture('frame')) {
+      // the painted frame's pumpkin sits top centre, about 94 px down its 1374 px wide texture
+      const k = S / BOARD_FRAME.pitch;
+      const y = (-BOARD_FRAME.top + 94) * k;
+      for (let i = 5; i >= 1; i--) this.lantern.circle(BOARD_W / 2, y, 16 * i).fill({ color: 0xffa000, alpha: 0.13 });
+    }
+  }
+
+  /** Short screen shake for big moments (board only, not the HUD). */
+  async shake(ms = 420, amp = 10): Promise<void> {
+    if (this.reduced) return;
+    await this.tween.run(ms, (p) => {
+      const a = amp * (1 - p);
+      this.world.pivot.set(Math.sin(p * 60) * a, Math.cos(p * 47) * a * 0.6);
+    }, ease.linear);
+    this.world.pivot.set(0, 0);
   }
 
   /** The painted candy-cane frame when imported, else the vector panel. */
@@ -126,12 +221,10 @@ export class Scene {
   layout(): void {
     const w = this.app.screen.width;
     const h = this.app.screen.height;
-    const scale = Math.max(w / (this.bg.texture.width || 1920), h / (this.bg.texture.height || 1080));
-    this.bg.scale.set(scale);
-    this.bg.position.set(w / 2, h / 2);
+    this.ambience.layout();
     const portrait = h > w;
-    // portrait: the HUD plus the row of side buttons / feature panels above it
-    const hudH = portrait ? Math.min(190, h * 0.3) + 92 : h <= 460 ? 84 : Math.min(118, h * 0.2);
+    // the bottom HUD (and, in portrait, the row of feature panels above it); matches --hud-h in styles.css
+    const hudH = portrait ? Math.min(214, h * 0.32) + 62 : h <= 460 ? 86 : 124;
     const top = portrait ? 64 : Math.min(84, h * 0.13);
     const side = portrait ? 0 : Math.min(240, w * 0.16);
     const availW = w - side * 2 - 24;
@@ -173,8 +266,9 @@ export class Scene {
     // A painted feature background when one exists, else the base scene tinted for the feature.
     const name = mode === 'base' ? 'bg' : mode === 'fullMoon' ? 'bg_fullmoon' : 'bg_cauldron';
     const own = mode === 'base' || hasTexture(name);
-    this.bg.texture = tex(own ? name : 'bg');
-    this.bg.tint = own ? 0xffffff : mode === 'fullMoon' ? 0xffb0a0 : 0xd8c8ff;
+    this.ambience.setBackground(tex(own ? name : 'bg'), own ? 0xffffff : mode === 'fullMoon' ? 0xffb0a0 : 0xd8c8ff, mode as AmbientMode);
+    this.glowColor = mode === 'fullMoon' ? 0xff6a1a : mode === 'cauldron' ? 0x9dff4a : 0xff4fb0;
+    this.drawFrameGlow();
     this.layout();
   }
 
@@ -196,9 +290,20 @@ export class Scene {
       const target = v.root.y;
       v.root.y = target - BOARD_H - S;
       const delay = reel * 70 + (ROWS - 1 - row) * 22;
-      jobs.push(this.tween.wait(delay).then(() => this.tween.run(380, (p) => { v.root.y = target - (1 - p) * (BOARD_H + S); }, ease.outBack)));
+      jobs.push(this.tween.wait(delay)
+        .then(() => this.tween.run(340, (p) => { v.root.y = target - (1 - p) * (BOARD_H + S); }, ease.inQuad))
+        .then(() => this.squash(v)));
     }));
     await Promise.all(jobs);
+  }
+
+  /** Jelly landing: squash wide, then spring back. */
+  private squash(v: CellView): Promise<void> {
+    if (this.reduced || v.root.destroyed) return Promise.resolve();
+    return this.tween.run(260, (p) => {
+      const k = Math.sin(p * Math.PI) * (1 - p) * 0.9;
+      v.root.scale.set(1 + k * 0.22, 1 - k * 0.26);
+    }, ease.linear).then(() => { if (!v.root.destroyed) v.root.scale.set(1); });
   }
 
   /** Pulses the winning cells and dims the rest. */
@@ -211,17 +316,26 @@ export class Scene {
         jobs.push(this.tween.to(v.root, { alpha: 0.45 }, 200));
         return;
       }
-      jobs.push(this.tween.run(520, (p) => v.root.scale.set(1 + Math.sin(p * Math.PI * 2) * 0.12), ease.linear));
+      const glow = v.showGlow(this.glowColor === 0xff4fb0 ? 0xffd34d : this.glowColor);
+      jobs.push(this.tween.run(620, (p) => {
+        v.root.scale.set(1 + Math.sin(p * Math.PI * 2) * 0.12);
+        glow.alpha = Math.sin(p * Math.PI) * 0.9 + 0.1;
+        glow.scale.set(0.8 + p * 0.5);
+      }, ease.linear));
     }));
     await Promise.all(jobs);
   }
 
   undim(): void {
-    for (const col of this.views) for (const v of col) v.root.alpha = 1;
+    for (const col of this.views) for (const v of col) {
+      v.root.alpha = 1;
+      v.hideGlow();
+    }
   }
 
   /** Winning candies burst into sugar sparks. */
   async explode(cells: Cell[]): Promise<void> {
+    if (cells.length >= 12) void this.shake(320, 6 + Math.min(10, cells.length - 12));
     const jobs = cells.map((c) => {
       const v = this.views[c.reel][c.row];
       this.flash('p_fx_pop', v.root.x, v.root.y, 1.15);
@@ -258,7 +372,11 @@ export class Scene {
         if (v.symbol !== board[reel][row]) v.set(board[reel][row], mults.find((m) => m.reel === reel && m.row === row)?.value ?? 0);
         const y0 = v.root.y;
         const y1 = this.pos(reel, row).y;
-        if (y0 !== y1) jobs.push(this.tween.wait(reel * 30).then(() => this.tween.run(320, (p) => { v.root.y = y0 + (y1 - y0) * p; }, ease.outBack)));
+        if (y0 !== y1) {
+          jobs.push(this.tween.wait(reel * 30)
+            .then(() => this.tween.run(300, (p) => { v.root.y = y0 + (y1 - y0) * p; }, ease.inQuad))
+            .then(() => this.squash(v)));
+        }
       });
       next.push(col);
     }

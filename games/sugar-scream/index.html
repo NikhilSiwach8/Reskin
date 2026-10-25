@@ -26,33 +26,36 @@
       </div>
     </aside>
 
-    <aside id="side-right">
-      <button id="btn-buy" class="side-btn" type="button"><span class="big">Buy</span><span>Feature</span></button>
-      <label id="ante" class="side-btn ante" title="Ante Bet">
-        <input type="checkbox" id="ante-toggle" />
-        <span class="big">Ante Bet</span>
-        <span id="ante-price">1.25x bet</span>
-        <span class="small">Lollipops land more often</span>
-      </label>
-    </aside>
-
     <footer id="hud">
+      <!-- bottom left: game info, bonus buy, Ante Bet -->
       <div class="hud-left">
-        <button id="btn-menu" class="round-btn" type="button" aria-label="Menu">☰</button>
-        <button id="btn-sound" class="round-btn" type="button" aria-label="Mute">🔊</button>
-        <div class="meter" id="meter-balance"><span class="meter-label">Balance</span><span class="meter-value">–</span></div>
+        <button id="btn-info" class="round-btn info" type="button" aria-label="Game info">i</button>
+        <button id="btn-buy" class="side-btn" type="button"><span class="big">Buy</span><span>Feature</span></button>
+        <label id="ante" class="side-btn ante" title="Ante Bet">
+          <input type="checkbox" id="ante-toggle" />
+          <span class="big">Ante Bet</span>
+          <span id="ante-price">1.25x bet</span>
+          <span class="small">Lollipops land more often</span>
+        </label>
       </div>
+      <!-- centre: balance and win -->
       <div class="hud-center">
-        <button id="btn-auto" class="round-btn" type="button" aria-label="Autoplay">⟳</button>
-        <button id="btn-spin" type="button" aria-label="Spin"><span id="spin-label">SPIN</span></button>
-        <button id="btn-turbo" class="round-btn" type="button" aria-label="Turbo">⚡</button>
-      </div>
-      <div class="hud-right">
+        <div class="meter" id="meter-balance"><span class="meter-label">Balance</span><span class="meter-value">–</span></div>
         <div class="meter" id="meter-win"><span class="meter-label">Win</span><span class="meter-value">–</span></div>
+      </div>
+      <!-- bottom right: bet, autoplay, spin, turbo, sound, settings -->
+      <div class="hud-right">
         <div class="meter bet" id="meter-bet">
           <button id="bet-minus" type="button" aria-label="Decrease bet">−</button>
           <div><span class="meter-label">Bet</span><span class="meter-value">–</span></div>
           <button id="bet-plus" type="button" aria-label="Increase bet">+</button>
+        </div>
+        <button id="btn-auto" class="round-btn" type="button" aria-label="Autoplay">⟳</button>
+        <button id="btn-spin" type="button" aria-label="Spin"><span id="spin-label">SPIN</span></button>
+        <button id="btn-turbo" class="round-btn" type="button" aria-label="Turbo">⚡</button>
+        <div class="hud-small">
+          <button id="btn-sound" class="round-btn" type="button" aria-label="Mute">🔊</button>
+          <button id="btn-menu" class="round-btn" type="button" aria-label="Settings">☰</button>
         </div>
       </div>
       <button id="btn-replay" class="hidden" type="button">Play</button>

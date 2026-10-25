@@ -66,6 +66,7 @@ export class Hud {
     $('#btn-sound').addEventListener('click', () => h.mute());
     $('#btn-menu').addEventListener('click', () => this.open('#modal-menu'));
     $('#btn-rules').addEventListener('click', () => { this.close('#modal-menu'); h.openRules(); });
+    $('#btn-info').addEventListener('click', () => h.openRules());
     $('#btn-replay').addEventListener('click', () => h.replayPlay());
     $<HTMLInputElement>('#ante-toggle').addEventListener('change', (e) => h.ante((e.target as HTMLInputElement).checked));
     $('#btn-buy').addEventListener('click', () => this.openBuy());
@@ -162,8 +163,32 @@ export class Hud {
     $('#meter-balance .meter-value').textContent = text;
   }
 
+  private winAnim = 0;
+
   setWin(text: string): void {
+    cancelAnimationFrame(this.winAnim);
     $('#meter-win .meter-value').textContent = text;
+  }
+
+  /** Counts the Win meter up from one amount to another (centi-bet), with a little pop. */
+  countWin(from: number, to: number, fmt: (centi: number) => string, ms: number): void {
+    cancelAnimationFrame(this.winAnim);
+    const el = $('#meter-win');
+    const value = $('#meter-win .meter-value');
+    el.classList.remove('pop');
+    void el.offsetWidth;
+    el.classList.add('pop');
+    if (ms <= 0) {
+      value.textContent = fmt(to);
+      return;
+    }
+    const start = performance.now();
+    const frame = () => {
+      const p = Math.min(1, (performance.now() - start) / ms);
+      value.textContent = fmt(Math.round(from + (to - from) * (1 - (1 - p) ** 3)));
+      if (p < 1) this.winAnim = requestAnimationFrame(frame);
+    };
+    frame();
   }
 
   setBet(text: string, canMinus: boolean, canPlus: boolean, locked: boolean): void {
@@ -223,7 +248,7 @@ export class Hud {
   }
 
   setReplayMode(): void {
-    document.querySelectorAll('#hud > div, #side-right').forEach((e) => e.classList.add('hidden'));
+    document.querySelectorAll('#hud > div').forEach((e) => e.classList.add('hidden'));
     $('#btn-replay').classList.remove('hidden');
   }
 
@@ -333,6 +358,24 @@ export class Hud {
   winScreen(tiers: { title: string; until: number; art?: string | null }[], amount: (p: number) => string, x: string, ms: number): Promise<void> {
     const el = $('#winscreen');
     el.classList.remove('hidden');
+    // candy rain made of the game's own symbols
+    el.querySelector('.candy-rain')?.remove();
+    if (!document.body.classList.contains('reduced')) {
+      const rain = document.createElement('div');
+      rain.className = 'candy-rain';
+      const ids = ['BH', 'WP', 'SL', 'GM', 'PA', 'EY', 'PU', 'BT', 'CC', 'SC', 'JK'] as const;
+      for (let i = 0; i < 26; i++) {
+        const img = document.createElement('img');
+        img.src = symbolSrc(ids[i % ids.length]);
+        img.alt = '';
+        img.style.left = `${Math.random() * 96}%`;
+        img.style.animationDuration = `${2.6 + Math.random() * 2.4}s`;
+        img.style.animationDelay = `${-Math.random() * 4}s`;
+        img.style.setProperty('--spin', `${(Math.random() < 0.5 ? -1 : 1) * (240 + Math.random() * 600)}deg`);
+        rain.appendChild(img);
+      }
+      el.insertBefore(rain, el.children[1] ?? null);
+    }
     $('#win-x').textContent = x;
     // painted tier lettering when imported, else the text title
     let shown = '';

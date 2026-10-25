@@ -140,7 +140,7 @@ export class Player {
           await this.hud.banner(`x${e.mult}`, `${this.o.fmt(e.base)} × ${e.mult} = ${this.o.fmt(e.base * e.mult)}`, this.ms(1300));
           break;
         case 'win':
-          this.hud.setWin(this.o.fmt(e.totalWin));
+          this.hud.countWin(e.totalWin - e.amount, e.totalWin, this.o.fmt, this.o.reduced() ? 0 : this.ms(700));
           if (e.kind === 'scatter') await this.hud.banner('Lollipop Pay', this.o.fmt(e.amount), this.ms(1100));
           break;
         case 'trickOrTreat': {
@@ -163,6 +163,7 @@ export class Player {
           this.inFeature = true;
           freeKind = e.kind;
           const def = FREE_SPINS[e.kind];
+          void this.scene.shake(600, 14);
           await this.scene.pulseCells(e.cells, this.ms(900));
           this.audio.play('bonus');
           const sub = e.kind === 'fullMoon'
@@ -179,6 +180,7 @@ export class Player {
           break;
         case 'retrigger':
           this.audio.play('retrigger');
+          void this.scene.shake(400, 8);
           await this.scene.pulseCells(e.cells, this.ms(700));
           await this.hud.banner(`+${e.added} Free Spins`, '', this.ms(1300));
           break;
@@ -197,6 +199,7 @@ export class Player {
           break;
         case 'wincap':
           this.audio.play('bigWin');
+          void this.scene.shake(900, 18);
           await this.hud.banner('MAX WIN', this.o.fmt(e.totalWin), this.ms(1800));
           break;
         case 'finalWin':

@@ -79,6 +79,12 @@ Build the upload zips with `npm run math:publish && npm run build && npm run rel
 2. **Frontend.** Upload `sugar-scream-frontend.zip`. The build is static, uses relative paths, and bundles all fonts and art, so it makes no external requests. The dev panel and local RGS are left out.
 3. **Launch / test / approval.** Same as [Midnight Vault](../midnight-vault/README.md#deploying-to-stake-engine): test authenticate, play, end-round, resume, replay, social mode and the jurisdiction flags on the real RGS, then submit replay IDs per mode.
 
+## Layout and animation
+
+- **Bottom left:** game info (rules and paytable), Buy Feature and the Ante Bet toggle. **Centre:** balance and win. **Bottom right:** bet −/+, autoplay, spin, turbo, sound and settings. On phones in portrait the left group sits above the spin row, with balance and win below.
+- **Animated scene** (`src/client/game/ambience.ts`, `scene.ts`): the background slowly breathes and drifts, and mode-coloured particles float up (sugar sparkles, brew bubbles in Haunted Cauldron, embers in Full Moon). Bats flap across now and then, and the base and free-spin scenes cross-fade. The frame has a pulsing glow and a flickering pumpkin. Symbols breathe, a random one wiggles now and then, and Jack-o'-Lanterns flicker. Landings squash and spring back, wins glow, big clusters, feature triggers and the max win shake the board, the Win meter counts up, and the win screens rain candy.
+- **Animated interface:** floating logo, breathing spin button, light sweep and hop on Buy, glowing Ante when on, pulsing info button, bubbling Cauldron panel and breathing Trick-or-Treat doors. Everything stops with reduced motion.
+
 ## Verified
 
 Checked in this environment (headless Chromium at 1600x900, 390x844, 360x640 and 844x390):
