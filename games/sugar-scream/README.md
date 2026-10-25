@@ -75,7 +75,7 @@ Checked in this environment (headless Chromium at 1600x900, 390x844, 360x640 and
 
 - **Not deployed to Stake Engine** (no account here). Built against the documented RGS contract and tested against the local mock only.
 - **Math is not certified.** Figures are exact for the published book set; the win-cap probability is a simulation estimate.
-- **Art:** painted symbols so far: Bleeding Heart, Witch's Potion, Slime Drop, Ghost Marshmallow, Poison Apple. The other symbols, the background, UI and splash art are still vector.
+- **Art:** all paying symbols and the Skull Lollipop are painted. The Jack-o'-Lantern, background, UI and splash art are still vector.
 - **Sound is procedural** (Web Audio synthesis), with no composed music.
 - **Devices:** only headless Chromium was tested. Real phones, Safari and Firefox still need testing.
 - **English only**; other `lang` values fall back to English.
