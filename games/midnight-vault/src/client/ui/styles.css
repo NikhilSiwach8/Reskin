@@ -346,3 +346,52 @@ body.reduced-motion #banner.show, body.reduced-motion .keys-row figure { animati
   .step-btn { width: 22px; height: 18px; }
   #btn-spin { width: 60px; height: 56px; margin-top: -10px; }
 }
+
+/* ================================================================
+   Splash screens
+   ================================================================ */
+.splash { position: fixed; inset: 0; z-index: 35; display: grid; place-items: center; overflow: hidden; background: #08050f; cursor: pointer; }
+.splash-bg { position: absolute; inset: -4%; background: center / cover no-repeat; filter: brightness(0.45) saturate(1.15); animation: splash-zoom 18s ease-in-out infinite alternate; }
+.splash::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, transparent 30%, rgba(5, 3, 10, 0.85) 100%); pointer-events: none; }
+.splash-content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: clamp(8px, 2vh, 18px); padding: 16px; text-align: center; max-width: 1100px; }
+.splash-logo { width: min(520px, 70vw); max-height: 34vh; object-fit: contain; animation: logo-float 3.2s ease-in-out infinite, logo-glow 2.4s ease-in-out infinite; }
+.splash-cards { display: flex; gap: clamp(8px, 2vw, 22px); flex-wrap: wrap; justify-content: center; }
+.splash-cards figure { margin: 0; width: clamp(150px, 26vw, 280px); padding: 12px; border-radius: 16px; border: 2px solid rgba(215, 165, 68, 0.75); background: rgba(16, 10, 30, 0.82); box-shadow: 0 0 24px rgba(125, 255, 168, 0.15); opacity: 0; animation: card-in 0.6s ease-out forwards; }
+.splash-cards figure:nth-child(2) { animation-delay: 0.15s; }
+.splash-cards figure:nth-child(3) { animation-delay: 0.3s; }
+.splash-cards img { width: 60%; aspect-ratio: 1; object-fit: contain; animation: art-bob 3s ease-in-out infinite; filter: drop-shadow(0 0 10px rgba(125, 255, 168, 0.5)); }
+.splash-cards b { display: block; font-family: var(--display); font-weight: 900; color: var(--gold); font-size: clamp(14px, 1.7vw, 20px); margin-top: 6px; }
+.splash-cards span { display: block; font-size: clamp(12px, 1.3vw, 15px); opacity: 0.88; margin-top: 4px; line-height: 1.35; }
+.splash-go { font-size: clamp(16px, 2.2vw, 22px); padding: 12px 34px; animation: go-pulse 1.6s ease-in-out infinite; }
+.splash-skip { display: flex; gap: 8px; align-items: center; font-size: 13px; opacity: 0.8; cursor: pointer; }
+.sb-art { width: clamp(140px, 24vh, 260px); aspect-ratio: 1; object-fit: contain; animation: art-bob 2.6s ease-in-out infinite, art-in 0.7s cubic-bezier(0.2, 1.6, 0.4, 1) both; filter: drop-shadow(0 0 22px rgba(125, 255, 168, 0.7)); }
+.sb-kicker { font-family: var(--serif); font-weight: 800; letter-spacing: 0.3em; text-transform: uppercase; color: var(--green); font-size: clamp(12px, 1.6vw, 16px); }
+.sb-title { font-family: var(--display); font-weight: 900; font-size: clamp(32px, 6vw, 72px); line-height: 1.05; color: #fff1b0; -webkit-text-stroke: 2px #150a20; text-shadow: 0 0 30px rgba(125, 255, 168, 0.6), 0 5px 0 #150a20; animation: title-in 0.6s ease-out 0.15s both; }
+.sb-value { font-family: var(--display); font-weight: 900; font-size: clamp(26px, 4.6vw, 54px); color: var(--green); text-shadow: 0 0 20px rgba(125, 255, 168, 0.7), 0 4px 0 #150a20; font-variant-numeric: tabular-nums; animation: title-in 0.6s ease-out 0.3s both; }
+.sb-desc { max-width: 620px; font-size: clamp(14px, 1.7vw, 18px); line-height: 1.45; opacity: 0.9; animation: title-in 0.6s ease-out 0.45s both; }
+.sb-auto { font-size: 12px; opacity: 0.6; min-height: 1em; }
+#splash-bonus[data-theme='phantomPayday'] .sb-title { text-shadow: 0 0 30px rgba(157, 102, 255, 0.8), 0 5px 0 #150a20; }
+#splash-bonus[data-theme='midnightCountdown'] .sb-title { text-shadow: 0 0 30px rgba(245, 161, 58, 0.8), 0 5px 0 #150a20; }
+@keyframes splash-zoom { from { transform: scale(1); } to { transform: scale(1.08) translateY(-1%); } }
+@keyframes logo-float { 50% { transform: translateY(-10px); } }
+@keyframes logo-glow { 50% { filter: drop-shadow(0 0 26px rgba(125, 255, 168, 0.75)); } }
+@keyframes card-in { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+@keyframes art-bob { 50% { transform: translateY(-8px) rotate(-2deg); } }
+@keyframes art-in { from { transform: scale(0.3); opacity: 0; } }
+@keyframes title-in { from { opacity: 0; transform: translateY(14px) scale(0.96); } }
+@keyframes go-pulse { 50% { box-shadow: 0 0 22px rgba(125, 255, 168, 0.8), 0 3px 0 #150a20; transform: scale(1.04); } }
+@media (max-height: 500px) and (orientation: landscape) {
+  .splash-cards figure { width: 150px; padding: 6px; }
+  .splash-cards span { display: none; }
+  .splash-logo { max-height: 26vh; }
+  .sb-art { width: 90px; }
+}
+body.reduced-motion .splash-bg, body.reduced-motion .splash-logo, body.reduced-motion .splash-cards img, body.reduced-motion .sb-art, body.reduced-motion .splash-go { animation: none; }
+body.reduced-motion .splash-cards figure { animation: none; opacity: 1; }
+
+/* Idle shimmer on the painted controls */
+#btn-spin:not(.spinning):not(:disabled) { animation: spin-idle 2.8s ease-in-out infinite; }
+@keyframes spin-idle { 50% { filter: brightness(1.12) drop-shadow(0 0 10px rgba(125, 255, 168, 0.55)); } }
+#btn-buy:not(:disabled) { animation: buy-shine 3.5s ease-in-out infinite; }
+@keyframes buy-shine { 50% { filter: brightness(1.18); box-shadow: 0 0 14px rgba(245, 201, 90, 0.6), 0 3px 0 #150a20; } }
+body.reduced-motion #btn-spin, body.reduced-motion #btn-buy { animation: none !important; }

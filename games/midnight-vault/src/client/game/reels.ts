@@ -9,23 +9,44 @@ import { ease, type Tweener } from './tween.ts';
 export const CELL = 150;
 const SYMBOL_SIZE = CELL * 0.92;
 const FILLER: SymbolId[] = SYMBOL_ORDER.filter((s) => s !== 'VK');
+const SPECIAL_LAND: SymbolId[] = ['RL', 'VK', 'VD', 'PH', 'CL', 'EL'];
+
+/** Idle motion style per symbol (presentation only). */
+type Idle = 'pulse' | 'sway' | 'float' | 'tick' | 'bob' | 'breathe' | 'none';
+const IDLE: Record<SymbolId, Idle> = {
+  RL: 'pulse', VK: 'sway', PH: 'float', CL: 'tick', VD: 'pulse', EL: 'bob',
+  LG: 'breathe', TC: 'breathe', GB: 'breathe', A: 'none', K: 'none', Q: 'none', J: 'none', T: 'none',
+};
+const GLOW_COLOR: Partial<Record<SymbolId, number>> = {
+  RL: 0x7dffa8, VK: 0x7dffa8, VD: 0xd7a544, PH: 0x9d66ff, CL: 0xb48cff, EL: 0x7dffa8, LG: 0xd7a544, TC: 0xf5a13a, GB: 0xf5a13a,
+};
 
 export class SymbolView extends Container {
   sym: SymbolId = 'A';
   private sprite = new Sprite();
+  private glow = new Sprite();
   private fallback?: Text;
+  private phase = Math.random() * Math.PI * 2;
+  private highlighted = false;
 
   constructor() {
     super();
     this.sprite.anchor.set(0.5);
-    this.addChild(this.sprite);
+    this.glow.anchor.set(0.5);
+    this.glow.blendMode = 'add';
+    this.glow.alpha = 0;
+    this.addChild(this.glow, this.sprite);
   }
 
   set(sym: SymbolId): void {
     this.sym = sym;
     this.sprite.texture = symbolTexture(sym);
-    this.sprite.width = SYMBOL_SIZE;
-    this.sprite.height = SYMBOL_SIZE;
+    this.glow.texture = this.sprite.texture;
+    this.glow.tint = GLOW_COLOR[sym] ?? 0xffffff;
+    this.sprite.width = this.sprite.height = SYMBOL_SIZE;
+    this.glow.width = this.glow.height = SYMBOL_SIZE * 1.06;
+    this.sprite.rotation = 0;
+    this.sprite.y = 0;
     if (isMissing('symbols')) {
       // Missing-asset fallback: keep the game readable with a text label.
       this.fallback ??= this.addChild(new Text({ text: '', style: { fill: '#E8E1CF', fontSize: 34, fontWeight: '700', align: 'center' } }));
@@ -39,10 +60,77 @@ export class SymbolView extends Container {
     this.alpha = 1;
     this.rotation = 0;
     this.sprite.tint = 0xffffff;
+    this.sprite.rotation = 0;
+    this.sprite.y = 0;
+    this.sprite.width = this.sprite.height = SYMBOL_SIZE;
+    this.highlighted = false;
+    this.glow.alpha = 0;
   }
 
   dim(on: boolean): void {
     this.sprite.tint = on ? 0x5a5070 : 0xffffff;
+  }
+
+  /** Strong pulsing glow while the symbol is part of a win. */
+  highlight(on: boolean): void {
+    this.highlighted = on;
+    if (!on) this.glow.alpha = 0;
+  }
+
+  /** Per-frame idle animation while the reel is at rest. */
+  idle(t: number, reduced: boolean): void {
+    const k = t / 1000 + this.phase;
+    const base = SYMBOL_SIZE;
+    if (this.highlighted) {
+      this.glow.alpha = 0.45 + Math.sin(k * 7) * 0.25;
+      return;
+    }
+    if (reduced) {
+      this.glow.alpha = 0;
+      return;
+    }
+    switch (IDLE[this.sym]) {
+      case 'pulse':
+        this.sprite.width = this.sprite.height = base * (1 + Math.sin(k * 2.4) * 0.03);
+        this.glow.alpha = 0.18 + Math.sin(k * 2.4) * 0.14;
+        break;
+      case 'sway':
+        this.sprite.rotation = Math.sin(k * 1.8) * 0.06;
+        this.glow.alpha = 0.12 + Math.sin(k * 3) * 0.08;
+        break;
+      case 'float':
+        this.sprite.y = Math.sin(k * 1.6) * 4;
+        this.glow.alpha = 0.1 + Math.sin(k * 1.6) * 0.08;
+        break;
+      case 'tick': {
+        // a small jolt once per second, like a ticking hand
+        const f = (t / 1000 + this.phase) % 1;
+        this.sprite.rotation = f < 0.08 ? Math.sin((f / 0.08) * Math.PI) * 0.05 : 0;
+        this.glow.alpha = 0.08 + (f < 0.1 ? 0.15 : 0);
+        break;
+      }
+      case 'bob':
+        this.sprite.y = Math.sin(k * 2) * 3;
+        this.sprite.rotation = Math.sin(k * 2 + 1) * 0.03;
+        this.glow.alpha = 0.12 + Math.sin(k * 2) * 0.1;
+        break;
+      case 'breathe':
+        this.sprite.width = this.sprite.height = base * (1 + Math.sin(k * 1.4) * 0.015);
+        this.glow.alpha = 0;
+        break;
+      default:
+        this.glow.alpha = 0;
+    }
+  }
+
+  /** Squash-and-stretch landing for special symbols. */
+  land(tweener: Tweener): Promise<void> {
+    return tweener.run(320, (p) => {
+      const sq = Math.sin(p * Math.PI) * (1 - p);
+      this.sprite.width = SYMBOL_SIZE * (1 + sq * 0.25);
+      this.sprite.height = SYMBOL_SIZE * (1 - sq * 0.18);
+      this.glow.alpha = (1 - p) * 0.6;
+    }, ease.linear);
   }
 }
 
@@ -127,6 +215,8 @@ export class ReelGrid extends Container {
   private tweener: Tweener;
   private speed = 0;
   private glow = new Graphics();
+  private time = 0;
+  reducedMotion = false;
   board: Board;
 
   constructor(tweener: Tweener, initial: Board) {
@@ -169,7 +259,11 @@ export class ReelGrid extends Container {
 
   /** Called every frame by the stage. */
   update(dt: number): void {
-    for (const r of this.reels) if (r.spinning) r.advance(this.speed * dt);
+    this.time += dt;
+    for (const r of this.reels) {
+      if (r.spinning) r.advance(this.speed * dt);
+      else for (const v of r.rowViews()) v.idle(this.time, this.reducedMotion);
+    }
   }
 
   /** Stops spinning reels on the given board with a staggered, decelerating landing. */
@@ -199,6 +293,7 @@ export class ReelGrid extends Container {
     if (anticipation) this.showAnticipation(i, false);
     onStop?.(i);
     if (!this.tweener.reducedMotion) {
+      for (const v of reel.rowViews()) if (SPECIAL_LAND.includes(v.sym)) void v.land(this.tweener);
       await this.tweener.run(150, (p) => (reel.y = Math.sin(p * Math.PI) * 14), ease.linear);
       reel.y = 0;
     }

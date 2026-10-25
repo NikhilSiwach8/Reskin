@@ -1,7 +1,7 @@
 // DOM user interface: control bar, feature panel, banners, modals.
 // All game text is rendered here (or as Pixi text), never baked into artwork.
 import type { LedgerState } from '../../engine/types.ts';
-import { t } from './text.ts';
+import { localizeTree, t } from './text.ts';
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector(sel) as T;
 
@@ -13,11 +13,35 @@ export interface HudHandlers {
   turbo: (on: boolean) => void;
   mute: () => void;
   buy: () => void;
-  settings: (s: { music: boolean; sfx: boolean; reduced: boolean; turbo: boolean }) => void;
+  settings: (s: Settings) => void;
   replayPlay: () => void;
   openRules: () => void;
   autoplaySummary: (count: number) => string;
   buyText: () => string;
+}
+
+export interface Settings {
+  music: boolean;
+  sfx: boolean;
+  reduced: boolean;
+  turbo: boolean;
+  scares: boolean;
+  intro: boolean;
+}
+
+export interface BonusSplash {
+  theme: string;
+  background: string;
+  art: string;
+  kicker: string;
+  title: string;
+  value: string;
+  desc: string;
+  button: string;
+  /** Continues automatically after this many ms. */
+  autoMs: number;
+  /** Optional per-frame update of the value text (count-up), p goes 0..1. */
+  countUp?: (p: number) => string;
 }
 
 export type SpinButtonState = 'idle' | 'spinning' | 'skip' | 'disabled';
@@ -66,7 +90,7 @@ export class Hud {
       this.close('#modal-auto');
       this.h.autoplay(this.autoCount, ($('#auto-stop-feature') as HTMLInputElement).checked);
     });
-    for (const id of ['#set-music', '#set-sfx', '#set-reduced', '#set-turbo']) $(id).addEventListener('change', () => this.emitSettings());
+    for (const id of ['#set-music', '#set-sfx', '#set-reduced', '#set-turbo', '#set-scares', '#set-intro']) $(id).addEventListener('change', () => this.emitSettings());
     document.querySelectorAll<HTMLElement>('[data-close]').forEach((el) =>
       el.addEventListener('click', () => this.close(`#${el.closest('.modal')!.id}`)),
     );
@@ -91,7 +115,100 @@ export class Hud {
 
   private emitSettings(): void {
     const v = (id: string) => ($(id) as HTMLInputElement).checked;
-    this.h.settings({ music: v('#set-music'), sfx: v('#set-sfx'), reduced: v('#set-reduced'), turbo: v('#set-turbo') });
+    this.h.settings({ music: v('#set-music'), sfx: v('#set-sfx'), reduced: v('#set-reduced'), turbo: v('#set-turbo'), scares: v('#set-scares'), intro: v('#set-intro') });
+  }
+
+  /** Mirrors stored settings into the settings dialog. */
+  showSettings(st: Settings): void {
+    const set = (id: string, on: boolean) => (($(id) as HTMLInputElement).checked = on);
+    set('#set-music', st.music);
+    set('#set-sfx', st.sfx);
+    set('#set-reduced', st.reduced);
+    set('#set-turbo', st.turbo);
+    set('#set-scares', st.scares);
+    set('#set-intro', st.intro);
+  }
+
+  // ---------------------------------------------------------------- splash screens
+  splashOpen = false;
+
+  /** Intro splash; resolves when the player continues (click, tap, Enter or Space). */
+  introSplash(): Promise<{ skipNextTime: boolean }> {
+    const el = $('#splash-intro');
+    localizeTree(el);
+    el.hidden = false;
+    this.splashOpen = true;
+    return new Promise((resolve) => {
+      const done = (e?: Event) => {
+        if (e && (e.target as HTMLElement).closest('.splash-skip')) return;
+        el.removeEventListener('click', done);
+        window.removeEventListener('keydown', key, true);
+        el.hidden = true;
+        this.splashOpen = false;
+        resolve({ skipNextTime: ($('#splash-intro-skip') as HTMLInputElement).checked });
+      };
+      const key = (e: KeyboardEvent) => {
+        if (e.code === 'Space' || e.code === 'Enter') {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          done();
+        }
+      };
+      el.addEventListener('click', done);
+      window.addEventListener('keydown', key, true);
+    });
+  }
+
+  /** Full-screen bonus intro / outro splash. Continues on click or automatically. */
+  bonusSplash(o: BonusSplash): Promise<void> {
+    const el = $('#splash-bonus');
+    el.dataset.theme = o.theme;
+    el.querySelector<HTMLElement>('.splash-bg')!.style.backgroundImage = `url('${o.background}')`;
+    (el.querySelector('.sb-art') as HTMLImageElement).src = o.art;
+    el.querySelector('.sb-kicker')!.textContent = t(o.kicker);
+    el.querySelector('.sb-title')!.textContent = t(o.title);
+    el.querySelector('.sb-value')!.textContent = o.countUp ? o.countUp(0) : t(o.value);
+    el.querySelector('.sb-desc')!.textContent = t(o.desc);
+    $('#splash-bonus-go').textContent = t(o.button);
+    // restart CSS entrance animations
+    el.querySelectorAll<HTMLElement>('.sb-art, .sb-title, .sb-value, .sb-desc').forEach((n) => {
+      n.style.animation = 'none';
+      void n.offsetWidth;
+      n.style.animation = '';
+    });
+    el.hidden = false;
+    this.splashOpen = true;
+    return new Promise((resolve) => {
+      const start = performance.now();
+      let raf = 0;
+      const tick = () => {
+        const elapsed = performance.now() - start;
+        if (o.countUp) el.querySelector('.sb-value')!.textContent = o.countUp(Math.min(1, elapsed / Math.min(2200, o.autoMs * 0.6)));
+        const left = Math.ceil((o.autoMs - elapsed) / 1000);
+        el.querySelector('.sb-auto')!.textContent = left > 0 ? t(`Continues in ${left}s`) : '';
+        if (elapsed >= o.autoMs) return done();
+        raf = requestAnimationFrame(tick);
+      };
+      const done = () => {
+        cancelAnimationFrame(raf);
+        el.removeEventListener('click', done);
+        window.removeEventListener('keydown', key, true);
+        if (o.countUp) el.querySelector('.sb-value')!.textContent = o.countUp(1);
+        el.hidden = true;
+        this.splashOpen = false;
+        resolve();
+      };
+      const key = (e: KeyboardEvent) => {
+        if (e.code === 'Space' || e.code === 'Enter') {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          done();
+        }
+      };
+      el.addEventListener('click', done);
+      window.addEventListener('keydown', key, true);
+      raf = requestAnimationFrame(tick);
+    });
   }
 
   open(sel: string): void {

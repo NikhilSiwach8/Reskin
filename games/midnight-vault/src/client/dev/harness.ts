@@ -27,10 +27,17 @@ type Request = (rgs: RgsClient, amount: number, mode: string) => Promise<{ balan
 const force = (scenario: string): Request => (rgs, amount, mode) =>
   rgs.request('POST', '/dev/force', { sessionID: rgs.sessionID, amount, mode, scenario });
 
-export function mountHarness(run: (mode: 'base' | 'bonus', request: Request) => Promise<void>): void {
+const PREVIEWS: [string, string][] = [
+  ['Scare: Phantom', 'lunge'],
+  ['Scare: Eyes', 'eyes'],
+  ['Scare: Bats', 'bats'],
+  ['Intro splash', 'intro'],
+];
+
+export function mountHarness(run: (mode: 'base' | 'bonus', request: Request) => Promise<void>, preview: (what: string) => void): void {
   const panel = document.createElement('details');
   panel.id = 'dev-harness';
-  panel.innerHTML = `<summary>DEV</summary><div class="dev-grid">${SCENARIOS.map(([label, mode, s]) => `<button data-mode="${mode}" data-s="${s}">${label}</button>`).join('')}</div>`;
+  panel.innerHTML = `<summary>DEV</summary><div class="dev-grid">${SCENARIOS.map(([label, mode, s]) => `<button data-mode="${mode}" data-s="${s}">${label}</button>`).join('')}${PREVIEWS.map(([label, p]) => `<button data-preview="${p}">${label}</button>`).join('')}</div>`;
   Object.assign(panel.style, {
     position: 'fixed', top: '8px', right: '8px', zIndex: '60', background: 'rgba(0,0,0,.8)', color: '#7DFFA8',
     border: '1px solid #7DFFA8', borderRadius: '8px', padding: '4px 8px', font: '12px monospace', maxWidth: '240px',
@@ -38,6 +45,7 @@ export function mountHarness(run: (mode: 'base' | 'bonus', request: Request) => 
   const style = document.createElement('style');
   style.textContent = '#dev-harness .dev-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px}#dev-harness button{background:#20152F;color:#E8E1CF;border:1px solid #9D66FF;border-radius:4px;padding:4px;font:11px monospace}';
   document.head.appendChild(style);
-  panel.querySelectorAll<HTMLButtonElement>('button').forEach((b) => b.addEventListener('click', () => void run(b.dataset.mode as 'base' | 'bonus', force(b.dataset.s!))));
+  panel.querySelectorAll<HTMLButtonElement>('button[data-s]').forEach((b) => b.addEventListener('click', () => void run(b.dataset.mode as 'base' | 'bonus', force(b.dataset.s!))));
+  panel.querySelectorAll<HTMLButtonElement>('button[data-preview]').forEach((b) => b.addEventListener('click', () => preview(b.dataset.preview!)));
   document.body.appendChild(panel);
 }

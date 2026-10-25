@@ -35,6 +35,8 @@ for (const [i, [mode, scenario]] of scenarios.entries()) {
   });
   await page.goto(`http://localhost:5199/?sessionID=smoke-${scenario}-${Date.now()}&rgs_url=localhost:5199/rgs&lang=en&currency=USD`);
   await page.waitForSelector('#loading', { state: 'hidden', timeout: 30000 });
+  // dismiss the intro splash
+  await page.waitForSelector('#splash-intro', { state: 'visible', timeout: 10000 }).then(() => page.evaluate(() => document.querySelector('#splash-intro-go').click())).catch(() => {});
   // Turbo keeps long bonus rounds short; results must still settle identically.
   await page.evaluate(() => document.querySelector('#btn-turbo').click());
   const start = money(await page.textContent('#meter-balance .meter-value'));

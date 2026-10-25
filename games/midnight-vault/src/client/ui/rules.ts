@@ -132,7 +132,8 @@ ${opts.disabledBuy ? '' : `<section>
     <li><b>Autoplay</b>: play a chosen number of rounds after confirmation. It stops on a feature if selected, or when the balance is too low.</li>
     <li><b>Turbo</b>: faster animations. Wins and results stay readable.</li>
     <li><b>Sound</b>: mute or unmute. Music and effects can be set separately in Settings.</li>
-    <li><b>Settings</b>: music, effects, reduced motion and turbo.</li>
+    <li><b>Settings</b>: music, effects, reduced motion, turbo, random jump scares and the intro screen.</li>
+    <li><b>Jump scares</b>: occasional random scares are cosmetic only. They are never linked to a result, never delay a round, and are off in turbo, with reduced motion, during features and in replay. You can turn them off in Settings.</li>
     <li><b>Info</b>: these rules.</li>
   </ul>
 </section>

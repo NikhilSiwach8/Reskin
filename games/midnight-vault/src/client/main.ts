@@ -13,7 +13,8 @@ import { Player } from './game/player.ts';
 import { Stage } from './game/stage.ts';
 import { formatMoney, winMicros } from './money.ts';
 import { RgsClient, errorMessage, type Jurisdiction, type RgsConfig, type RgsRound } from './rgs.ts';
-import { Hud, wait } from './ui/hud.ts';
+import { Hud, wait, type Settings as UiSettings } from './ui/hud.ts';
+import { Scares } from './game/scares.ts';
 import { buildRules, type MathSummary } from './ui/rules.ts';
 import { setSocial, t } from './ui/text.ts';
 
@@ -42,16 +43,13 @@ const IDLE_BOARD: Board = [
   ['EL', 'T', 'Q', 'GB', 'A'],
 ];
 
-interface Settings {
-  turbo: boolean;
-  reduced: boolean;
+interface Settings extends UiSettings {
   muted: boolean;
-  music: boolean;
-  sfx: boolean;
 }
 
 function loadSettings(): Settings {
-  const defaults: Settings = { turbo: false, reduced: matchMedia('(prefers-reduced-motion: reduce)').matches, muted: false, music: true, sfx: true };
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const defaults: Settings = { turbo: false, reduced, muted: false, music: true, sfx: true, scares: !reduced, intro: true };
   try {
     return { ...defaults, ...JSON.parse(localStorage.getItem('mv-settings') ?? '{}') };
   } catch {
@@ -73,6 +71,7 @@ class Game {
   private audio = new Audio();
   private stage!: Stage;
   private player!: Player;
+  private scares!: Scares;
   private settings = loadSettings();
   private config: RgsConfig | null = null;
   private levels: number[] = [];
@@ -135,8 +134,15 @@ class Game {
       fmt: (centi) => this.fmtMoney(winMicros(this.roundBet || this.bet, centi)),
       turbo: () => this.settings.turbo && !this.jurisdiction?.disabledTurbo,
       reduced: () => this.settings.reduced,
+      autoplay: () => this.autoplay !== null,
     });
-    this.applySettings({ music: this.settings.music, sfx: this.settings.sfx, reduced: this.settings.reduced, turbo: this.settings.turbo });
+    this.scares = new Scares(this.stage, this.audio);
+    // Jump scares are cosmetic: never during features, turbo, reduced motion, replay, dialogs or splash screens.
+    this.scares.allowed = () =>
+      !launch.replay && !this.settings.reduced && !this.settings.turbo && !this.player.inFeature && !this.hud.anyModalOpen() && !this.hud.splashOpen;
+    this.scares.idleAllowed = () => !this.busy;
+    this.applySettings(this.settings);
+    this.hud.showSettings(this.settings);
     this.hud.setMuted(this.settings.muted);
     this.audio.muted = this.settings.muted;
     window.addEventListener('pointerdown', () => this.audio.unlock(), { once: false });
@@ -161,6 +167,13 @@ class Game {
       this.hud.hideLoading();
       this.refresh();
       this.hud.setWin(this.fmtMoney(0));
+      if (this.settings.intro) {
+        const { skipNextTime } = await this.hud.introSplash();
+        this.audio.unlock();
+        if (skipNextTime) this.applySettings({ ...this.settings, intro: false });
+        this.hud.showSettings(this.settings);
+      }
+      this.scares.armIdle();
       if (auth.round && (auth.round.active ?? true) && auth.round.payoutMultiplier !== undefined) await this.resume(auth.round);
     } catch (e) {
       this.hud.setLoading(1, errorMessage(e));
@@ -198,7 +211,7 @@ class Game {
 
   private onKey(e: KeyboardEvent): void {
     if (e.code !== 'Space' || e.repeat) return;
-    if (this.hud.anyModalOpen() || launch.replay || this.jurisdiction?.disabledSpacebar) return;
+    if (this.hud.anyModalOpen() || this.hud.splashOpen || launch.replay || this.jurisdiction?.disabledSpacebar) return;
     const target = e.target as HTMLElement;
     if (target?.tagName === 'INPUT') return;
     e.preventDefault();
@@ -219,6 +232,7 @@ class Game {
     this.hud.setWin(this.fmtMoney(0));
     const started = performance.now();
     this.player.startSpin();
+    if (mode === 'base' && !devRequest) this.scares.onSpin();
     let round: RgsRound;
     try {
       const res = devRequest ? await devRequest(this.rgs, this.bet, mode) : await this.rgs.play(this.bet, mode);
@@ -323,13 +337,15 @@ class Game {
     saveSettings(this.settings);
   }
 
-  private applySettings(s: { music: boolean; sfx: boolean; reduced: boolean; turbo: boolean }): void {
+  private applySettings(s: UiSettings): void {
     Object.assign(this.settings, s);
     this.audio.musicOn = s.music;
     this.audio.sfxOn = s.sfx;
     this.audio.apply();
-    this.stage.tweener.reducedMotion = s.reduced;
+    this.stage.setReducedMotion(s.reduced);
     this.stage.particles.enabled = !s.reduced;
+    this.scares.enabled = s.scares;
+    saveSettings(this.settings);
     this.hud.setReducedMotion(s.reduced);
     (document.getElementById('set-music') as HTMLInputElement).checked = s.music;
     (document.getElementById('set-sfx') as HTMLInputElement).checked = s.sfx;
@@ -379,11 +395,17 @@ class Game {
   async devScenario(mode: 'base' | 'bonus', request: DevRequest): Promise<void> {
     await this.spin(mode, request);
   }
+
+  /** Development harness: preview a jump scare or the intro splash. */
+  devPreview(what: string): void {
+    if (what === 'intro') void this.hud.introSplash();
+    else void this.scares.play(what as 'lunge' | 'eyes' | 'bats');
+  }
 }
 
 const game = new Game();
 void game.boot();
 
 if (import.meta.env.DEV) {
-  void import('./dev/harness.ts').then((m) => m.mountHarness((mode, request) => game.devScenario(mode, request)));
+  void import('./dev/harness.ts').then((m) => m.mountHarness((mode, request) => game.devScenario(mode, request), (what) => game.devPreview(what)));
 }

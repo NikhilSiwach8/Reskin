@@ -16,7 +16,28 @@ export interface PlayContext {
   fmt: (centi: number) => string;
   turbo: () => boolean;
   reduced: () => boolean;
+  /** True while autoplay runs (splash screens then continue sooner). */
+  autoplay: () => boolean;
 }
+
+const SPLASH: Record<BonusPath, { art: string; background: string; desc: string }> = {
+  cursedFortune: {
+    art: 'assets/key_cursed_fortune.webp', background: 'assets/bg_cursed_fortune.webp',
+    desc: 'More Cursed Relics with multipliers up to 100x. Every Relic and Ledger charges Relic Overload for bigger expansions.',
+  },
+  phantomPayday: {
+    art: 'assets/key_phantom_payday.webp', background: 'assets/bg_phantom_payday.webp',
+    desc: 'Every Phantom that lands transforms symbols. Fill the Phantom Seal and the Phantom starts creating wilds.',
+  },
+  midnightCountdown: {
+    art: 'assets/key_midnight_countdown.webp', background: 'assets/bg_midnight_countdown.webp',
+    desc: 'Every Clock and Ledger moves the hand. When it strikes XIII, a Final Countdown Spin brings a 4x4 Relic Surge.',
+  },
+  vaultBreach: {
+    art: 'assets/fx_vault_door.webp', background: 'assets/bg_final_heist.webp',
+    desc: 'Four stages: The Seal Breaks, The Haunting, Relic Overload and The Final Heist.',
+  },
+};
 
 const PATH_BG: Record<BonusPath, TextureName> = {
   cursedFortune: 'bg_cursed_fortune',
@@ -291,7 +312,16 @@ export class Player {
           const spot = stage.clockSpot();
           stage.props.showClock(9, spot.x, spot.y, spot.size);
         }
-        if (e.path !== 'vaultBreach') await hud.banner(FEATURE_NAMES[e.path], `${e.spins} free spins`, this.ms(1600, 700));
+        audio.play('splash');
+        await hud.bonusSplash({
+          theme: e.path,
+          ...SPLASH[e.path],
+          kicker: e.path === 'vaultBreach' ? 'The vault is open' : 'Bonus unlocked',
+          title: FEATURE_NAMES[e.path],
+          value: e.path === 'vaultBreach' ? `${e.spins} spins in 4 stages` : `${e.spins} free spins`,
+          button: 'Start',
+          autoMs: this.splashMs(),
+        });
         break;
       }
 
@@ -340,9 +370,24 @@ export class Player {
       case 'featureEnd': {
         const name = FEATURE_NAMES[e.feature] ?? e.feature;
         stage.wins.clear();
-        if (e.featureWin > 0 || this.path) {
+        if (this.path) {
+          // Full-screen outro with the bonus total counting up.
           audio.play('bonusEnd');
-          await hud.banner(`${name} complete`, e.featureWin > 0 ? this.ctx.fmt(e.featureWin) : 'No win this time', this.ms(1800, 800), e.featureWin > 0);
+          const total = e.featureWin;
+          await hud.bonusSplash({
+            theme: this.path,
+            ...SPLASH[this.path],
+            kicker: 'Bonus complete',
+            title: name,
+            value: '',
+            desc: total > 0 ? 'Total bonus win' : 'No win this time. The vault will open again.',
+            button: 'Continue',
+            autoMs: this.splashMs(),
+            countUp: total > 0 ? (p) => this.ctx.fmt(Math.round(total * p)) : undefined,
+          });
+        } else if (e.featureWin > 0) {
+          audio.play('bonusEnd');
+          await hud.banner(`${name} complete`, this.ctx.fmt(e.featureWin), this.ms(1800, 800), true);
         }
         if (this.path || e.feature === 'thirteenthHour') {
           stage.props.hideClock();
@@ -370,6 +415,17 @@ export class Player {
         hud.setWin(this.ctx.fmt(e.amount));
         break;
     }
+  }
+
+  /** How long a bonus splash waits before continuing on its own. */
+  private splashMs(): number {
+    if (this.ctx.autoplay()) return 2500;
+    return this.turbo ? 2500 : 6000;
+  }
+
+  /** True while a feature or bonus sequence is being presented. */
+  get inFeature(): boolean {
+    return this.inSequence;
   }
 
   private async pulseCells(cells: Cell[]): Promise<void> {

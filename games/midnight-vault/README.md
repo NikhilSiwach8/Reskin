@@ -104,6 +104,8 @@ Checked in this environment (headless Chromium at 1600x900, 1280x720, 800x450, 8
 - Base game, Cursed Relic expansion and multipliers, Lockdown Spin, Phantom Heist, Spectral Respin, The Thirteenth Hour, all three Three Keys paths, retriggers, The Vault Breach (all four stages), max win, big-win presentation.
 - Haunted Ledger and Relic Overload indicators come from engine events.
 - Rules/paytable panel with payline diagrams, RTP per mode, max win, disclaimer; social-mode wording.
+- Intro splash screen (can be skipped) and bonus intro/outro splash screens; animated backgrounds (fog, embers, flickering lights, bats), animated logo, idle symbol animations, relic auras and a swinging vault door.
+- Random jump scares (Phantom lunge, glowing eyes, bat swarm): cosmetic only, chosen on the client, never linked to results or delaying a round, off in turbo, reduced motion, features and replay, and switchable in Settings.
 - Spacebar spin, slam stop, turbo, reduced motion, mute with separate music and effects, autoplay with confirmation, bet replay, active-round resume, missing-asset fallback, production build without dev code.
 
 ## Unfinished / not verified

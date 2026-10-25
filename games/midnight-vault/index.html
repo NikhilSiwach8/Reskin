@@ -40,6 +40,33 @@
     </div>
     <div id="toast" role="alert" hidden></div>
 
+    <section id="splash-intro" class="splash" hidden aria-label="Welcome">
+      <div class="splash-bg" style="background-image: url('assets/bg_bank.webp')"></div>
+      <div class="splash-content">
+        <img class="splash-logo" src="assets/logo.webp" alt="Midnight Vault" />
+        <div class="splash-cards">
+          <figure><img src="assets/relic_block.webp" alt="" /><figcaption><b>Cursed Relic</b><span>Expanding wilds up to 4x4 with multipliers up to 100x</span></figcaption></figure>
+          <figure><img src="assets/fx_vault_door.webp" alt="" /><figcaption><b>Haunted features</b><span>Lockdown Spin, Phantom Heist, Spectral Respin and The Thirteenth Hour</span></figcaption></figure>
+          <figure><img src="assets/key_cursed_fortune.webp" alt="" /><figcaption><b>Three Keys to the Vault</b><span>Three bonus paths and The Vault Breach. Max win 5,000x</span></figcaption></figure>
+        </div>
+        <button class="pill-btn primary splash-go" id="splash-intro-go">Enter the vault</button>
+        <label class="splash-skip"><input type="checkbox" id="splash-intro-skip" /> Don't show again</label>
+      </div>
+    </section>
+
+    <section id="splash-bonus" class="splash" hidden aria-live="assertive">
+      <div class="splash-bg"></div>
+      <div class="splash-content">
+        <img class="sb-art" src="" alt="" />
+        <div class="sb-kicker"></div>
+        <div class="sb-title"></div>
+        <div class="sb-value"></div>
+        <div class="sb-desc"></div>
+        <button class="pill-btn primary splash-go" id="splash-bonus-go">Start</button>
+        <div class="sb-auto"></div>
+      </div>
+    </section>
+
     <nav id="controls" aria-label="Game controls">
       <div class="ctl-group ctl-left">
         <button class="icon-btn" id="btn-menu" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm8.6 4.9-1.9-.4a7 7 0 0 1-.6 1.5l1.1 1.6-1.6 1.6-1.6-1.1a7 7 0 0 1-1.5.6l-.4 1.9h-2.2l-.4-1.9a7 7 0 0 1-1.5-.6l-1.6 1.1-1.6-1.6 1.1-1.6a7 7 0 0 1-.6-1.5l-1.9-.4v-2.2l1.9-.4a7 7 0 0 1 .6-1.5L5.1 6.9l1.6-1.6 1.6 1.1a7 7 0 0 1 1.5-.6l.4-1.9h2.2l.4 1.9a7 7 0 0 1 1.5.6l1.6-1.1 1.6 1.6-1.1 1.6a7 7 0 0 1 .6 1.5l1.9.4Z"/></svg></button>
@@ -83,6 +110,8 @@
           <label><input type="checkbox" id="set-sfx" checked /> Sound effects</label>
           <label><input type="checkbox" id="set-reduced" /> Reduced motion (fewer flashes, shakes and particles)</label>
           <label><input type="checkbox" id="set-turbo" /> Turbo spin</label>
+          <label><input type="checkbox" id="set-scares" checked /> Random jump scares (cosmetic only, never linked to results)</label>
+          <label><input type="checkbox" id="set-intro" checked /> Show the intro screen</label>
         </div>
       </div>
     </div>

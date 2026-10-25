@@ -4,7 +4,8 @@
 
 type Sfx =
   | 'click' | 'spin' | 'reelStop' | 'land' | 'relic' | 'expand' | 'win' | 'bigWin' | 'door' | 'chain'
-  | 'phantom' | 'transform' | 'tick' | 'strike' | 'bonusEnter' | 'bonusEnd' | 'retrigger' | 'keys' | 'surge';
+  | 'phantom' | 'transform' | 'tick' | 'strike' | 'bonusEnter' | 'bonusEnd' | 'retrigger' | 'keys' | 'surge'
+  | 'scare' | 'whisper' | 'screech' | 'splash';
 
 export class Audio {
   private ctx?: AudioContext;
@@ -138,6 +139,20 @@ export class Audio {
       case 'bonusEnd': [880, 698, 587, 440].forEach((f, i) => this.tone(f, 0.8, 'triangle', 0.1, undefined, 0.01, undefined, i * 0.12)); break;
       case 'retrigger': [659, 880, 1047].forEach((f, i) => this.tone(f, 0.4, 'square', 0.06, undefined, 0.005, undefined, i * 0.06)); break;
       case 'keys': [1047, 1319, 1568].forEach((f, i) => this.tone(f, 0.6, 'sine', 0.12, undefined, 0.005, undefined, i * 0.12)); break;
+      // Jump-scare sting: dissonant shriek gliding down, noise burst and a low hit (kept below clipping).
+      case 'scare':
+        this.noise(0.5, 0.35, 2600, 0.6);
+        [1480, 1567, 1661].forEach((f) => this.tone(f, 0.9, 'sawtooth', 0.07, undefined, 0.005, f / 6));
+        this.tone(55, 1.0, 'sine', 0.35, undefined, 0.002, 30);
+        break;
+      case 'whisper':
+        for (let i = 0; i < 6; i++) this.noise(0.25, 0.06, 1800 + Math.random() * 2400, 8, i * 0.12);
+        break;
+      case 'screech':
+        for (let i = 0; i < 10; i++) this.tone(2200 + Math.random() * 1600, 0.12, 'square', 0.025, undefined, 0.003, 1400, i * 0.09);
+        this.noise(1.2, 0.18, 3500, 1.5);
+        break;
+      case 'splash': [196, 247, 294, 392].forEach((f, i) => this.tone(f, 1.6, 'triangle', 0.08, undefined, 0.05, undefined, i * 0.15)); break;
     }
   }
 

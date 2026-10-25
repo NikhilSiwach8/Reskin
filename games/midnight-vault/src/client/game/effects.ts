@@ -5,6 +5,7 @@ import type { Cell, LineWin, RelicBlock } from '../../engine/types.ts';
 import { symbolTexture, tex } from '../assets.ts';
 import { CELL, type ReelGrid } from './reels.ts';
 import { ease, type Tweener } from './tween.ts';
+import { glowTexture } from './ambience.ts';
 
 const LINE_COLORS = [0x7dffa8, 0xf5a13a, 0x9d66ff, 0xd8423a, 0xe8e1cf, 0x3ac2ff, 0xffd36a, 0xff6ad5, 0x5ce84a, 0xffa07a, 0xb48cff, 0x40e0d0, 0xffc93a, 0xff4a3a, 0x8cffb5];
 
@@ -23,6 +24,7 @@ const textStyle = (size: number, fill = '#FFF1B0') => ({
 
 interface BlockView {
   root: Container;
+  aura: Sprite;
   frame: Graphics;
   art: Sprite;
   label: Text;
@@ -60,8 +62,24 @@ export class RelicLayer extends Container {
     for (const r of reels) for (const s of this.grid.reels[r].rowViews()) s.visible = true;
   }
 
+  private time = 0;
+
+  /** Living aura and multiplier badge pulse on every relic block. */
+  update(dt: number): void {
+    this.time += dt;
+    const t = this.time / 1000;
+    for (const v of this.views.values()) {
+      v.aura.alpha = 0.35 + Math.sin(t * 3 + v.block.reel) * 0.2;
+      v.aura.rotation = t * 0.4;
+      const k = 1 + Math.sin(t * 4) * 0.06;
+      v.label.scale.set(k);
+    }
+  }
+
   private draw(v: BlockView, x: number, y: number, size: number): void {
     const w = size;
+    v.aura.position.set(x + w / 2, y + w / 2);
+    v.aura.width = v.aura.height = w * 1.5;
     v.frame.clear();
     v.frame.roundRect(x + 4, y + 4, w - 8, w - 8, 18).fill({ color: 0x0b2a1c, alpha: 0.85 });
     v.frame.roundRect(x + 4, y + 4, w - 8, w - 8, 18).stroke({ color: 0x7dffa8, width: 14, alpha: 0.35 });
@@ -77,14 +95,18 @@ export class RelicLayer extends Container {
   async show(block: RelicBlock, opts: { surge?: boolean; reduced?: boolean; turbo?: boolean } = {}): Promise<void> {
     const key = block.id > 0 ? block.id : -this.nextLocal++;
     const root = new Container();
+    const aura = new Sprite(glowTexture());
+    aura.anchor.set(0.5);
+    aura.tint = 0x7dffa8;
+    aura.blendMode = 'add';
     const frame = new Graphics();
     const art = new Sprite(block.size > 1 && tex('relic_block') !== Texture.EMPTY ? tex('relic_block') : symbolTexture('RL'));
     art.anchor.set(0.5);
     const label = new Text({ text: block.mult > 1 ? `x${block.mult}` : '', style: textStyle(block.size > 1 ? 44 : 34) });
     label.anchor.set(1, 1);
-    root.addChild(frame, art, label);
+    root.addChild(aura, frame, art, label);
     this.addChild(root);
-    const v: BlockView = { root, frame, art, label, block };
+    const v: BlockView = { root, aura, frame, art, label, block };
     // a new block replaces any older overlay it overlaps (absorbed relics)
     for (const [id, other] of this.views) {
       if (overlaps(other.block, block)) {
@@ -148,7 +170,10 @@ export class WinLayer extends Container {
   clear(): void {
     this.lines.clear();
     this.labels.removeChildren().forEach((c) => c.destroy());
-    for (const v of this.grid.allViews()) v.dim(false);
+    for (const v of this.grid.allViews()) {
+      v.dim(false);
+      v.highlight(false);
+    }
   }
 
   private drawLine(win: LineWin, alpha = 1): void {
@@ -168,7 +193,13 @@ export class WinLayer extends Container {
   async present(wins: LineWin[], formatWin: (centi: number) => string, opts: { turbo: boolean; relics: RelicLayer }): Promise<void> {
     if (!wins.length) return;
     const winning = new Set(wins.flatMap((w) => w.cells.map((c) => `${c.reel},${c.row}`)));
-    for (let reel = 0; reel < REELS; reel++) for (let row = 0; row < ROWS; row++) this.grid.view({ reel, row }).dim(!winning.has(`${reel},${row}`));
+    for (let reel = 0; reel < REELS; reel++) {
+      for (let row = 0; row < ROWS; row++) {
+        const on = winning.has(`${reel},${row}`);
+        this.grid.view({ reel, row }).dim(!on);
+        this.grid.view({ reel, row }).highlight(on);
+      }
+    }
     for (const w of wins) this.drawLine(w);
     opts.relics.pulse(wins.flatMap((w) => w.cells));
     const views = [...winning].map((k) => {

@@ -2,6 +2,7 @@
 import { Application, Container, Sprite } from 'pixi.js';
 import type { Board } from '../../engine/types.ts';
 import { tex, type TextureName } from '../assets.ts';
+import { Ambience, AnimatedLogo } from './ambience.ts';
 import { Particles, Props, RelicLayer, WinLayer } from './effects.ts';
 import { ReelGrid } from './reels.ts';
 import { Tweener } from './tween.ts';
@@ -25,7 +26,13 @@ export class Stage {
   private bgA = new Sprite();
   private bgB = new Sprite();
   private bgName: TextureName = 'bg_bank';
-  private logo = new Sprite(tex('logo'));
+  private logo = new AnimatedLogo(tex('logo'));
+  /** Backgrounds plus ambient lights; breathes slowly as one layer. */
+  private bgLayer = new Container();
+  readonly ambience = new Ambience();
+  private elapsed = 0;
+  /** Top-most screen-space layer (jump scares). */
+  readonly overlay = new Container();
   orientation: Orientation = 'landscape';
   /** Board rectangle in CSS pixels, published for the DOM overlay. */
   boardRect = { x: 0, y: 0, w: 0, h: 0 };
@@ -49,13 +56,21 @@ export class Stage {
     this.gridLayer.position.set(FRAME.wx, FRAME.wy);
     this.gridLayer.addChild(this.reels, this.relics, this.wins, this.props, this.particles);
     this.board.addChild(panel, this.gridLayer, frame);
-    this.logo.anchor.set(0.5, 0);
     this.root.addChild(this.board, this.logo);
-    app.stage.addChild(this.bgA, this.bgB, this.root);
+    this.bgLayer.addChild(this.bgA, this.bgB, this.ambience);
+    this.ambience.setBackground('bg_bank');
+    app.stage.addChild(this.bgLayer, this.root, this.overlay);
 
     app.ticker.add((t) => {
-      this.reels.update(t.deltaMS);
-      this.particles.update(t.deltaMS);
+      const dt = t.deltaMS;
+      this.elapsed += dt;
+      this.reels.update(dt);
+      this.relics.update(dt);
+      this.particles.update(dt);
+      this.logo.update(dt);
+      this.ambience.update(dt, this.app.screen.width, this.app.screen.height);
+      // slow "breathing" zoom of the painted background
+      this.bgLayer.scale.set(this.tweener.reducedMotion ? 1 : 1.012 + Math.sin(this.elapsed / 4200) * 0.012);
     });
     window.addEventListener('resize', () => this.layout());
     for (const id of ['controls', 'replay-bar']) {
@@ -69,12 +84,17 @@ export class Stage {
     const vw = this.app.screen.width;
     const vh = this.app.screen.height;
     this.orientation = vw >= vh ? 'landscape' : 'portrait';
+    this.bgLayer.pivot.set(vw / 2, vh / 2);
+    this.bgLayer.position.set(vw / 2, vh / 2);
     for (const bg of [this.bgA, this.bgB]) {
       const t = bg.texture;
       const s = Math.max(vw / (t.width || 1), vh / (t.height || 1));
       bg.scale.set(s);
       bg.position.set(vw / 2, vh / 2);
     }
+    const bt = this.bgA.texture;
+    const bs = this.bgA.scale.x;
+    this.ambience.setRect(vw / 2 - (bt.width * bs) / 2, vh / 2 - (bt.height * bs) / 2, bt.width * bs, bt.height * bs);
     const land = this.orientation === 'landscape';
     // Design space of the playfield (logo + board). It is fitted into the area above the
     // DOM control bar, whose real height depends on the screen (it wraps on narrow phones).
@@ -89,14 +109,12 @@ export class Stage {
     if (land) {
       this.board.scale.set(0.78);
       this.board.position.set((dw - FRAME.w * 0.78) / 2, 150);
-      this.logo.width = 400;
-      this.logo.scale.y = this.logo.scale.x;
+      this.logo.scale.set(400 / (this.logo.artWidth || 400));
       this.logo.position.set(dw / 2, -8);
     } else {
       this.board.scale.set(1);
       this.board.position.set((dw - FRAME.w) / 2, 330);
-      this.logo.width = 640;
-      this.logo.scale.y = this.logo.scale.x;
+      this.logo.scale.set(640 / (this.logo.artWidth || 640));
       this.logo.position.set(dw / 2, 6);
     }
     const g = this.gridLayer.getGlobalPosition();
@@ -115,10 +133,19 @@ export class Stage {
     this.bgName = name;
     this.bgB.texture = tex(name);
     this.layout();
+    this.ambience.setBackground(name);
     await this.tweener.run(700, (p) => (this.bgB.alpha = p));
     this.bgA.texture = this.bgB.texture;
     this.bgB.alpha = 0;
     this.layout();
+  }
+
+  /** Applies the reduced-motion setting to the decorative layers. */
+  setReducedMotion(on: boolean): void {
+    this.tweener.reducedMotion = on;
+    this.ambience.reduced = on;
+    this.logo.reduced = on;
+    this.reels.reducedMotion = on;
   }
 
   async shake(strength = 12, ms = 400): Promise<void> {
