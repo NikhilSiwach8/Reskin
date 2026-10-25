@@ -9,7 +9,15 @@ const SYMBOL_IDS: SymbolId[] = ['BH', 'WP', 'SL', 'GM', 'PA', 'EY', 'PU', 'BT', 
 export const SCENE_TEXTURES = ['bg', 'panel', 'witch'] as const;
 
 const textures = new Map<string, Texture>();
-const PAINTED = new Set<string>(painted);
+const PAINTED = new Set<string>(painted.symbols);
+const BUTTONS = new Set<string>(painted.buttons);
+
+export const isPainted = (id: SymbolId) => PAINTED.has(id);
+
+/** URL of a painted button image, or null when the button keeps its CSS look. */
+export function buttonSrc(name: string): string | null {
+  return BUTTONS.has(name) ? `assets/btn_${name}.webp` : null;
+}
 
 /** URL of a symbol's art: the painted WebP when one was imported, else the vector SVG. */
 export function symbolSrc(id: SymbolId): string {

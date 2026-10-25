@@ -69,6 +69,17 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outl
 #btn-spin.auto #spin-label { font-family: var(--fd); font-weight: 700; font-size: 22px; }
 #btn-replay { position: absolute; left: 50%; transform: translateX(-50%); bottom: 22px; padding: 16px 40px; border-radius: 40px; border: 4px solid var(--gold); background: #d6007a; font-size: 22px; font-weight: 700; }
 
+/* painted button art (tools/import-painted.py) */
+.painted { background: var(--img) center / contain no-repeat !important; border: none !important; box-shadow: none !important; }
+.round-btn.painted, #meter-bet button.painted { color: transparent; }
+.round-btn.painted.on { filter: drop-shadow(0 0 8px var(--lime)) brightness(1.15); }
+#btn-spin.painted { filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5)); }
+#btn-spin.painted.spinning { background-image: var(--img-active, var(--img)) !important; animation: spinglow 1.2s linear infinite; }
+#btn-spin.painted.auto { animation: none; }
+#btn-spin.painted #spin-label { visibility: hidden; }
+#btn-spin.painted.auto #spin-label { visibility: visible; text-shadow: 0 0 6px #000, 0 2px 0 #4a0030; }
+@keyframes spinglow { to { transform: rotate(360deg); } }
+
 /* ------------------------------------------------------------------ overlays */
 #banner { position: fixed; left: 50%; top: calc(var(--board-top) + var(--board-h) / 2); transform: translate(-50%, -50%); text-align: center; z-index: 6; pointer-events: none; animation: pop 0.35s ease-out; }
 #banner-title { font-family: var(--fh); font-size: clamp(28px, 8vw, 84px); white-space: nowrap; color: var(--gold); text-shadow: 0 0 20px #ff4fb0, 0 5px 0 #5a1300; letter-spacing: 2px; }

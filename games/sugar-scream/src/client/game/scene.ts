@@ -3,7 +3,7 @@
 import { Application, Container, Graphics, Sprite, Text, type Ticker } from 'pixi.js';
 import { REELS, ROWS } from '../../engine/config.ts';
 import type { Board, Cell, MultCell, SymbolId } from '../../engine/types.ts';
-import { symbolTexture, tex } from '../assets.ts';
+import { isPainted, symbolTexture, tex } from '../assets.ts';
 import { Tweener, ease } from './tween.ts';
 
 /** Board design units: one cell is S x S. */
@@ -38,7 +38,8 @@ class CellView {
         style: { fontFamily: 'Creepster, Fredoka, sans-serif', fontSize: 56, fill: '#fff6c2', stroke: { color: '#5a1300', width: 8 }, dropShadow: { color: '#000', blur: 6, distance: 3, alpha: 0.7 } },
       });
       this.label.anchor.set(0.5);
-      this.label.y = S * 0.3;
+      // painted lantern: the value sits in its open mouth
+      this.label.y = isPainted('JK') ? S * 0.17 : S * 0.3;
       this.root.addChild(this.label);
     }
   }

@@ -1,6 +1,6 @@
 // DOM user interface: meters, buttons, dialogs, banners, win screens and the Trick or Treat doors.
 import type { KnockPrize } from '../engine/types.ts';
-import { symbolSrc } from './assets.ts';
+import { buttonSrc, symbolSrc } from './assets.ts';
 import { localizeTree, t } from './text.ts';
 
 export const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
@@ -95,10 +95,28 @@ export class Hud {
       h.autoplay(this.autoCount, $<HTMLInputElement>('#auto-stop-feature').checked);
     });
     $('#winscreen').addEventListener('click', () => this.skipOverlay?.());
+    this.applyButtonArt();
     localizeTree(document.body);
   }
 
   private autoActive = false;
+
+  /** Swaps CSS-drawn buttons for painted art where it has been imported. */
+  private applyButtonArt(): void {
+    const map: [string, string, string?][] = [
+      ['#btn-spin', 'spin', 'spin_active'], ['#btn-auto', 'auto'], ['#btn-turbo', 'turbo'], ['#btn-menu', 'menu'],
+      ['#btn-sound', 'sound'], ['#bet-minus', 'minus'], ['#bet-plus', 'plus'],
+    ];
+    for (const [sel, name, active] of map) {
+      const src = buttonSrc(name);
+      if (!src) continue;
+      const el = $(sel);
+      el.classList.add('painted');
+      el.style.setProperty('--img', `url(${src})`);
+      const act = active && buttonSrc(active);
+      if (act) el.style.setProperty('--img-active', `url(${act})`);
+    }
+  }
 
   // ---------------------------------------------------------------- meters & buttons
   setLoading(p: number, msg?: string): void {
