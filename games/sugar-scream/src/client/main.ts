@@ -236,7 +236,7 @@ class Game {
   private onKey(e: KeyboardEvent): void {
     if (e.code !== 'Space' || e.repeat) return;
     if (this.hud.anyModalOpen() || this.hud.splashOpen || launch.replay || this.jurisdiction?.disabledSpacebar) return;
-    if ((e.target as HTMLElement)?.tagName === 'INPUT' || (e.target as HTMLElement)?.tagName === 'BUTTON') e.preventDefault();
+    // also stops a focused button from being activated by the same key press
     e.preventDefault();
     this.onSpinButton();
   }

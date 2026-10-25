@@ -18,7 +18,9 @@ export function buildRules(root: HTMLElement, o: { math?: MathSummary; fmt: (cen
   }).join('');
   const treats = KNOCK_TABLE.filter(([v]) => typeof v === 'number').map(([v]) => o.fmt(v as number)).join(', ');
   const mults = MULT_VALUES.map(([v]) => `x${v}`).join(', ');
-  const modeRows = BET_MODES.filter((m) => !(o.disabledBuy && m.buy)).map((m) => {
+  // Ante Bet follows the buy-feature flag too.
+  const modes = BET_MODES.filter((m) => m.name === 'base' || !o.disabledBuy);
+  const modeRows = modes.map((m) => {
     const s = o.math?.modes.find((x) => x.mode === m.name);
     return `<tr><td>${esc(m.label)}</td><td>${m.cost}x</td><td>${s ? `${(s.rtp * 100).toFixed(2)}%` : '–'}</td><td>${s ? `${s.maxWin.toLocaleString('en-US')}x` : '–'}</td></tr>`;
   }).join('');
@@ -41,8 +43,8 @@ export function buildRules(root: HTMLElement, o: { math?: MathSummary; fmt: (cen
     <p>${RETRIGGER_SCATTERS} or more Skull Lollipops during free spins award ${RETRIGGER_SPINS} more free spins.</p>
     <h3>Full Moon free spins</h3>
     <p>${FULL_MOON_SCATTERS} or more Skull Lollipops award ${FREE_SPINS.fullMoon.spins} Full Moon free spins. They play like Haunted Cauldron, but the Cauldron starts at x${FREE_SPINS.fullMoon.cauldron}, Jack-o'-Lanterns land more often and each one adds <b>${FREE_SPINS.fullMoon.pour}x</b> its value to the Cauldron.</p>
-    <h3>Ante Bet and Buy Feature</h3>
-    ${BET_MODES.filter((m) => m.name !== 'base' && !(o.disabledBuy && m.buy)).map((m) => `<p><b>${esc(m.label)} (${m.cost}x bet):</b> ${esc(m.description)}</p>`).join('')}
+    ${o.disabledBuy ? '' : '<h3>Ante Bet and Buy Feature</h3>'}
+    ${modes.filter((m) => m.name !== 'base').map((m) => `<p><b>${esc(m.label)} (${m.cost}x bet):</b> ${esc(m.description)}</p>`).join('')}
     <h3>Return to player</h3>
     <table><tr><th>Mode</th><th>Cost</th><th>RTP</th><th>Max win</th></tr>${modeRows}</table>
     ${o.math ? '' : '<p>RTP information is not available.</p>'}

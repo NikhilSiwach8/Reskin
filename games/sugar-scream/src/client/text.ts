@@ -73,15 +73,3 @@ export function localizeTree(root: HTMLElement): void {
     for (const a of ['aria-label', 'title']) if (el.hasAttribute(a)) el.setAttribute(a, t(el.getAttribute(a)!));
   });
 }
-
-export const FEATURE_NAMES: Record<string, string> = {
-  lockdown: 'Lockdown Spin',
-  phantomHeist: 'Phantom Heist',
-  spectralRespin: 'Spectral Respin',
-  thirteenthHour: 'The Thirteenth Hour',
-  threeKeys: 'Three Keys to the Vault',
-  vaultBreach: 'The Vault Breach',
-  cursedFortune: 'Cursed Fortune',
-  phantomPayday: 'Phantom Payday',
-  midnightCountdown: 'Midnight Countdown',
-};

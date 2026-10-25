@@ -2,7 +2,7 @@
 //
 // Books fall into groups:
 //   fixed groups - books whose total probability is known or estimated independently
-//                  (the win cap, and forced rare features such as The Vault Breach in base)
+//                  (the win cap)
 //   below        - remaining natural rounds paying less than the mode cost (including 0)
 //   above        - remaining natural rounds paying at least the mode cost
 // Every book inside a group gets the same weight, so the simulated shape of the

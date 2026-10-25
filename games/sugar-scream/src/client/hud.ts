@@ -146,6 +146,8 @@ export class Hud {
     $<HTMLInputElement>('#ante-toggle').disabled = busy || this.autoActive;
     $('#ante').classList.toggle('disabled', busy || this.autoActive);
     $('#ante').classList.toggle('on', opts.anteOn);
+    // Ante Bet is a feature bet, so it follows the jurisdiction's buy-feature flag.
+    $('#ante').classList.toggle('hidden', !opts.buyAvailable);
     $<HTMLInputElement>('#ante-toggle').checked = opts.anteOn;
   }
 
