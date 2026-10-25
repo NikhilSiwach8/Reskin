@@ -58,8 +58,8 @@ const FREE_PAY_WEIGHTS: [SymbolId, number][] = [
 
 export const DRAWS: Record<DrawTable, Weighted<SymbolId>> = {
   base: [...PAY_WEIGHTS, ['SC', 12]],
-  // Ante Bet: Skull Lollipops land about twice as often.
-  ante: [...PAY_WEIGHTS.map(([s, w]) => [s, w * 2] as [SymbolId, number]), ['SC', 31]],
+  // Ante Bet: more Skull Lollipops (free spins about 1.7x, Trick or Treat about 1.6x as often).
+  ante: [...PAY_WEIGHTS.map(([s, w]) => [s, w * 2] as [SymbolId, number]), ['SC', 28]],
   free: [...FREE_PAY_WEIGHTS, ['SC', 10], ['JK', 18]],
   fullMoon: [...FREE_PAY_WEIGHTS, ['SC', 10], ['JK', 26]],
 };
@@ -128,7 +128,7 @@ export const BET_MODES: BetModeDef[] = [
   { name: 'base', cost: 1, label: 'Spin', description: 'Standard spin at 1x bet.', draw: 'base' },
   {
     name: 'ante', cost: 1.25, label: 'Ante Bet', draw: 'ante',
-    description: 'Costs 1.25x bet per spin. Skull Lollipops land more often: free spins trigger about 2.4 times and Trick or Treat about twice as often.',
+    description: 'Costs 1.25x bet per spin. Skull Lollipops land more often: free spins trigger about 1.7 times and Trick or Treat about 1.6 times as often.',
   },
   {
     name: 'bonus', cost: 100, label: 'Haunted Cauldron', draw: 'base', forcedScatters: 4, buy: true,

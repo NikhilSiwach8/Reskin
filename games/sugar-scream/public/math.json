@@ -1,0 +1,40 @@
+{
+  "generated": {
+    "books": 100000,
+    "seed": 1313
+  },
+  "modes": [
+    {
+      "mode": "base",
+      "cost": 1,
+      "rtp": 0.9599999999778586,
+      "maxWin": 5000,
+      "maxWinProbability": 1.1481053999867741e-8,
+      "hitRate": 0.44627056044116487
+    },
+    {
+      "mode": "ante",
+      "cost": 1.25,
+      "rtp": 0.9600000000438935,
+      "maxWin": 5000,
+      "maxWinProbability": 3.6933336000705134e-8,
+      "hitRate": 0.43130248069060356
+    },
+    {
+      "mode": "bonus",
+      "cost": 100,
+      "rtp": 0.9600000000130144,
+      "maxWin": 5000,
+      "maxWinProbability": 0.00000500000000107987,
+      "hitRate": 0.9999999999981716
+    },
+    {
+      "mode": "fullmoon",
+      "cost": 300,
+      "rtp": 0.9599999999835523,
+      "maxWin": 5000,
+      "maxWinProbability": 0.000054503873032014685,
+      "hitRate": 1.0000000000001217
+    }
+  ]
+}
