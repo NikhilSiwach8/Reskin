@@ -26,6 +26,8 @@ interface Args {
   forcedAttempts: number;
   clientSummary: boolean;
   level: number;
+  /** Per-mode natural book counts overriding --books (e.g. bonus=35000,fullmoon=30000). */
+  modeBooks: Record<string, number>;
 }
 
 function parseArgs(argv: string[]): Args {
@@ -43,6 +45,7 @@ function parseArgs(argv: string[]): Args {
     forcedAttempts: Number(get('wincap-attempts', '600000')),
     clientSummary: argv.includes('--client-summary'),
     level: Number(get('level', '19')),
+    modeBooks: Object.fromEntries(get('mode-books', '').split(',').filter(Boolean).map((kv) => kv.split('=')).map(([k, v]) => [k, Number(v)])),
   };
 }
 
@@ -88,7 +91,10 @@ async function runMode(mode: ModeName, args: Args): Promise<ModeStats> {
   const rng = new Rng(args.seed ^ (mode === 'base' ? 0x0b5e : 0xb0b5 + BET_MODES.indexOf(def)));
   const t0 = Date.now();
   const sink = new BookSink(join(args.out, `books_${mode}.jsonl.tmp`));
-  for (let i = 1; i <= args.books; i++) sink.add(playRound(i, mode, rng));
+  // The buy modes' books are about 13x larger than base books, so they use fewer natural
+  // books to keep the whole upload set small (see --mode-books).
+  const count = args.modeBooks[mode] ?? args.books;
+  for (let i = 1; i <= count; i++) sink.add(playRound(i, mode, rng));
   const books = sink.summaries;
   const natural = books.length;
   const naturalCaps = books.filter((b) => b.criteria === 'wincap').length;
@@ -178,7 +184,7 @@ async function main() {
   writeFileSync(join(args.out, 'REPORT.md'), renderReport(all, args));
   // Small summary for the in-game rules panel (RTP and max win per mode).
   const summary = JSON.stringify({
-    generated: { books: args.books, seed: args.seed },
+    generated: { books: args.books, modeBooks: args.modeBooks, seed: args.seed },
     modes: all.map((m) => ({ mode: m.mode, cost: m.cost, rtp: m.rtp, maxWin: m.maxWin, maxWinProbability: m.maxWinProbability, hitRate: m.hitRate })),
   }, null, 2) + '\n';
   writeFileSync(join(args.out, 'math.json'), summary);
