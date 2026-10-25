@@ -1,0 +1,33 @@
+{
+  "name": "sugar-scream",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Sugar Scream - a 6x5 pay-anywhere tumbling Halloween slot for Stake Engine (math engine, Stake book generator, PixiJS client, local mock RGS).",
+  "engines": {
+    "node": ">=22.15.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --config vitest.config.ts",
+    "math": "node --experimental-strip-types src/math/cli.ts",
+    "math:dev": "node --experimental-strip-types src/math/cli.ts --books 20000 --out math-output/dev --wincaps 4 --wincap-attempts 60000 --level 3",
+    "math:publish": "node --experimental-strip-types src/math/cli.ts --books 100000 --out math-output/publish --client-summary",
+    "art": "node tools/render-art.mjs",
+    "test:e2e": "node tools/smoke.mjs"
+  },
+  "dependencies": {
+    "@fontsource/creepster": "^5.2.5",
+    "@fontsource/fredoka": "^5.2.8",
+    "pixi.js": "8.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.21",
+    "typescript": "5.9.3",
+    "vite": "8.3.5",
+    "vitest": "5.0.5"
+  }
+}

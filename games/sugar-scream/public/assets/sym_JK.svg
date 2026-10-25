@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><defs><radialGradient id="g" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#ffc266"/><stop offset="0.55" stop-color="#ff6a00"/><stop offset="1" stop-color="#8a2a00"/></radialGradient><filter id="gl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="10" result="b"/><feFlood flood-color="#ffb300"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+    <g filter="url(#gl)">
+      <ellipse cx="58" cy="112" rx="40" ry="60" fill="url(#g)" stroke="#4a1a00" stroke-width="5"/>
+      <ellipse cx="142" cy="112" rx="40" ry="60" fill="url(#g)" stroke="#4a1a00" stroke-width="5"/>
+      <ellipse cx="100" cy="112" rx="46" ry="66" fill="url(#g)" stroke="#4a1a00" stroke-width="5"/>
+      <path d="M94 50 C92 34 96 24 108 16" fill="none" stroke="#2f5a14" stroke-width="10" stroke-linecap="round"/>
+      <path d="M58 92 l20 -16 l8 22 z M142 92 l-20 -16 l-8 22 z" fill="#fff36b" stroke="#4a1a00" stroke-width="3"/>
+      <path d="M48 128 q52 44 104 0 l-10 4 l-6 -10 l-10 12 l-10 -10 l-10 12 l-8 -12 l-10 12 l-10 -10 l-10 10 l-6 -10 z" fill="#fff36b" stroke="#4a1a00" stroke-width="3"/>
+    </g></svg>

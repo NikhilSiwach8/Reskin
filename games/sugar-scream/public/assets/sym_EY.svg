@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><defs><radialGradient id="g" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#ffffff"/><stop offset="0.7" stop-color="#f1e6d8"/><stop offset="1" stop-color="#c9a98f"/></radialGradient><radialGradient id="iris" cx="50%" cy="50%" r="60%"><stop offset="0" stop-color="#9cff8a"/><stop offset="0.6" stop-color="#1f9b4a"/><stop offset="1" stop-color="#0a3b1c"/></radialGradient><filter id="sh" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="#000" flood-opacity="0.55"/></filter></defs>
+    <g filter="url(#sh)">
+      <circle cx="100" cy="100" r="74" fill="url(#g)" stroke="#5a2020" stroke-width="5"/>
+      <path d="M30 92 q20 4 34 -6 M36 128 q16 -6 28 2 M170 96 q-18 6 -32 -2 M164 132 q-16 -8 -28 0 M100 28 q-6 18 4 30" fill="none" stroke="#d61f2c" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="108" cy="104" r="34" fill="url(#iris)" stroke="#0d2d1a" stroke-width="3"/>
+      <circle cx="108" cy="104" r="15" fill="#050505"/>
+      <circle cx="98" cy="94" r="6" fill="#fff"/>
+      <ellipse cx="70" cy="60" rx="18" ry="10" transform="rotate(-25 70 60)" fill="#fff" opacity="0.55"/>
+    </g></svg>

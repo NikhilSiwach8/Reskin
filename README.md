@@ -27,3 +27,4 @@ All skills except the two marked "written for this repo" are copied unchanged. T
 ## Games
 
 - [`games/midnight-vault`](games/midnight-vault/README.md): **Midnight Vault**, a 5x5, 15-line Halloween slot for Stake Engine with an outcome engine, Stake book generator, PixiJS client, local mock RGS, painted art, tests and documentation.
+- [`games/sugar-scream`](games/sugar-scream/README.md): **Sugar Scream**, a Halloween reskin of the 6x5 pay-anywhere tumbling format popularised by *Sweet Bonanza*, with three new bonuses (Witch's Spell, Trick or Treat doorstep picks, a persistent Haunted Cauldron multiplier) and Full Moon super free spins. It includes an outcome engine, Stake book generator, PixiJS client, local mock RGS, original vector art and tests.
