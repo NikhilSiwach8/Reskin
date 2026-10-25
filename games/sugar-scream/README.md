@@ -17,7 +17,7 @@ Theme, art, names and code are original; only the game format is borrowed. See [
 | Math pipeline | Simulates rounds, writes Stake RGS files (`index.json`, `books_*.jsonl.zst`, `lookUpTable_*_0.csv`) and a math report | `src/math/` |
 | Game client | PixiJS 8 + DOM UI static web app that replays RGS outcomes | `src/client/`, `index.html` |
 | Local RGS | Vite dev-server mock of the Stake RGS API, serving the generated books | `src/rgs/mockRgs.ts` |
-| Art | Original vector art (11 symbols, background, board, witch, ghost, cauldron, door) written as SVG by a script | `tools/render-art.mjs`, `public/assets/` |
+| Art | Painted symbol art (imported from `art/source/` by `tools/import-painted.py`) plus original vector art written as SVG by a script for everything not painted yet | `art/source/`, `tools/import-painted.py`, `tools/render-art.mjs`, `public/assets/` |
 | Tests | 21 unit tests (vitest) and a 12-scenario browser smoke test (Playwright) | `tests/`, `tools/smoke.mjs` |
 
 ## Quick start
@@ -49,6 +49,7 @@ Launch parameters: `social=true` (stake.us wording), `currency=EUR`, `lang=de` (
 | `npm run math:publish` | 100,000 books per mode in `math-output/publish` (zstd level 19), plus `public/math.json` for the rules panel |
 | `node --experimental-strip-types src/math/tune.ts base 200000` | Raw (unweighted) feature statistics for tuning |
 | `npm run art` | Rewrite the SVG assets in `public/assets/` |
+| `npm run art:painted` | Import painted art: drop `sym_<ID>.webp`/`.png` (transparent) into `art/source/`; the game uses it instead of the SVG |
 | `npm run build` | Typecheck and build the static client into `dist/` |
 
 ## Math summary
@@ -74,7 +75,7 @@ Checked in this environment (headless Chromium at 1600x900, 390x844, 360x640 and
 
 - **Not deployed to Stake Engine** (no account here). Built against the documented RGS contract and tested against the local mock only.
 - **Math is not certified.** Figures are exact for the published book set; the win-cap probability is a simulation estimate.
-- **Art is vector**, drawn in code. There are no painted assets and no frame-by-frame animation.
+- **Art:** painted symbols so far: Bleeding Heart, Witch's Potion, Slime Drop, Ghost Marshmallow, Poison Apple. The other symbols, the background, UI and splash art are still vector.
 - **Sound is procedural** (Web Audio synthesis), with no composed music.
 - **Devices:** only headless Chromium was tested. Real phones, Safari and Firefox still need testing.
 - **English only**; other `lang` values fall back to English.

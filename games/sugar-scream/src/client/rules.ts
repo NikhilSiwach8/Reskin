@@ -3,6 +3,7 @@ import {
   BET_MODES, CAULDRON_SCATTERS, DOORS, FREE_SPINS, FULL_MOON_SCATTERS, KNOCKS, KNOCK_TABLE, MIN_CLUSTER, MULT_VALUES,
   PAYING, RETRIGGER_SCATTERS, RETRIGGER_SPINS, SCATTER_PAYS, SYMBOLS, TRICK_OR_TREAT_SCATTERS, WINCAP,
 } from '../engine/config.ts';
+import { symbolSrc } from './assets.ts';
 import { localizeTree } from './text.ts';
 
 export interface MathSummary {
@@ -14,7 +15,7 @@ const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 export function buildRules(root: HTMLElement, o: { math?: MathSummary; fmt: (centi: number) => string; disabledBuy: boolean }): void {
   const pays = PAYING.map((id) => {
     const p = SYMBOLS[id].pays!;
-    return `<div class="paycell"><img src="assets/sym_${id}.svg" alt=""><div><b>${esc(SYMBOLS[id].name)}</b><br>12+ ${o.fmt(p[2])}<br>10-11 ${o.fmt(p[1])}<br>8-9 ${o.fmt(p[0])}</div></div>`;
+    return `<div class="paycell"><img src="${symbolSrc(id)}" alt=""><div><b>${esc(SYMBOLS[id].name)}</b><br>12+ ${o.fmt(p[2])}<br>10-11 ${o.fmt(p[1])}<br>8-9 ${o.fmt(p[0])}</div></div>`;
   }).join('');
   const treats = KNOCK_TABLE.filter(([v]) => typeof v === 'number').map(([v]) => o.fmt(v as number)).join(', ');
   const mults = MULT_VALUES.map(([v]) => `x${v}`).join(', ');
@@ -32,14 +33,14 @@ export function buildRules(root: HTMLElement, o: { math?: MathSummary; fmt: (cen
     <p>Values shown for the current bet.</p>
     <div class="paygrid">${pays}</div>
     <h3>Skull Lollipop</h3>
-    <p><img src="assets/sym_SC.svg" alt=""> Scatter. Counted anywhere on the board after the base-game tumbles end. 4 pay ${o.fmt(SCATTER_PAYS[4])}, 5 pay ${o.fmt(SCATTER_PAYS[5])}, 6 or more pay ${o.fmt(SCATTER_PAYS[6])}.</p>
+    <p><img src="${symbolSrc('SC')}" alt=""> Scatter. Counted anywhere on the board after the base-game tumbles end. 4 pay ${o.fmt(SCATTER_PAYS[4])}, 5 pay ${o.fmt(SCATTER_PAYS[5])}, 6 or more pay ${o.fmt(SCATTER_PAYS[6])}.</p>
     <h3>Witch's Spell</h3>
     <p>On any base-game spin the Witch can fly over the board before it is evaluated. Her spell turns several candies into one paying candy, always making at least ${MIN_CLUSTER} of it, so the spin always wins.</p>
     <h3>Trick or Treat</h3>
     <p>Exactly ${TRICK_OR_TREAT_SCATTERS} Skull Lollipops after the base-game tumbles start Trick or Treat. Knock on up to ${KNOCKS} of ${DOORS} doors. Each door hides a <b>Treat</b> (${treats}), a <b>Trick</b> (nothing), or the <b>Golden Lollipop</b>, which ends the knocking and awards ${FREE_SPINS.cauldron.spins} Haunted Cauldron free spins. Treats are kept. The prizes are decided when the round starts; the door you choose only decides where each prize is shown. In autoplay the doors open automatically.</p>
     <h3>Haunted Cauldron free spins</h3>
-    <p><img src="assets/sym_SC.svg" alt=""> ${CAULDRON_SCATTERS} Skull Lollipops award ${FREE_SPINS.cauldron.spins} free spins.</p>
-    <p><img src="assets/sym_JK.svg" alt=""> During free spins Jack-o'-Lanterns can land, each carrying a multiplier (${mults}). They stay through the tumbles. When a free spin's tumbles end with a win, the spin's total win is multiplied by the sum of its Jack-o'-Lanterns <b>plus the Cauldron</b>. Then those Jack-o'-Lanterns are poured into the Cauldron, which keeps growing until the feature ends. Jack-o'-Lanterns on a spin without a win are lost.</p>
+    <p><img src="${symbolSrc('SC')}" alt=""> ${CAULDRON_SCATTERS} Skull Lollipops award ${FREE_SPINS.cauldron.spins} free spins.</p>
+    <p><img src="${symbolSrc('JK')}" alt=""> During free spins Jack-o'-Lanterns can land, each carrying a multiplier (${mults}). They stay through the tumbles. When a free spin's tumbles end with a win, the spin's total win is multiplied by the sum of its Jack-o'-Lanterns <b>plus the Cauldron</b>. Then those Jack-o'-Lanterns are poured into the Cauldron, which keeps growing until the feature ends. Jack-o'-Lanterns on a spin without a win are lost.</p>
     <p>${RETRIGGER_SCATTERS} or more Skull Lollipops during free spins award ${RETRIGGER_SPINS} more free spins.</p>
     <h3>Full Moon free spins</h3>
     <p>${FULL_MOON_SCATTERS} or more Skull Lollipops award ${FREE_SPINS.fullMoon.spins} Full Moon free spins. They play like Haunted Cauldron, but the Cauldron starts at x${FREE_SPINS.fullMoon.cauldron}, Jack-o'-Lanterns land more often and each one adds <b>${FREE_SPINS.fullMoon.pour}x</b> its value to the Cauldron.</p>

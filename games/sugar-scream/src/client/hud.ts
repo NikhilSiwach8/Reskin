@@ -1,5 +1,6 @@
 // DOM user interface: meters, buttons, dialogs, banners, win screens and the Trick or Treat doors.
 import type { KnockPrize } from '../engine/types.ts';
+import { symbolSrc } from './assets.ts';
 import { localizeTree, t } from './text.ts';
 
 export const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
@@ -353,11 +354,11 @@ export class Hud {
       prize.className = `prize ${k.prize}`;
       if (k.prize === 'treat') {
         total += k.amount;
-        prize.innerHTML = `<img class="icon" src="assets/sym_PU.svg" alt=""><span>${fmt(k.amount)}</span>`;
+        prize.innerHTML = `<img class="icon" src="${symbolSrc('PU')}" alt=""><span>${fmt(k.amount)}</span>`;
       } else if (k.prize === 'trick') {
         prize.innerHTML = `<img class="icon" src="assets/ghost.svg" alt=""><span>${t('BOO!')}</span>`;
       } else {
-        prize.innerHTML = `<img class="icon" src="assets/sym_SC.svg" alt=""><span>${t('Free Spins!')}</span>`;
+        prize.innerHTML = `<img class="icon" src="${symbolSrc('SC')}" alt=""><span>${t('Free Spins!')}</span>`;
       }
       door.appendChild(prize);
       onReveal(k);
