@@ -6,7 +6,9 @@ Figures are exact for this book set and its lookup-table weights. They are not a
 | Mode | Cost | Books | RTP | Raw sim RTP | Hit rate | Std dev | Max win | Max win frequency |
 |---|---|---|---|---|---|---|---|---|
 | base | 1x | 100,325 | 96.000% | 102.76% | 1 in 3.62 | 16.42x | 5,000x | 1 in 7,413,948 |
-| bonus | 100x | 100,025 | 96.000% | 106.40% | 1 in 1.00 | 148.33x | 5,000x | 1 in 25,000 |
+| cursed | 110x | 100,025 | 96.000% | 100.10% | 1 in 1.00 | 204.92x | 5,000x | 1 in 11,400 |
+| phantom | 90x | 100,000 | 96.000% | 95.22% | 1 in 1.00 | 91.43x | 1,192.5x | 1 in 98,573 |
+| midnight | 100x | 100,000 | 96.000% | 97.51% | 1 in 1.00 | 60.91x | 570.9x | 1 in 103,812 |
 
 ## base mode
 
@@ -46,35 +48,90 @@ Figures are exact for this book set and its lookup-table weights. They are not a
 | 1,000x to <5,000x | 0.0037% |
 | 5,000x (win cap) | 0.0000% |
 
-## bonus mode
+## cursed mode
 
 - Non-zero-weight books: 100,025
-- Probability of a round paying less than its cost, after weighting: 70.48%
-- Weighting adjustment: rounds paying at least the cost are 0.8398x as likely as in the raw simulation
-- Win-cap estimate: natural cap hits 4 / 100,000; natural Cursed Fortune rounds 36840; forced Cursed Fortune cap rate 25 / 372864; probability used 4.000e-5
-- Fixed-probability group `wincap`: 29 books sharing probability 4.000e-5 (1 in 25,000)
+- Probability of a round paying less than its cost, after weighting: 74.82%
+- Weighting adjustment: rounds paying at least the cost are 0.9363x as likely as in the raw simulation
+- Win-cap estimate: natural cap hits 2 / 100,000; natural Cursed Fortune rounds 100000; forced Cursed Fortune cap rate 25 / 285011; probability used 8.772e-5
+- Fixed-probability group `wincap`: 27 books sharing probability 8.772e-5 (1 in 11,400)
+
+| Feature tag | Frequency | RTP contribution | Average round win |
+|---|---|---|---|
+| threeKeys | 1 in 1.00 | 96.00% | 105.60x |
+| cursedFortune | 1 in 1.00 | 96.00% | 105.60x |
+| retrigger | 1 in 16.03 | 15.35% | 270.71x |
+| wincap | 1 in 11,400 | 0.40% | 5000.00x |
+
+| Round win | Probability |
+|---|---|
+| 0x | 0.3254% |
+| >0x to <1x | 2.5184% |
+| 1x to <2x | 1.8215% |
+| 2x to <5x | 5.7623% |
+| 5x to <10x | 9.0174% |
+| 10x to <20x | 13.3675% |
+| 20x to <50x | 21.8232% |
+| 50x to <100x | 17.8967% |
+| 100x to <500x | 23.7190% |
+| 500x to <1,000x | 2.8699% |
+| 1,000x to <5,000x | 0.8699% |
+| 5,000x (win cap) | 0.0088% |
+
+## phantom mode
+
+- Non-zero-weight books: 100,000
+- Probability of a round paying less than its cost, after weighting: 66.39%
+- Weighting adjustment: rounds paying at least the cost are 1.0145x as likely as in the raw simulation
+- Win-cap estimate: natural cap hits 0 / 100,000; natural Cursed Fortune rounds 0; forced Cursed Fortune cap rate 0 / 0; probability used 0.000e+0
+- Fixed-probability group `wincap`: 0 books sharing probability 0.000e+0 (never)
+
+| Feature tag | Frequency | RTP contribution | Average round win |
+|---|---|---|---|
+| threeKeys | 1 in 1.00 | 96.00% | 86.40x |
+| phantomPayday | 1 in 1.00 | 96.00% | 86.40x |
+| retrigger | 1 in 16.92 | 9.79% | 149.17x |
+
+| Round win | Probability |
+|---|---|
+| 0x | 0.0397% |
+| >0x to <1x | 0.3177% |
+| 1x to <2x | 0.5748% |
+| 2x to <5x | 2.5367% |
+| 5x to <10x | 5.1726% |
+| 10x to <20x | 11.2368% |
+| 20x to <50x | 26.1372% |
+| 50x to <100x | 23.9873% |
+| 100x to <500x | 29.4553% |
+| 500x to <1,000x | 0.5367% |
+| 1,000x to <5,000x | 0.0051% |
+| 5,000x (win cap) | 0.0000% |
+
+## midnight mode
+
+- Non-zero-weight books: 100,000
+- Probability of a round paying less than its cost, after weighting: 59.85%
+- Weighting adjustment: rounds paying at least the cost are 0.9633x as likely as in the raw simulation
+- Win-cap estimate: natural cap hits 0 / 100,000; natural Cursed Fortune rounds 0; forced Cursed Fortune cap rate 0 / 0; probability used 0.000e+0
+- Fixed-probability group `wincap`: 0 books sharing probability 0.000e+0 (never)
 
 | Feature tag | Frequency | RTP contribution | Average round win |
 |---|---|---|---|
 | threeKeys | 1 in 1.00 | 96.00% | 96.00x |
-| cursedFortune | 1 in 2.69 | 38.90% | 104.52x |
-| phantomPayday | 1 in 2.83 | 28.63% | 81.11x |
-| midnightCountdown | 1 in 3.89 | 24.15% | 93.88x |
-| retrigger | 1 in 15.95 | 12.18% | 194.31x |
-| vaultBreach | 1 in 56.61 | 4.33% | 245.04x |
-| wincap | 1 in 25,000 | 0.20% | 5000.00x |
+| midnightCountdown | 1 in 1.00 | 96.00% | 96.00x |
+| retrigger | 1 in 12.21 | 11.75% | 143.50x |
 
 | Round win | Probability |
 |---|---|
-| 0x | 0.1380% |
-| >0x to <1x | 1.0944% |
-| 1x to <2x | 0.9368% |
-| 2x to <5x | 3.2669% |
-| 5x to <10x | 5.4677% |
-| 10x to <20x | 10.1203% |
-| 20x to <50x | 23.1434% |
-| 50x to <100x | 26.3104% |
-| 100x to <500x | 27.7955% |
-| 500x to <1,000x | 1.3521% |
-| 1,000x to <5,000x | 0.3704% |
-| 5,000x (win cap) | 0.0040% |
+| 0x | 0.0369% |
+| >0x to <1x | 0.3777% |
+| 1x to <2x | 0.2596% |
+| 2x to <5x | 0.6404% |
+| 5x to <10x | 1.0170% |
+| 10x to <20x | 3.4738% |
+| 20x to <50x | 18.6242% |
+| 50x to <100x | 35.4207% |
+| 100x to <500x | 40.1458% |
+| 500x to <1,000x | 0.0039% |
+| 1,000x to <5,000x | 0.0000% |
+| 5,000x (win cap) | 0.0000% |

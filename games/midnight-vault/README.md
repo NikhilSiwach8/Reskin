@@ -72,13 +72,15 @@ Published book set: 100,000 natural books per mode, seed 1313, target RTP 96%. T
 | Mode | Cost | RTP | Hit rate | Std dev | Max win | Max win frequency |
 |---|---|---|---|---|---|---|
 | base | 1x | 96.00% | 1 in 3.62 | 16.42x | 5,000x | 1 in 7.4 million (estimate) |
-| bonus (Buy Bonus) | 100x | 96.00% | every round pays | 148.33x | 5,000x | 1 in 25,000 buys (estimate) |
+| cursed (Buy Cursed Fortune) | 110x | 96.00% | 1 in 1.00 | 204.92x | 5,000x | 1 in 11,400 buys (estimate) |
+| phantom (Buy Phantom Payday) | 90x | 96.00% | 1 in 1.00 | 91.43x | 1,192.5x | 1 in 98,573 buys |
+| midnight (Buy Midnight Countdown) | 100x | 96.00% | 1 in 1.00 | 60.91x | 570.9x | 1 in 103,812 buys |
 
-Base-game feature frequencies in the published set: The Thirteenth Hour 1 in 71, Lockdown Spin 1 in 208, Phantom Heist 1 in 215, Spectral Respin 1 in 216, Three Keys to the Vault 1 in 219, The Vault Breach 1 in 270,271 (exact). The weighting adjusts the raw simulation moderately: in base, rounds paying at least 1x are 0.93x as likely as simulated; in the bonus buy, rounds paying at least the 100x cost are 0.84x as likely.
+Base-game feature frequencies in the published set: The Thirteenth Hour 1 in 71, Lockdown Spin 1 in 208, Phantom Heist 1 in 215, Spectral Respin 1 in 216, Three Keys to the Vault 1 in 219, The Vault Breach 1 in 270,271 (exact). The weighting adjusts the raw simulation moderately: in base, rounds paying at least 1x are 0.93x as likely as simulated; in the three bonus buys, rounds paying at least the buy price are 0.94x (Cursed Fortune), 1.01x (Phantom Payday) and 0.96x (Midnight Countdown) as likely. Each buy is priced from its path's own simulated value, so the weighting barely changes its shape. Only Cursed Fortune can reach the 5,000x cap; the other buys' max win is the largest payout in their book set.
 
 ## Deploying to Stake Engine
 
-1. **Math.** Run `npm run math:publish`. Upload the five files in `math-output/publish/` (`index.json`, `books_base.jsonl.zst`, `books_bonus.jsonl.zst`, `lookUpTable_base_0.csv`, `lookUpTable_bonus_0.csv`) in the Stake Engine dashboard. The RGS verifies on upload that each lookup-table payout matches its book. Math cannot be changed after approval.
+1. **Math.** Run `npm run math:publish`. Upload the nine files in `math-output/publish/` (`index.json`, plus `books_<mode>.jsonl.zst` and `lookUpTable_<mode>_0.csv` for the modes `base`, `cursed`, `phantom` and `midnight`) in the Stake Engine dashboard. The RGS verifies on upload that each lookup-table payout matches its book. Math cannot be changed after approval.
 2. **Frontend.** Run `npm run build` and upload the contents of `dist/`. The build is fully static, uses relative paths, and bundles all fonts and assets (no external requests, as Stake's strict XSS policy requires). The dev panel and local RGS are not included in the build.
 3. **Launch.** Stake launches the game with `sessionID`, `rgs_url`, `lang`, `currency`, `device`, `social` (and `replay`, `game`, `version`, `mode`, `event` for bet replay). The client reads all of these; nothing is hard-coded.
 4. **Test on the real RGS** with the dashboard test session: authenticate, play, end-round, resume of an active round, replay, social mode, and the jurisdiction flags (turbo, autoplay, buy feature, spacebar, slam stop, minimum round duration).

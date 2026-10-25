@@ -9,16 +9,32 @@
       "cost": 1,
       "rtp": 0.9599999999199481,
       "maxWin": 5000,
-      "maxWinProbability": 1.3488090000103752e-7,
+      "maxWinProbability": 1.3488090000103752e-07,
       "hitRate": 0.2761266950201894
     },
     {
-      "mode": "bonus",
-      "cost": 100,
-      "rtp": 0.959999999986501,
+      "mode": "cursed",
+      "cost": 110,
+      "rtp": 0.9599999999909683,
       "maxWin": 5000,
-      "maxWinProbability": 0.000040000000003698075,
-      "hitRate": 0.9986197622385434
+      "maxWinProbability": 8.771591271490953e-05,
+      "hitRate": 0.9967458632629886
+    },
+    {
+      "mode": "phantom",
+      "cost": 90,
+      "rtp": 0.9600000000016508,
+      "maxWin": 1192.5,
+      "maxWinProbability": 1.0144769437816612e-05,
+      "hitRate": 0.9996028688486387
+    },
+    {
+      "mode": "midnight",
+      "cost": 100,
+      "rtp": 0.959999999996226,
+      "maxWin": 570.9,
+      "maxWinProbability": 9.632828040038531e-06,
+      "hitRate": 0.9996305532538329
     }
   ]
 }

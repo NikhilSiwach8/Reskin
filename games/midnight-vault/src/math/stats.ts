@@ -68,6 +68,8 @@ export function buildStats(
     if (b.payoutMultiplier >= WINCAP) maxP += p(i);
     maxWin = Math.max(maxWin, x);
   });
+  // Modes that cannot reach the cap report the frequency of their largest payout instead.
+  if (maxP === 0) books.forEach((b, i) => { if (b.payoutMultiplier / 100 === maxWin) maxP += p(i); });
   let variance = 0;
   books.forEach((b, i) => (variance += p(i) * (b.payoutMultiplier / 100 - mean) ** 2));
 
