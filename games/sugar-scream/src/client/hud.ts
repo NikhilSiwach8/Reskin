@@ -861,9 +861,21 @@ export class Hud {
   /** Bonus Games sheet: one card per bonus buy (art, volatility, price, buy button). */
   private renderBuy(): void {
     const box = $('#buy-options');
+    const options = this.h.buyOptions();
+    // the cards are built once; a bet change only updates prices, so nothing reloads or re-animates
+    const cards = [...box.querySelectorAll<HTMLElement>('.buy-card')];
+    if (cards.length === options.length && options.every((o, i) => cards[i].dataset.mode === o.mode)) {
+      options.forEach((o, i) => {
+        const price = cards[i].querySelector('.bc-price')!;
+        if (price.textContent !== o.price) price.textContent = o.price;
+        cards[i].querySelector('button')!.disabled = !o.affordable;
+      });
+      return;
+    }
     box.innerHTML = '';
-    for (const o of this.h.buyOptions()) {
+    for (const o of options) {
       const card = document.createElement('div');
+      card.dataset.mode = o.mode;
       card.className = 'buy-card buy-option';
       card.innerHTML = '<h3></h3><div class="bc-art"><img alt=""></div><p class="bc-desc"></p><div class="bc-vol"><span></span><i></i></div><div class="bc-price"></div><button type="button" class="bc-buy"></button>';
       card.querySelector('h3')!.textContent = t(o.label);

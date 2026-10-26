@@ -127,7 +127,24 @@ export class Scene {
     this.drawFrameGlow();
     this.setBoard(board, []);
     this.layout();
-    window.addEventListener('resize', () => this.layout());
+    // Pixi resizes the canvas on the next frame; resize it now so the layout sees the new size
+    let queued = 0;
+    const relayout = () => {
+      cancelAnimationFrame(queued);
+      queued = requestAnimationFrame(() => {
+        this.app.resize();
+        this.layout();
+      });
+    };
+    window.addEventListener('resize', relayout);
+    window.addEventListener('orientationchange', relayout);
+    window.visualViewport?.addEventListener('resize', relayout);
+    // the HUD clusters change size as fonts and art load in: keep the board clear of them
+    const ro = new ResizeObserver(relayout);
+    for (const sel of ['#hud .hud-left', '#hud .hud-right', '#hud .hud-center']) {
+      const el = document.querySelector(sel);
+      if (el) ro.observe(el);
+    }
     this.ticker.add((tk) => this.idle(Math.min(tk.deltaMS, 50) / 1000));
   }
 
@@ -241,20 +258,45 @@ export class Scene {
     const rect = (sel: string) => document.querySelector(sel)?.getBoundingClientRect();
     const left = rect('#hud .hud-left');
     const right = rect('#hud .hud-right');
-    const under = Math.min(...['#meter-win', '#msg-bar'].map((q) => rect(q)?.top ?? h).filter((v) => v > 0));
-    const top = portrait ? 58 : Math.min(62, h * 0.09);
-    let side = 0;
-    let bottom = h - under + 4;
-    // portrait: everything under the board, plus a row for the free-spin panels
-    if (portrait) bottom = h - Math.min(left?.top ?? h, right?.top ?? h, under) + 50;
-    else side = Math.max(left ? left.right : 0, right ? w - right.left : 0) + 6;
-    const availW = w - side * 2 - 8;
-    const availH = h - bottom - top;
+    // the message bar sits under the board, or above it on short landscape screens
+    const msg = rect('#msg-bar');
+    const msgTop = !!msg && msg.height > 0 && msg.top < h / 2;
+    const logo = rect('#logo');
+    const logoTop = logo && logo.height > 0 && logo.left < w / 2 && logo.right > w / 2 ? logo.bottom : 0;
+    const under = Math.min(h, ...[rect('#meter-win'), msgTop ? undefined : msg].map((r) => (r && r.height > 0 ? r.top : h)));
+    const top = Math.max(msgTop ? msg!.bottom + 6 : 0, portrait ? Math.max(58, logoTop + 6) : Math.min(62, h * 0.09));
     const fb = this.frameBox;
-    const k = Math.min(availW / fb.w, availH / fb.h);
+    let k: number;
+    let side = 0;
+    let lift = 0;
+    let y: number;
+    if (portrait) {
+      // board, then the free-spin panel row, message bar and win meter, then the controls;
+      // spare height is shared out evenly between the gaps
+      const clusters = Math.min(left?.top ?? h, right?.top ?? h);
+      const bottom = h - Math.min(clusters, under) + 50;
+      const availH = h - bottom - top;
+      k = Math.min((w - 8) / fb.w, availH / fb.h);
+      const spare = Math.max(0, availH - fb.h * k);
+      lift = spare / 3;
+      y = top + spare / 3;
+    } else {
+      const clusters = Math.min(left?.top ?? h, right?.top ?? h);
+      side = Math.max(left ? left.right : 0, right ? w - right.left : 0) + 6;
+      // a) between the two control clusters, down to the win meter
+      const between = Math.min((w - side * 2 - 8) / fb.w, (under - 4 - top) / fb.h);
+      // b) above the clusters, using the full width less room for the free-spin panels
+      const panelW = Math.min(170, w * 0.115) + 16;
+      const above = Math.min((w - panelW * 2) / fb.w, (Math.min(clusters, under) - 6 - top) / fb.h);
+      k = Math.max(between, above);
+      const availH = (above > between ? Math.min(clusters, under) - 6 : under - 4) - top;
+      y = top + (availH - fb.h * k) / 2;
+    }
     this.world.scale.set(k);
     // centre the frame (not just the grid) in the available area
-    this.world.position.set((w - fb.w * k) / 2 - fb.x * k, top + (availH - fb.h * k) / 2 - fb.y * k);
+    this.world.position.set((w - fb.w * k) / 2 - fb.x * k, y - fb.y * k);
+    document.documentElement.style.setProperty('--stack-lift', `${lift}px`);
+    document.documentElement.style.setProperty('--hud-side', `${side}px`);
     document.documentElement.style.setProperty('--board-top', `${this.world.y}px`);
     document.documentElement.style.setProperty('--board-left', `${this.world.x}px`);
     document.documentElement.style.setProperty('--board-w', `${BOARD_W * k}px`);

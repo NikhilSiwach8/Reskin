@@ -185,6 +185,16 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outl
 .paycell div { font-size: 13px; line-height: 1.35; }
 
 /* ------------------------------------------------------------------ responsive (non-HUD) */
+@media (max-height: 500px) and (orientation: landscape) {
+  /* free-spin panels: one slim column that fits beside the board */
+  #side-left { width: auto; min-width: 104px; max-width: calc(var(--board-left) - var(--board-pad) - 16px); gap: 6px; }
+  #side-left .panel { padding: 3px 8px; border-width: 2px; border-radius: 12px; }
+  #side-left .panel-title { font-size: 10px; letter-spacing: 0; line-height: 1.1; }
+  #side-left .panel-value { font-size: 20px; }
+  #tumble-win { display: none !important; }
+  #cauldron img { display: none; }
+  #cauldron.painted-panel { background: linear-gradient(180deg, rgba(60, 10, 90, 0.9), rgba(20, 4, 40, 0.92)); border: 2px solid var(--lime); aspect-ratio: auto; padding: 3px 8px; }
+}
 @media (max-height: 460px) and (orientation: landscape) {
   #logo { font-size: 26px; }
   .panel-value { font-size: 22px; }
@@ -214,6 +224,7 @@ body.reduced * { animation: none !important; }
 #logo .l1, #logo .l2 { display: inline-block; animation: logo-glow 2.6s ease-in-out infinite; }
 #logo .l2 { animation-delay: -1.3s; }
 @keyframes logo-float { 50% { transform: translateX(-50%) translateY(5px) rotate(-1deg); } }
+@keyframes logo-float-corner { 50% { transform: translateY(4px) rotate(-1deg); } }
 @keyframes logo-glow { 50% { transform: scale(1.04); } }
 
 /* spin button: breathes while idle, spins while a round plays */
@@ -268,8 +279,12 @@ body.reduced * { animation: none !important; }
 @keyframes tier-flash { to { opacity: 0; } }
 
 /* message bar under the board */
-#msg-bar { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--win-h) + 10px); z-index: 3; max-width: min(820px, 94vw); padding: 5px 22px; border-radius: 20px; background: linear-gradient(180deg, rgba(40, 6, 70, 0.85), rgba(14, 2, 30, 0.9)); border: 2px solid rgba(255, 79, 176, 0.55); text-align: center; font-weight: 700; font-size: clamp(13px, 1.4vw, 18px); letter-spacing: 0.5px; text-transform: uppercase; color: #ffe9f6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+#msg-bar { position: fixed; left: 0; right: 0; margin: 0 auto; width: fit-content; bottom: calc(var(--win-h) + 10px); z-index: 3; max-width: min(820px, 94vw); padding: 5px 22px; border-radius: 20px; background: linear-gradient(180deg, rgba(40, 6, 70, 0.85), rgba(14, 2, 30, 0.9)); border: 2px solid rgba(255, 79, 176, 0.55); text-align: center; font-weight: 700; font-size: clamp(12px, 1.4vw, 18px); letter-spacing: 0.5px; text-transform: uppercase; color: #ffe9f6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
 #msg-bar:empty, #msg-text:empty { display: none; }
+/* the bar keeps its size between messages (the board is laid out around it) */
+#msg-bar { min-height: calc(1.25em + 14px); max-width: min(820px, 94vw, calc(100vw - var(--hud-side, 0px) * 2 - 8px)); }
+#msg-bar:has(#msg-text:empty), #msg-bar:has(> :only-child:empty) { visibility: hidden; }
+#msg-text { max-width: 100%; overflow: hidden; text-overflow: ellipsis; vertical-align: top; }
 #msg-text.msg-in { display: inline-block; animation: msg-in 0.35s ease-out; }
 @keyframes msg-in { from { transform: translateY(8px); opacity: 0; } }
 .msg-win { display: inline-flex; align-items: center; gap: 4px; margin: 0 10px; color: var(--gold); animation: msg-in 0.35s ease-out backwards; }
@@ -387,7 +402,7 @@ body.in-free #msg-bar { border-color: rgba(157, 255, 74, 0.6); }
 
 /* ------------------------------------------------------------------ HUD layout (reference: controls flank the board) */
 /* --u is the HUD unit: everything scales with the screen, capped by width on squarer screens */
-:root { --u: min(1.1vh, 0.72vw); --win-h: calc(var(--u) * 6.4 + 10px); --hud-h: 0px; }
+:root { --u: min(1.1vh, 0.62vw); --win-h: calc(var(--u) * 6.4 + 10px); --hud-h: 0px; }
 #hud { position: fixed; inset: 0; z-index: 3; pointer-events: none; }
 #hud > * { pointer-events: auto; }
 .hud-left, .hud-right { position: absolute; bottom: max(calc(var(--u) * 2.4), env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: calc(var(--u) * 1.2); }
@@ -466,6 +481,11 @@ body.in-free #msg-bar { border-color: rgba(157, 255, 74, 0.6); }
 .bc-price { margin: 6px 12px 0; text-align: center; font-family: var(--fd); font-weight: 700; font-size: clamp(22px, 2.6vw, 36px); }
 .bc-buy { margin: 8px 12px 14px; padding: 12px; border-radius: 14px; border: none; background: linear-gradient(180deg, #ff4fb0, #c4007a); color: #fff; font-weight: 700; font-size: clamp(16px, 1.6vw, 22px); letter-spacing: 1px; text-transform: uppercase; box-shadow: 0 4px 0 #6a0040; }
 .bc-buy:disabled { background: #b9aec2; box-shadow: none; }
+/* every card lines up: the description takes the slack, so volatility, price and button share rows */
+.buy-card > * { flex: none; }
+.buy-card .bc-desc { flex: 1 0 auto; }
+.buy-card .bc-vol { margin-top: auto; padding-top: 8px; }
+.bc-price, .bp-value, #meter-bet .meter-value, #meter-balance .meter-value { font-variant-numeric: tabular-nums; }
 .ante-card #ante { margin: 6px 10px 12px; width: auto; }
 .ante-card #ante.painted { width: calc(100% - 20px); }
 .buy-betpanel { display: grid; grid-template-columns: auto auto auto auto; grid-template-rows: auto auto; align-items: center; justify-content: center; column-gap: clamp(10px, 2vw, 30px); row-gap: 8px; width: min(620px, 92vw); margin: 18px auto 0; padding: 12px 20px 14px; border-radius: 18px; background: #0b0014; border: 4px solid #fff; }
@@ -477,18 +497,42 @@ body.in-free #msg-bar { border-color: rgba(157, 255, 74, 0.6); }
 #bp-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; border-radius: 50%; background: #fff; border: 4px solid #1a0430; }
 #bp-slider::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 4px solid #1a0430; }
 
-/* small landscape screens */
-@media (max-height: 460px) and (orientation: landscape) {
-  .buy-card .bc-art { aspect-ratio: 16 / 9; }
+/* small landscape screens: the logo moves to the top right corner and the message bar to the
+   top, so the board gets the full height between them and the win meter */
+@media (max-height: 500px) and (orientation: landscape) {
+  #logo { left: auto; right: max(12px, env(safe-area-inset-right)); top: max(6px, env(safe-area-inset-top)); transform: none; flex-direction: column; align-items: flex-end; gap: 0; font-size: clamp(18px, 5.4vh, 26px); animation-name: logo-float-corner; }
+  #msg-bar { top: max(6px, env(safe-area-inset-top)); bottom: auto; font-size: 12px; padding: 3px 14px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  /* the whole sheet fits the screen: compact header, short art, slim bet panel */
+  .buy-sheet { padding-top: 2px; }
+  .buy-sheet h2 { font-size: 24px; margin-bottom: 6px; }
+  .buy-sheet h2::after { display: none; }
+  .buy-sheet .modal-close { width: 36px; height: 36px; font-size: 16px; }
+  .buy-card { border-radius: 16px; border-width: 3px; }
+  .buy-card h3 { font-size: 16px; padding: 6px 6px 4px; }
+  .buy-card .bc-art { aspect-ratio: auto; height: 24vh; margin-top: -30px; padding: 32px 6px 4px; display: flex; justify-content: center; align-items: center; overflow: hidden; box-sizing: content-box; }
+  .buy-card .bc-art img { height: 100%; width: auto; max-width: 90%; }
   .bc-desc { display: none; }
+  .bc-vol { font-size: 9px; margin: 0 10px; }
+  .bc-price { font-size: 18px; margin-top: 2px; }
+  .bc-buy { margin: 4px 10px 8px; padding: 6px; font-size: 14px; border-radius: 10px; }
+  .ante-card #ante { margin: 2px auto 6px; }
+  .ante-card #ante.painted { width: min(calc(100% - 16px), 40vh); }
+  .ante-card #ante.painted .big { font-size: 12px; }
+  .buy-betpanel { margin-top: 8px; padding: 4px 16px 8px; row-gap: 2px; border-width: 3px; }
+  .buy-betpanel .tile-tag { font-size: 11px; padding: 0 8px; }
+  .bp-value { font-size: 18px; }
+  .bp-arrow { width: 34px; height: 34px; font-size: 34px; }
 }
 /* phones in portrait: the two clusters sit side by side under the board */
 @media (orientation: portrait) {
   /* clusters along the bottom edge; win meter, message bar and free-spin panels stacked above them */
   :root { --u: min(1.22vw, 0.6vh); --hud-h: calc(var(--u) * 30 + 26px); }
-  .hud-center { bottom: calc(var(--hud-h) + 4px); }
-  #msg-bar { bottom: calc(var(--hud-h) + var(--win-h) + 10px); font-size: 12px; padding: 4px 12px; }
-  #side-left { bottom: calc(var(--hud-h) + var(--win-h) + 44px) !important; }
+  .hud-center { bottom: calc(var(--hud-h) + 4px + var(--stack-lift, 0px)); }
+  #msg-bar { bottom: calc(var(--hud-h) + var(--win-h) + 10px + var(--stack-lift, 0px)); font-size: clamp(11px, 3.2vw, 14px); padding: 4px 12px; white-space: normal; line-height: 1.25; }
+  #msg-text { white-space: normal; }
+  #side-left { bottom: calc(var(--hud-h) + var(--win-h) + 44px + var(--stack-lift, 0px)) !important; }
   #meter-balance { margin-left: calc(var(--u) * 6.4); }
   #meter-bet { margin-right: 0; }
   #menu-pop { bottom: calc(var(--hud-h) + 10px); }
