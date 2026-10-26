@@ -86,6 +86,18 @@ Build the upload zips with `npm run math:publish && npm run build && npm run rel
 - **Layout** (after the format's best-known Stake titles): bottom left has a menu button that opens a settings popover (music and effects volume sliders, reduced motion, intro screen, Game Info), the Bonus tile and the balance. Bottom right has a big Spin button with Autoplay, Turbo and Sound beside it, and the bet with −/+ under it. The win meter and message bar sit under the board, and the board uses the full height between the two control groups (on phones the groups sit under the board). The Bonus tile opens a Bonus Games sheet: Ante Bet, Haunted Cauldron, Full Moon and Loot Box cards with art, a volatility bar, the price and a Buy button (the Ante card has the sliding toggle), plus a balance and bet panel with a bet slider.
 - **Animated scene** (`src/client/game/ambience.ts`, `scene.ts`): the background slowly breathes and drifts, and mode-coloured particles float up (sugar sparkles, brew bubbles in Haunted Cauldron, embers in Full Moon). Bats flap across now and then, and the base and free-spin scenes cross-fade. The frame has a pulsing glow and a flickering pumpkin. Symbols breathe, a random one wiggles now and then, and Jack-o'-Lanterns flicker. Landings squash and spring back, wins glow, big clusters, feature triggers and the max win shake the board, the Win meter counts up, and the win screens rain candy.
 - **Presentation in the style of the format's best-known title:** each column drops in as a stack under gravity. Once 3 Skull Lollipops have landed, the remaining columns hold back and glow. Winning candies swell, jiggle and glow, then shatter into shards, and survivors fall with gravity while new candies drop in. A message bar under the board shows "12 × [candy] PAYS $1.20" during tumbles, the running win or free-spin total, and tips between rounds. In free spins, Jack-o'-Lanterns blast (shock ring, flash, shake) before their values fly to the Cauldron. Free spins open with a "Congratulations! You have won 10 free spins" screen and close with "You have won $X in N free spins". The panel counts spins left. Every winning round gets a splash: Nice Win (below 5x) or Sweet Win (5x to 15x) as a quick light splash, and Big (15x), Mega (40x), Monster (100x), Sugar Scream (500x) and Max Win punching in tier by tier over a fountain of candy and gold coins. Then the total win appears at once (no count-up).
+- **Music** (`src/client/audio.ts`): the supplied Halloween track, cut on its 8-bar phrase boundaries (about 90 BPM, 21.3 s per phrase) into seamless loops, one per area, cross-faded as the bonus doors close and open:
+
+  | Area | Section of the track | File |
+  |---|---|---|
+  | Base game | Intro and build (0:00–0:42) | `music_base.mp3` |
+  | Trick or Treat, Loot Box | The build (0:21–0:42) | `music_feature.mp3` |
+  | Haunted Cauldron free spins | The drop (0:42–1:04) | `music_free.mp3` |
+  | Full Moon free spins | The peak (1:04–1:25) | `music_fullmoon.mp3` |
+  | Big Win and above, Loot Box prize, Max Win | Sting: the drop's first two bars | `sting_bigwin.mp3` |
+  | Free spins total screen | Sting: the track's ending | `sting_end.mp3` |
+
+  The loop under a sting dips and comes back after it. The cuts are made with ffmpeg from `art/source/audio/halloween-music.mp3`. If the files can't load, the old procedural music-box loop plays instead. The music slider, music switch and mute all control it.
 - **Animated interface:** floating logo, breathing spin button, light sweep and hop on Buy, glowing Ante when on, pulsing info button, bubbling Cauldron panel and breathing Trick-or-Treat doors. Everything stops with reduced motion.
 
 ## Verified
@@ -102,6 +114,6 @@ Checked in this environment (headless Chromium at 1600x900, 390x844, 360x640 and
 - **Not deployed to Stake Engine** (no account here). Built against the documented RGS contract and tested against the local mock only.
 - **Math is not certified.** Figures are exact for the published book set; the win-cap probability is a simulation estimate.
 - **Art:** the game uses the supplied painted art throughout: all 11 symbols, the board frame, backgrounds for the base game and both free-spin modes, every HUD button and panel, the Trick-or-Treat street, doors and reveals, the loading, intro, free-spin intro and feature-complete screens, the five win screens (Big, Mega, Monster, Sugar Scream, Max Win), the Witch's Spell witch, and the spell and candy-pop effects. The vector SVGs in `public/assets/` remain only as fallbacks.
-- **Sound is procedural** (Web Audio synthesis), with no composed music.
+- **Music licence:** the supplied Halloween track (`art/source/audio/halloween-music.mp3`, "prettyjohn1-halloween-halloween-music-620626") must be licensed for commercial use before release. The sound effects are procedural (Web Audio synthesis).
 - **Devices:** only headless Chromium was tested. Real phones, Safari and Firefox still need testing.
 - **English only**; other `lang` values fall back to English.

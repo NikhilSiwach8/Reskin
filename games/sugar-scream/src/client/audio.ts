@@ -1,16 +1,37 @@
-// Original procedural sound design (Web Audio synthesis, no third-party samples).
-// Music (a creepy music-box loop) and effects have independent switches, plus the
-// master mute that Stake Engine requires.
+// Music: one Halloween track cut into phrase-length loops (art/source/audio/), one per
+// game area, cross-faded on the music bus, plus short stings that duck the loop.
+// The procedural music-box loop is the fallback if the files can't load.
+// Effects are procedural (Web Audio synthesis). Music and effects have independent
+// switches, plus the master mute that Stake Engine requires.
 
 export type Sfx =
   | 'click' | 'drop' | 'land' | 'pop' | 'win' | 'bigWin' | 'spell' | 'scatter' | 'knock' | 'treat' | 'boo'
   | 'lollipop' | 'bonus' | 'mult' | 'cauldron' | 'retrigger' | 'end';
+
+export type MusicArea = 'base' | 'feature' | 'free' | 'fullMoon';
+export type Sting = 'bigwin' | 'end';
+
+/** Loop lengths are exact phrase lengths (8 bars at ~90 BPM), downbeat to downbeat. */
+const TRACKS: Record<MusicArea | Sting, { file: string; loop?: number }> = {
+  base: { file: 'music_base', loop: 42.71 }, // intro + build, the calm half of the track
+  feature: { file: 'music_feature', loop: 21.37 }, // the build: Trick or Treat, Loot Box
+  free: { file: 'music_free', loop: 21.29 }, // the drop: Haunted Cauldron
+  fullMoon: { file: 'music_fullmoon', loop: 21.32 }, // the peak: Full Moon
+  bigwin: { file: 'sting_bigwin' }, // the drop's first two bars
+  end: { file: 'sting_end' }, // the track's ending
+};
 
 export class Audio {
   private ctx?: AudioContext;
   private master?: GainNode;
   private music?: GainNode;
   private sfx?: GainNode;
+  /** Loops go through this, so stings can duck them. */
+  private duck?: GainNode;
+  private buffers = new Map<MusicArea | Sting, { buf: AudioBuffer; offset: number }>();
+  private area: MusicArea = 'base';
+  private loop?: { area: MusicArea; src: AudioBufferSourceNode; gain: GainNode };
+  private duckTimer = 0;
   muted = false;
   musicOn = true;
   sfxOn = true;
@@ -30,18 +51,86 @@ export class Audio {
     this.master = this.ctx.createGain();
     this.music = this.ctx.createGain();
     this.sfx = this.ctx.createGain();
+    this.duck = this.ctx.createGain();
+    this.duck.connect(this.music);
     this.music.connect(this.master);
     this.sfx.connect(this.master);
     this.master.connect(this.ctx.destination);
     this.apply();
-    this.startMusic();
+    void this.loadMusic();
+  }
+
+  private async loadMusic(): Promise<void> {
+    const load = async (name: MusicArea | Sting) => {
+      const res = await fetch(`assets/audio/${TRACKS[name].file}.mp3`);
+      if (!res.ok) throw new Error(`${res.status}`);
+      const buf = await this.ctx!.decodeAudioData(await res.arrayBuffer());
+      this.buffers.set(name, { buf, offset: leadIn(buf) });
+    };
+    try {
+      await load('base');
+    } catch {
+      this.startMusic();
+      return;
+    }
+    this.setMusic(this.area);
+    for (const name of ['free', 'feature', 'fullMoon', 'bigwin', 'end'] as const) {
+      await load(name).catch(() => {});
+      if (name === this.area) this.setMusic(name);
+    }
+  }
+
+  /** Cross-fades to the loop for a game area; starts once its file has loaded. */
+  setMusic(area: MusicArea): void {
+    this.area = area;
+    const ctx = this.ctx;
+    const track = this.buffers.get(area);
+    if (!ctx || !track || this.loop?.area === area) return;
+    const t = ctx.currentTime;
+    if (this.loop) {
+      const old = this.loop;
+      old.gain.gain.setTargetAtTime(0, t, 0.25);
+      old.src.stop(t + 1.5);
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = track.buf;
+    src.loop = true;
+    src.loopStart = track.offset;
+    src.loopEnd = track.offset + TRACKS[area].loop!;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(1, t + 0.6);
+    src.connect(gain).connect(this.duck!);
+    src.start(t, track.offset);
+    this.loop = { area, src, gain };
+  }
+
+  /** A one-shot music sting; the loop dips under it and comes back after. */
+  sting(name: Sting): void {
+    const ctx = this.ctx;
+    const track = this.buffers.get(name);
+    if (!ctx || !track || !this.duck || ctx.state !== 'running') return;
+    const t = ctx.currentTime;
+    const src = ctx.createBufferSource();
+    src.buffer = track.buf;
+    src.connect(this.music!);
+    src.start(t, track.offset);
+    const len = track.buf.duration - track.offset;
+    this.duck.gain.cancelScheduledValues(t);
+    this.duck.gain.setTargetAtTime(0.12, t, 0.08);
+    window.clearTimeout(this.duckTimer);
+    this.duckTimer = window.setTimeout(() => {
+      const now = this.ctx!.currentTime;
+      this.duck!.gain.cancelScheduledValues(now);
+      this.duck!.gain.setTargetAtTime(1, now, 0.4);
+    }, (len - 1.2) * 1000);
   }
 
   apply(): void {
     if (!this.ctx || !this.master || !this.music || !this.sfx) return;
     const t = this.ctx.currentTime;
     this.master.gain.setTargetAtTime(this.muted ? 0 : 0.8, t, 0.05);
-    this.music.gain.setTargetAtTime(this.musicOn ? 0.26 * this.musicVol : 0, t, 0.2);
+    this.music.gain.setTargetAtTime(this.musicOn ? 0.5 * this.musicVol : 0, t, 0.2);
     this.sfx.gain.setTargetAtTime(this.sfxOn ? 0.75 * this.sfxVol : 0, t, 0.05);
   }
 
@@ -137,4 +226,12 @@ export class Audio {
       case 'end': arp([12, 7, 3, 0], 0.12, 'triangle', 0.18, 0.4); break;
     }
   }
+}
+
+/** Seconds of decoder padding before the first sound (some browsers keep the MP3 encoder delay). */
+function leadIn(buf: AudioBuffer): number {
+  const d = buf.getChannelData(0);
+  const max = Math.min(d.length, Math.floor(buf.sampleRate * 0.1));
+  for (let i = 0; i < max; i++) if (Math.abs(d[i]) > 0.001) return i / buf.sampleRate;
+  return 0;
 }
