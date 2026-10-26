@@ -78,6 +78,8 @@ for (const viewport of [{ width: 1600, height: 900 }, { width: 390, height: 844 
   for (const [n, label] of [[1, 'buy cauldron'], [2, 'buy full moon'], [3, 'buy loot box']]) {
     await play(label, async () => {
       await tap('#btn-buy');
+      // the cards fly in: tap Buy once they have landed (a tap mid-flight can hit the backdrop and close the sheet)
+      await page.waitForFunction(() => [...document.querySelectorAll('#buy-cards .buy-card')].every((c) => c.getAnimations().every((a) => a.playState !== 'running')), null, { timeout: 5000, polling: 50 });
       await tap(`#buy-options .buy-option:nth-child(${n}) button`);
       await tap('#confirm-yes');
     });
