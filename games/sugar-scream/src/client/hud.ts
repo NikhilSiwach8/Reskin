@@ -567,7 +567,7 @@ export class Hud {
     const banner = panelSrc('bonus_banner');
     const intro = el.querySelector<HTMLElement>('.portal-intro')!;
     const tunnel = bgSrc('portal_tunnel');
-    intro.style.backgroundImage = tunnel ? cssUrl(tunnel) : '';
+    intro.style.setProperty('--tunnel', tunnel ? cssUrl(tunnel) : 'none');
     el.querySelector<HTMLImageElement>('.portal-banner')!.src = banner ?? '';
     el.querySelector<HTMLImageElement>('.portal-flash')!.src = panelSrc('portal_flash') ?? '';
     this.layoutPortal();

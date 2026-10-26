@@ -11,6 +11,9 @@ export const ease = {
   outQuad: (t: number) => 1 - (1 - t) * (1 - t),
   inOutQuad: (t: number) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2),
   outCubic: (t: number) => 1 - (1 - t) ** 3,
+  outQuint: (t: number) => 1 - (1 - t) ** 5,
+  inOutSine: (t: number) => -(Math.cos(Math.PI * t) - 1) / 2,
+  inOutCubic: (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2),
   inCubic: (t: number) => t * t * t,
   outBack: (t: number) => {
     const c1 = 1.70158;
@@ -33,7 +36,8 @@ export class Tweener {
   private active = new Set<Active>();
 
   constructor(ticker: Ticker) {
-    ticker.add((t) => this.step(t.deltaMS));
+    // A long frame (tab switch, garbage collection) is clamped so animations never jump ahead.
+    ticker.add((t) => this.step(Math.min(t.deltaMS, 34)));
   }
 
   private step(dt: number): void {

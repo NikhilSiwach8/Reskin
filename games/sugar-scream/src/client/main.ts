@@ -139,7 +139,7 @@ class Game {
 
   async boot(): Promise<void> {
     const app = new Application();
-    await app.init({ resizeTo: window, backgroundAlpha: 0, antialias: true, autoDensity: true, resolution: Math.min(window.devicePixelRatio || 1, 2) });
+    await app.init({ resizeTo: window, backgroundAlpha: 0, antialias: true, autoDensity: true, resolution: Math.min(window.devicePixelRatio || 1, 2), powerPreference: 'high-performance' });
     document.getElementById('app')!.appendChild(app.canvas);
     await document.fonts.load('40px Creepster').catch(() => {});
     const failures = await loadAssets((p) => this.hud.setLoading(p * 0.8));

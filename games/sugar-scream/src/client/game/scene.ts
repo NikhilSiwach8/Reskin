@@ -1,6 +1,6 @@
 // PixiJS scene: background, board panel, the 6x5 grid of candies and every board animation.
 // Animations only present an outcome that the book has already fixed.
-import { Application, Container, Graphics, NineSliceSprite, Sprite, Text, type Ticker } from 'pixi.js';
+import { Application, Container, Graphics, NineSliceSprite, Sprite, Text, Texture, type Ticker } from 'pixi.js';
 import { REELS, ROWS } from '../../engine/config.ts';
 import type { Board, Cell, MultCell, SymbolId } from '../../engine/types.ts';
 import { hasTexture, isPainted, symbolTexture, tex } from '../assets.ts';
@@ -197,9 +197,11 @@ export class Scene {
   /** Short screen shake for big moments (board only, not the HUD). */
   async shake(ms = 420, amp = 10): Promise<void> {
     if (this.reduced) return;
+    const cycles = Math.max(3, ms / 70);
     await this.tween.run(ms, (p) => {
-      const a = amp * (1 - p);
-      this.world.pivot.set(Math.sin(p * 60) * a, Math.cos(p * 47) * a * 0.6);
+      const a = amp * (1 - p) * (1 - p);
+      const t = p * cycles * Math.PI * 2;
+      this.world.pivot.set(Math.sin(t) * a, Math.sin(t * 1.3 + 1) * a * 0.55);
     }, ease.linear);
     this.world.pivot.set(0, 0);
   }
@@ -347,9 +349,10 @@ export class Scene {
   /** Jelly landing: squash wide, then spring back. */
   private squash(v: CellView): Promise<void> {
     if (this.reduced || v.root.destroyed) return Promise.resolve();
-    return this.tween.run(260, (p) => {
-      const k = Math.sin(p * Math.PI) * (1 - p) * 0.9;
-      v.root.scale.set(1 + k * 0.22, 1 - k * 0.26);
+    return this.tween.run(340, (p) => {
+      // damped spring: squash, a softer stretch back, settle
+      const k = Math.sin(p * Math.PI * 2) * Math.exp(-p * 4.2) * 0.85;
+      v.root.scale.set(1 + k * 0.2, 1 - k * 0.24);
     }, ease.linear).then(() => { if (!v.root.destroyed) v.root.scale.set(1); });
   }
 
@@ -545,12 +548,57 @@ export class Scene {
     return { x: (x - this.world.x) / this.world.scale.x, y: (y - this.world.y) / this.world.scale.y };
   }
 
+  // ---------------------------------------------------------------- particles
+  // Sparks, dots and shards are pooled sprites over textures rendered once, instead of a new
+  // vector shape per particle: big tumbles no longer hitch while dozens burst at once.
+  private dotTex: Texture | null = null;
+  private shardTex: Texture | null = null;
+  private pool: Sprite[] = [];
+
+  private particleTextures(): [Texture, Texture] {
+    if (!this.dotTex || !this.shardTex) {
+      const dot = new Graphics().circle(32, 32, 30).fill(0xffffff);
+      const glow = new Graphics();
+      for (let i = 4; i >= 1; i--) glow.circle(32, 32, 8 * i).fill({ color: 0xffffff, alpha: 0.22 });
+      dot.addChild(glow);
+      this.dotTex = this.app.renderer.generateTexture({ target: dot, resolution: 2, antialias: true });
+      const shard = new Graphics().poly([16, 0, 32, 32, 2, 34]).fill(0xffffff).poly([16, 0, 21, 14, 12, 18]).fill({ color: 0xffffff, alpha: 0.6 });
+      this.shardTex = this.app.renderer.generateTexture({ target: shard, resolution: 2, antialias: true });
+      dot.destroy({ children: true });
+      shard.destroy();
+    }
+    return [this.dotTex, this.shardTex];
+  }
+
+  private particle(kind: 'dot' | 'shard', color: number, size: number): Sprite {
+    const [dot, shard] = this.particleTextures();
+    const p = this.pool.pop() ?? new Sprite();
+    p.texture = kind === 'dot' ? dot : shard;
+    p.anchor.set(0.5);
+    p.tint = color;
+    p.alpha = 1;
+    p.rotation = 0;
+    p.blendMode = kind === 'dot' ? 'add' : 'normal';
+    p.scale.set(size / 64);
+    p.visible = true;
+    this.fx.addChild(p);
+    return p;
+  }
+
+  private release(p: Sprite): void {
+    if (p.destroyed) return;
+    p.visible = false;
+    p.removeFromParent();
+    if (this.pool.length < 400) this.pool.push(p);
+    else p.destroy();
+  }
+
   private spark(x: number, y: number, color: number): void {
-    const g = new Graphics().circle(0, 0, 4 + Math.random() * 6).fill({ color, alpha: 0.9 });
+    const g = this.particle('dot', color, 10 + Math.random() * 12);
     g.position.set(x + (Math.random() - 0.5) * 40, y + (Math.random() - 0.5) * 40);
-    this.fx.addChild(g);
-    const vy = 1 + Math.random() * 2;
-    void this.tween.run(600, (p) => { g.alpha = 1 - p; g.y += vy; }, ease.linear).then(() => g.destroy());
+    const y0 = g.y;
+    const fall = 40 + Math.random() * 60;
+    void this.tween.run(650, (p) => { g.alpha = 1 - p; g.y = y0 + fall * p; g.scale.set((g.scale.x) * 0.995); }, ease.outQuad).then(() => this.release(g));
   }
 
   /** A painted effect sprite that pops, spins slightly and fades (skipped if not imported). */
@@ -573,34 +621,33 @@ export class Scene {
   private shards(x: number, y: number, color: number): void {
     if (this.reduced) return;
     for (let i = 0; i < 7; i++) {
-      const g = new Graphics().poly([0, -10, 8, 6, -7, 7]).fill({ color }).poly([0, -10, 3, -2, -2, 0]).fill({ color: 0xffffff, alpha: 0.7 });
+      const g = this.particle('shard', color, 20 + Math.random() * 22);
       g.position.set(x, y);
-      g.scale.set(0.8 + Math.random() * 0.9);
-      this.fx.addChild(g);
       const a = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.6;
       const v0 = 260 + Math.random() * 260;
       const spin = (Math.random() - 0.5) * 16;
-      void this.tween.run(700, (p) => {
-        const t = p * 0.7;
+      void this.tween.run(760, (p) => {
+        const t = p * 0.72;
         g.position.set(x + Math.cos(a) * v0 * t, y + Math.sin(a) * v0 * t + 900 * t * t);
         g.rotation = spin * t;
-        g.alpha = p < 0.6 ? 1 : 1 - (p - 0.6) / 0.4;
-      }, ease.linear).then(() => g.destroy());
+        g.alpha = p < 0.6 ? 1 : 1 - ease.inOutSine((p - 0.6) / 0.4);
+      }, ease.linear).then(() => this.release(g));
     }
   }
 
   burst(x: number, y: number, color: number, n: number): void {
     if (this.reduced) return;
     for (let i = 0; i < n; i++) {
-      const g = new Graphics().circle(0, 0, 5 + Math.random() * 7).fill({ color, alpha: 0.95 });
+      const size = 14 + Math.random() * 16;
+      const g = this.particle('dot', color, size);
       g.position.set(x, y);
-      this.fx.addChild(g);
       const a = Math.random() * Math.PI * 2;
       const d = 50 + Math.random() * 90;
-      void this.tween.run(480, (p) => {
+      void this.tween.run(560, (p) => {
         g.position.set(x + Math.cos(a) * d * p, y + Math.sin(a) * d * p + p * p * 60);
-        g.alpha = 1 - p;
-      }, ease.outQuad).then(() => g.destroy());
+        g.alpha = 1 - ease.inQuad(p);
+        g.scale.set((size / 64) * (1 - p * 0.5));
+      }, ease.outCubic).then(() => this.release(g));
     }
   }
 }

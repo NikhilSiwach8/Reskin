@@ -214,17 +214,17 @@ body.reduced * { animation: none !important; }
 #logo .l1, #logo .l2 { display: inline-block; animation: logo-glow 2.6s ease-in-out infinite; }
 #logo .l2 { animation-delay: -1.3s; }
 @keyframes logo-float { 50% { transform: translateX(-50%) translateY(5px) rotate(-1deg); } }
-@keyframes logo-glow { 50% { filter: brightness(1.25) drop-shadow(0 0 10px rgba(255, 120, 220, 0.8)); transform: scale(1.04); } }
+@keyframes logo-glow { 50% { transform: scale(1.04); } }
 
 /* spin button: breathes while idle, spins while a round plays */
 #btn-spin:not(.spinning):not(:disabled) { animation: spin-breathe 2.2s ease-in-out infinite; }
-@keyframes spin-breathe { 50% { transform: scale(1.06); filter: drop-shadow(0 0 14px rgba(255, 79, 176, 0.9)) brightness(1.08); } }
+@keyframes spin-breathe { 50% { transform: scale(1.06); } }
 #btn-spin:not(.spinning):not(:disabled):hover { animation-duration: 1s; }
 
 .round-btn, #meter-bet button { transition: transform 0.15s, filter 0.15s; }
 .round-btn:hover:not(:disabled), #meter-bet button:hover:not(:disabled) { transform: scale(1.12) rotate(-6deg); filter: brightness(1.2); }
 .round-btn:active:not(:disabled), #meter-bet button:active:not(:disabled) { transform: scale(0.92); }
-@keyframes info-pulse { 50% { box-shadow: 0 0 20px rgba(255, 211, 77, 0.9); } }
+@keyframes info-pulse { 50% { transform: scale(1.05); } }
 
 /* buy plaque: a light sweep clipped to the plaque's shape, and a hop every few seconds */
 #btn-buy { position: relative; animation: buy-hop 4s ease-in-out infinite; }
@@ -237,11 +237,11 @@ body.reduced * { animation: none !important; }
 
 /* ante plaque glows while active */
 #ante.on { animation: ante-glow 1.8s ease-in-out infinite; }
-@keyframes ante-glow { 50% { filter: drop-shadow(0 0 14px rgba(157, 255, 74, 0.95)) brightness(1.1); } }
+@keyframes ante-glow { 50% { transform: scale(1.04); } }
 
 /* win meter pops when it counts up */
 #meter-win.pop { animation: meter-pop 0.5s ease-out; }
-@keyframes meter-pop { 30% { transform: scale(1.14); filter: brightness(1.35) drop-shadow(0 0 12px rgba(255, 211, 77, 0.9)); } }
+@keyframes meter-pop { 30% { transform: scale(1.14); } }
 
 /* free-spin panels */
 #cauldron img, #cauldron.painted-panel { animation: bubble 2.4s ease-in-out infinite; }
@@ -249,13 +249,13 @@ body.reduced * { animation: none !important; }
 #fs-panel { animation: fs-in 0.5s ease-out; }
 @keyframes fs-in { from { transform: translateX(-30px); opacity: 0; } }
 #banner-title { animation: banner-shimmer 1.2s ease-in-out infinite; }
-@keyframes banner-shimmer { 50% { filter: brightness(1.3); transform: scale(1.04); } }
+@keyframes banner-shimmer { 50% { transform: scale(1.04); } }
 
 /* trick-or-treat doors breathe until knocked */
 .door:not(:disabled) { animation: door-breathe 2.4s ease-in-out infinite; }
 .door:nth-child(3n + 2):not(:disabled) { animation-delay: -0.8s; }
 .door:nth-child(3n):not(:disabled) { animation-delay: -1.6s; }
-@keyframes door-breathe { 50% { transform: translateY(-3px); filter: brightness(1.12) drop-shadow(0 0 10px rgba(255, 160, 0, 0.7)); } }
+@keyframes door-breathe { 50% { transform: translateY(-4px) scale(1.015); } }
 
 /* candy and coin fountain on the win screens (positions driven from hud.ts) */
 .candy-rain { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
@@ -264,7 +264,7 @@ body.reduced * { animation: none !important; }
 .candy-rain .coin { width: clamp(28px, 3.6vw, 50px); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff6c0, #ffd34d 35%, #c78a00 75%, #7a5000); box-shadow: inset 0 0 0 3px rgba(255, 240, 180, 0.6), 0 2px 6px rgba(0, 0, 0, 0.4); }
 #winscreen.punch #win-art, #winscreen.punch #win-title { animation: tier-punch 0.5s cubic-bezier(0.2, 1.6, 0.4, 1); }
 #winscreen.punch::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle, rgba(255, 255, 255, 0.85), transparent 60%); animation: tier-flash 0.5s ease-out forwards; pointer-events: none; }
-@keyframes tier-punch { from { transform: scale(1.5); filter: brightness(2); } }
+@keyframes tier-punch { from { transform: scale(1.5); opacity: 0.4; } }
 @keyframes tier-flash { to { opacity: 0; } }
 
 /* message bar under the board */
@@ -327,19 +327,22 @@ body.in-free #msg-bar { border-color: rgba(157, 255, 74, 0.6); }
 .portal-door.left img { left: -51.7%; }
 .portal-door.right { right: 0; transform-origin: right center; }
 .portal-door.right img { left: -151.7%; }
-.portal-intro { inset: 0; display: flex; align-items: center; justify-content: center; background: center / cover no-repeat; opacity: 0; }
+.portal-intro { inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; overflow: hidden; }
+.portal-intro::before { content: ''; position: absolute; inset: -8%; background: var(--tunnel) center / cover no-repeat; will-change: transform; }
+.portal-banner { position: relative; }
 .portal-banner { width: min(900px, 86vw); filter: drop-shadow(0 12px 30px rgba(0, 0, 0, 0.6)); }
 .portal-banner[src=''] { display: none; }
 .portal-flash { left: 50%; top: 50%; width: 140vmax; height: 140vmax; margin: -70vmax 0 0 -70vmax; opacity: 0; mix-blend-mode: screen; pointer-events: none; }
 
 /* 1. BONUS! over the spinning tunnel */
 #portal.intro { opacity: 1; transition: opacity calc(0.25s * var(--k)); }
-#portal.intro .portal-intro { opacity: 1; animation: tunnel-spin calc(2.4s * var(--k)) linear infinite; }
+#portal.intro .portal-intro { opacity: 1; }
+#portal.intro .portal-intro::before { animation: tunnel-spin calc(2.4s * var(--k)) ease-in-out infinite; }
 #portal.intro .portal-banner { animation: tier-punch calc(0.55s * var(--k)) cubic-bezier(0.2, 1.6, 0.4, 1), banner-shimmer calc(0.9s * var(--k)) ease-in-out calc(0.55s * var(--k)) infinite; }
-@keyframes tunnel-spin { from { background-size: 110% auto; } 50% { background-size: 135% auto; } to { background-size: 110% auto; } }
+@keyframes tunnel-spin { from { transform: scale(1.1) rotate(0deg); } 50% { transform: scale(1.3) rotate(8deg); } to { transform: scale(1.1) rotate(0deg); } }
 /* 2. the hallway with the doors shut */
 #portal.hall { opacity: 1; }
-#portal.hall .portal-intro { opacity: 0; transition: opacity calc(0.35s * var(--k)); animation: none; }
+#portal.hall .portal-intro { opacity: 0; transition: opacity calc(0.35s * var(--k)); }
 #portal.hall .portal-dest { opacity: 1; }
 #portal.hall .portal-stage { opacity: 1; transform: scale(1); transition: opacity calc(0.35s * var(--k)), transform calc(0.65s * var(--k)) cubic-bezier(0.2, 0.9, 0.3, 1.05); }
 #portal.knock .portal-leaves { animation: portal-knock calc(0.45s * var(--k)) ease-in-out; }
@@ -348,7 +351,7 @@ body.in-free #msg-bar { border-color: rgba(157, 255, 74, 0.6); }
 #portal.open .portal-door.left { transform: rotateY(-100deg); transition: transform calc(0.8s * var(--k)) cubic-bezier(0.5, 0, 0.3, 1); }
 #portal.open .portal-door.right { transform: rotateY(100deg); transition: transform calc(0.8s * var(--k)) cubic-bezier(0.5, 0, 0.3, 1); }
 #portal.open .portal-dest { animation: dest-glow calc(0.8s * var(--k)) ease-out; }
-@keyframes dest-glow { from { filter: brightness(1.8); } }
+@keyframes dest-glow { from { opacity: 0.7; } }
 /* 4. fly through the doorway */
 #portal.through .portal-stage { transform: scale(6); opacity: 0; transition: transform calc(0.75s * var(--k)) cubic-bezier(0.6, 0, 0.85, 0.5), opacity calc(0.25s * var(--k)) ease-in calc(0.5s * var(--k)); }
 #portal.through .portal-dest { transform: scale(1); animation: dest-arrive calc(1.4s * var(--k)) cubic-bezier(0.2, 0.7, 0.3, 1) forwards; }
@@ -492,3 +495,13 @@ body.in-free #msg-bar { border-color: rgba(157, 255, 74, 0.6); }
   #buy-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .bc-desc { display: none; }
 }
+
+/* ------------------------------------------------------------------ smooth animation: keep moving layers on the GPU */
+#logo, #logo .l1, #logo .l2, #btn-spin, #btn-buy, #ante.on, #ante-badge, #meter-win, .door, .loot-box, .loot-box img, #winscreen .rays,
+#win-art, #win-title, #win-amount, .candy-rain > *, #banner, #banner-title, #banner-art, .portal-stage, .portal-dest, .portal-door, .portal-flash,
+.portal-banner, #cauldron.painted-panel, #fs-count, .buy-card, #menu-pop, #splash .splash-card { will-change: transform, opacity; backface-visibility: hidden; }
+/* glows that used to pulse now stay on and only the element breathes */
+#btn-spin.painted:not(.spinning) { filter: drop-shadow(0 6px 12px rgba(255, 79, 176, 0.55)); }
+#ante.on, #ante-badge { filter: drop-shadow(0 0 10px rgba(157, 255, 74, 0.8)); }
+/* gentler, consistent easing for UI transitions */
+.round-btn, #meter-bet button, .loot-box img, .door { transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
