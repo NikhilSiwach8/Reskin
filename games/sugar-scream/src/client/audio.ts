@@ -14,6 +14,9 @@ export class Audio {
   muted = false;
   musicOn = true;
   sfxOn = true;
+  /** Volumes 0..1 (menu sliders). */
+  musicVol = 0.7;
+  sfxVol = 0.8;
 
   /** Must be called from a user gesture (browser autoplay policy). */
   unlock(): void {
@@ -38,8 +41,8 @@ export class Audio {
     if (!this.ctx || !this.master || !this.music || !this.sfx) return;
     const t = this.ctx.currentTime;
     this.master.gain.setTargetAtTime(this.muted ? 0 : 0.8, t, 0.05);
-    this.music.gain.setTargetAtTime(this.musicOn ? 0.18 : 0, t, 0.2);
-    this.sfx.gain.setTargetAtTime(this.sfxOn ? 0.6 : 0, t, 0.05);
+    this.music.gain.setTargetAtTime(this.musicOn ? 0.26 * this.musicVol : 0, t, 0.2);
+    this.sfx.gain.setTargetAtTime(this.sfxOn ? 0.75 * this.sfxVol : 0, t, 0.05);
   }
 
   /** A detuned music box playing a minor-key waltz with a low pad underneath. */

@@ -18,6 +18,9 @@ export interface Settings {
   reduced: boolean;
   music: boolean;
   sfx: boolean;
+  /** Volumes 0..1 from the menu sliders (music / sfx are false at 0). */
+  musicVol: number;
+  sfxVol: number;
   intro: boolean;
 }
 
@@ -28,11 +31,14 @@ export interface BuyOption {
   price: string;
   art: string;
   affordable: boolean;
+  /** Volatility 1 (low) to 5 (highest), shown as a bar on the card. */
+  vol: number;
 }
 
 export interface HudHandlers {
   spin: () => void;
   betStep: (dir: -1 | 1) => void;
+  betIndex: (index: number) => void;
   autoplay: (count: number, stopOnFeature: boolean) => void;
   stopAutoplay: () => void;
   turbo: (on: boolean) => void;
@@ -64,9 +70,17 @@ export class Hud {
     $('#bet-plus').addEventListener('click', () => h.betStep(1));
     $('#btn-turbo').addEventListener('click', () => h.turbo(!this.turboOn));
     $('#btn-sound').addEventListener('click', () => h.mute());
-    $('#btn-menu').addEventListener('click', () => this.open('#modal-menu'));
-    $('#btn-rules').addEventListener('click', () => { this.close('#modal-menu'); h.openRules(); });
-    $('#btn-info').addEventListener('click', () => h.openRules());
+    $('#btn-menu').addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggleMenu();
+    });
+    document.addEventListener('pointerdown', (e) => {
+      if (!$('#menu-pop').classList.contains('hidden') && !(e.target as HTMLElement).closest('#menu-pop, #btn-menu')) this.toggleMenu(false);
+    });
+    $('#btn-rules').addEventListener('click', () => { this.toggleMenu(false); h.openRules(); });
+    $('#bp-minus').addEventListener('click', () => h.betStep(-1));
+    $('#bp-plus').addEventListener('click', () => h.betStep(1));
+    $<HTMLInputElement>('#bp-slider').addEventListener('input', (e) => h.betIndex(Number((e.target as HTMLInputElement).value)));
     $('#btn-replay').addEventListener('click', () => h.replayPlay());
     $<HTMLInputElement>('#ante-toggle').addEventListener('change', (e) => h.ante((e.target as HTMLInputElement).checked));
     $('#btn-buy').addEventListener('click', () => this.openBuy());
@@ -76,11 +90,21 @@ export class Hud {
       m.querySelector('.modal-close')?.addEventListener('click', () => this.close(`#${m.id}`));
     });
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') document.querySelectorAll('.modal:not(.hidden)').forEach((m) => this.close(`#${m.id}`));
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal:not(.hidden)').forEach((m) => this.close(`#${m.id}`));
+        this.toggleMenu(false);
+      }
     });
-    for (const id of ['music', 'sfx', 'reduced', 'intro'] as const) {
+    for (const id of ['reduced', 'intro'] as const) {
       $<HTMLInputElement>(`#set-${id}`).addEventListener('change', (e) => {
         this.settings = { ...this.settings, [id]: (e.target as HTMLInputElement).checked };
+        h.settings(this.settings);
+      });
+    }
+    for (const id of ['music', 'sfx'] as const) {
+      $<HTMLInputElement>(`#set-${id}`).addEventListener('input', (e) => {
+        const v = Number((e.target as HTMLInputElement).value) / 100;
+        this.settings = { ...this.settings, [id]: v > 0, [`${id}Vol`]: v };
         h.settings(this.settings);
       });
     }
@@ -145,6 +169,7 @@ export class Hud {
     for (const src of later) if (src) new Image().src = src;
     const knob = buttonSrc('ante_knob');
     if (knob) ($('#ante .ante-knob') as HTMLElement).style.backgroundImage = cssUrl(knob);
+    $<HTMLImageElement>('#ante-art').src = symbolSrc('SC');
     const pot = panelSrc('cauldron_icon');
     if (pot) $<HTMLImageElement>('#cauldron img').src = pot;
     const lootTitle = panelSrc('loot_title');
@@ -174,6 +199,7 @@ export class Hud {
 
   setBalance(text: string): void {
     $('#meter-balance .meter-value').textContent = text;
+    $('#bp-balance').textContent = text;
   }
 
   private winAnim = 0;
@@ -204,10 +230,30 @@ export class Hud {
     frame();
   }
 
-  setBet(text: string, canMinus: boolean, canPlus: boolean, locked: boolean): void {
+  setBet(text: string, canMinus: boolean, canPlus: boolean, locked: boolean, level?: { index: number; count: number }): void {
+    const changed = $('#meter-bet .meter-value').textContent !== text;
     $('#meter-bet .meter-value').textContent = text;
-    $<HTMLButtonElement>('#bet-minus').disabled = locked || !canMinus;
-    $<HTMLButtonElement>('#bet-plus').disabled = locked || !canPlus;
+    $('#bp-bet').textContent = text;
+    for (const id of ['#bet-minus', '#bp-minus']) $<HTMLButtonElement>(id).disabled = locked || !canMinus;
+    for (const id of ['#bet-plus', '#bp-plus']) $<HTMLButtonElement>(id).disabled = locked || !canPlus;
+    const slider = $<HTMLInputElement>('#bp-slider');
+    slider.disabled = locked;
+    if (level) {
+      slider.max = String(Math.max(0, level.count - 1));
+      slider.value = String(level.index);
+      slider.style.setProperty('--fill', `${level.count > 1 ? (level.index / (level.count - 1)) * 100 : 0}%`);
+    }
+    // prices on the open Bonus Games sheet follow the bet
+    if (changed && !$('#modal-buy').classList.contains('hidden')) this.renderBuy();
+  }
+
+  /** Opens or closes the settings popover above the menu button. */
+  private toggleMenu(open?: boolean): void {
+    const pop = $('#menu-pop');
+    const show = open ?? pop.classList.contains('hidden');
+    pop.classList.toggle('hidden', !show);
+    $('#btn-menu').setAttribute('aria-expanded', String(show));
+    $('#btn-menu').classList.toggle('on', show);
   }
 
   setSpin(state: 'idle' | 'spinning' | 'disabled'): void {
@@ -226,15 +272,15 @@ export class Hud {
 
   setControlsLocked(busy: boolean, opts: { buyAvailable: boolean; autoAvailable: boolean; turboAvailable: boolean; anteOn: boolean }): void {
     $<HTMLButtonElement>('#btn-buy').disabled = busy || this.autoActive || !opts.buyAvailable;
-    $('#btn-buy').classList.toggle('hidden', !opts.buyAvailable);
+    $('#btn-buy').closest('.tile')!.classList.toggle('hidden', !opts.buyAvailable);
+    $('#ante-badge').classList.toggle('hidden', !opts.anteOn);
     $<HTMLButtonElement>('#btn-auto').disabled = (busy && !this.autoActive) || !opts.autoAvailable;
     $('#btn-auto').classList.toggle('hidden', !opts.autoAvailable);
     $('#btn-turbo').classList.toggle('hidden', !opts.turboAvailable);
     $<HTMLInputElement>('#ante-toggle').disabled = busy || this.autoActive;
     $('#ante').classList.toggle('disabled', busy || this.autoActive);
     $('#ante').classList.toggle('on', opts.anteOn);
-    // Ante Bet is a feature bet, so it follows the jurisdiction's buy-feature flag.
-    $('#ante').classList.toggle('hidden', !opts.buyAvailable);
+
     $<HTMLInputElement>('#ante-toggle').checked = opts.anteOn;
   }
 
@@ -256,7 +302,9 @@ export class Hud {
 
   showSettings(s: Settings): void {
     this.settings = { ...s };
-    for (const id of ['music', 'sfx', 'reduced', 'intro'] as const) $<HTMLInputElement>(`#set-${id}`).checked = s[id];
+    for (const id of ['reduced', 'intro'] as const) $<HTMLInputElement>(`#set-${id}`).checked = s[id];
+    $<HTMLInputElement>('#set-music').value = String(Math.round((s.music ? s.musicVol : 0) * 100));
+    $<HTMLInputElement>('#set-sfx').value = String(Math.round((s.sfx ? s.sfxVol : 0) * 100));
     document.body.classList.toggle('reduced', s.reduced);
   }
 
@@ -805,24 +853,34 @@ export class Hud {
   }
 
   private openBuy(): void {
+    this.toggleMenu(false);
+    this.renderBuy();
+    this.open('#modal-buy');
+  }
+
+  /** Bonus Games sheet: one card per bonus buy (art, volatility, price, buy button). */
+  private renderBuy(): void {
     const box = $('#buy-options');
     box.innerHTML = '';
     for (const o of this.h.buyOptions()) {
-      const row = document.createElement('div');
-      row.className = 'buy-option';
-      row.innerHTML = `<img src="${o.art}" alt=""><div><h3></h3><p></p></div><button type="button"></button>`;
-      row.querySelector('h3')!.textContent = t(o.label);
-      row.querySelector('p')!.textContent = t(o.desc);
-      const b = row.querySelector('button')!;
-      b.textContent = o.price;
+      const card = document.createElement('div');
+      card.className = 'buy-card buy-option';
+      card.innerHTML = '<h3></h3><div class="bc-art"><img alt=""></div><p class="bc-desc"></p><div class="bc-vol"><span></span><i></i></div><div class="bc-price"></div><button type="button" class="bc-buy"></button>';
+      card.querySelector('h3')!.textContent = t(o.label);
+      card.querySelector('img')!.src = o.art;
+      card.querySelector('.bc-desc')!.textContent = t(o.desc);
+      card.querySelector('.bc-vol span')!.textContent = t('Volatility');
+      card.querySelector<HTMLElement>('.bc-vol i')!.style.setProperty('--v', String(o.vol));
+      card.querySelector('.bc-price')!.textContent = o.price;
+      const b = card.querySelector('button')!;
+      b.textContent = t('Buy');
       b.disabled = !o.affordable;
       b.addEventListener('click', async () => {
         this.close('#modal-buy');
         if (await this.confirm(this.h.buyText(o.mode))) this.h.buy(o.mode);
       });
-      box.appendChild(row);
+      box.appendChild(card);
     }
-    this.open('#modal-buy');
   }
 
   confirm(text: string): Promise<boolean> {

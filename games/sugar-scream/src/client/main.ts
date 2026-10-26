@@ -53,7 +53,7 @@ interface Settings extends UiSettings {
 
 function loadSettings(): Settings {
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const defaults: Settings = { turbo: false, reduced, muted: false, music: true, sfx: true, intro: true, ante: false };
+  const defaults: Settings = { turbo: false, reduced, muted: false, music: true, sfx: true, musicVol: 0.7, sfxVol: 0.8, intro: true, ante: false };
   try {
     return { ...defaults, ...JSON.parse(localStorage.getItem('ss-settings') ?? '{}') };
   } catch {
@@ -90,6 +90,7 @@ class Game {
     this.hud = new Hud({
       spin: () => this.onSpinButton(),
       betStep: (d) => this.stepBet(d),
+      betIndex: (i) => this.setBetIndex(i),
       autoplay: (n, stop) => this.startAutoplay(n, stop),
       stopAutoplay: () => this.stopAutoplay(),
       turbo: (on) => this.setTurbo(on),
@@ -107,6 +108,7 @@ class Game {
         price: this.fmtMoney(this.bet * m.cost),
         art: BUY_ART[m.name],
         affordable: this.bet * m.cost <= this.balance,
+        vol: ({ bonus: 3, fullmoon: 5, lootbox: 4 } as Record<string, number>)[m.name] ?? 3,
       })),
       buyText: (mode) => {
         const m = BUY_MODES.find((b) => b.name === mode)!;
@@ -181,6 +183,7 @@ class Game {
       if (auth.config.jurisdiction?.disabledBuyFeature) this.settings.ante = false;
       this.hud.hideLoading();
       this.refresh();
+      this.scene.layout(); // the HUD is now filled in: fit the board around it
       this.hud.setWin(this.fmtMoney(0));
       this.hud.tips();
       if (this.settings.intro) {
@@ -198,8 +201,8 @@ class Game {
   private refresh(): void {
     const j = this.jurisdiction;
     this.hud.setBalance(this.fmtMoney(this.balance));
-    this.hud.setBet(this.fmtMoney(this.bet), this.betIndex > 0, this.betIndex < this.levels.length - 1, this.busy || this.autoplay !== null);
-    this.hud.setAntePrice(this.fmtMoney(this.bet * 1.25));
+    this.hud.setBet(this.fmtMoney(this.bet), this.betIndex > 0, this.betIndex < this.levels.length - 1, this.busy || this.autoplay !== null, { index: this.betIndex, count: this.levels.length });
+    this.hud.setAntePrice(`${this.fmtMoney(this.bet * 1.25)} ${t('per spin')}`);
     this.hud.setControlsLocked(this.busy, {
       buyAvailable: !j?.disabledBuyFeature,
       autoAvailable: !j?.disabledAutoplay,
@@ -208,6 +211,12 @@ class Game {
     });
     this.hud.setSpin(this.busy ? (j?.disabledSlamstop && !this.autoplay ? 'disabled' : 'spinning') : this.levels.length ? 'idle' : 'disabled');
     this.hud.setAutoplay(this.autoplay?.left ?? null);
+  }
+
+  private setBetIndex(i: number): void {
+    if (this.busy || this.autoplay) return;
+    this.betIndex = Math.min(this.levels.length - 1, Math.max(0, i));
+    this.refresh();
   }
 
   private stepBet(dir: -1 | 1): void {
@@ -367,6 +376,8 @@ class Game {
     Object.assign(this.settings, s);
     this.audio.musicOn = s.music;
     this.audio.sfxOn = s.sfx;
+    this.audio.musicVol = s.musicVol;
+    this.audio.sfxVol = s.sfxVol;
     this.audio.apply();
     this.scene.reduced = s.reduced;
     this.hud.showSettings(this.settings);

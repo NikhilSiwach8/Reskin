@@ -82,7 +82,8 @@ for (const viewport of [{ width: 1600, height: 900 }, { width: 390, height: 844 
       await tap('#confirm-yes');
     });
   }
-  await page.click('#btn-info', { force: true });
+  await page.click('#btn-menu', { force: true });
+  await page.click('#btn-rules', { force: true });
   await page.waitForTimeout(500);
   if (!(await page.textContent('#rules-body')).includes('96.00%')) problems.push('rules panel shows no RTP');
   const ok = problems.length === 0;

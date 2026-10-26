@@ -233,13 +233,21 @@ export class Scene {
     const h = this.app.screen.height;
     this.ambience.layout();
     const portrait = h > w;
-    // the bottom HUD (and, in portrait, the row of feature panels above it); matches --hud-h in styles.css
-    // plus the message bar above the HUD
-    const hudH = portrait ? Math.min(214, h * 0.32) + 92 : h <= 460 ? 86 + 24 : 124 + 32;
-    const top = portrait ? 58 : Math.min(66, h * 0.1);
-    const side = portrait ? 0 : Math.min(185, w * 0.12);
+    // Reserve room for the HUD measured from the DOM: in landscape the control clusters flank the
+    // board at the bottom corners and only the win meter / message bar sit under it; in portrait
+    // the clusters (and the free-spin panels above them) sit under the board.
+    const rect = (sel: string) => document.querySelector(sel)?.getBoundingClientRect();
+    const left = rect('#hud .hud-left');
+    const right = rect('#hud .hud-right');
+    const under = Math.min(...['#meter-win', '#msg-bar'].map((q) => rect(q)?.top ?? h).filter((v) => v > 0));
+    const top = portrait ? 58 : Math.min(62, h * 0.09);
+    let side = 0;
+    let bottom = h - under + 4;
+    // portrait: everything under the board, plus a row for the free-spin panels
+    if (portrait) bottom = h - Math.min(left?.top ?? h, right?.top ?? h, under) + 50;
+    else side = Math.max(left ? left.right : 0, right ? w - right.left : 0) + 6;
     const availW = w - side * 2 - 8;
-    const availH = h - hudH - top - 4;
+    const availH = h - bottom - top;
     const fb = this.frameBox;
     const k = Math.min(availW / fb.w, availH / fb.h);
     this.world.scale.set(k);
