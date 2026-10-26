@@ -12,6 +12,7 @@ const S = 160;
 const BOARD_W = REELS * S;
 const BOARD_H = ROWS * S;
 const SYMBOL_SIZE = S * 0.86;
+const SCATTER_SCALE = 1.2;
 
 /**
  * Measured on the painted frame (art/source/panel_board.webp, 1374x1145): its 5 divider lines
@@ -55,9 +56,12 @@ class CellView {
     this.symbol = symbol;
     this.sprite.texture = symbolTexture(symbol);
     this.sprite.tint = 0xffffff;
-    this.sprite.width = SYMBOL_SIZE;
-    this.sprite.height = SYMBOL_SIZE;
+    // the Skull Lollipop scatter is drawn larger so it stands out (it may overlap its neighbours)
+    const size = symbol === 'SC' ? SYMBOL_SIZE * SCATTER_SCALE : SYMBOL_SIZE;
+    this.sprite.width = size;
+    this.sprite.height = size;
     this.baseScale = this.sprite.scale.x;
+    this.root.zIndex = symbol === 'SC' ? 2 : symbol === 'JK' ? 1 : 0;
     this.label?.destroy();
     this.label = null;
     if (symbol === 'JK' && mult > 0) {
@@ -115,6 +119,7 @@ export class Scene {
     app.stage.addChild(this.ambience.root, this.world);
     this.gridMask.rect(-10, -6, BOARD_W + 20, BOARD_H + 12).fill(0xffffff);
     this.grid.mask = this.gridMask;
+    this.grid.sortableChildren = true;
     const frame = this.makeFrame();
     this.frameGlow.blendMode = 'add';
     this.lantern.blendMode = 'add';
