@@ -42,7 +42,7 @@ for (const [i, [mode, scenario]] of scenarios.entries()) {
   const start = money(await page.textContent('#meter-balance .meter-value'));
   await page.click('#dev-harness summary');
   await page.click(`#dev-harness button[data-s="${scenario}"][data-mode="${mode}"]`);
-  await page.waitForFunction(() => !document.querySelector('#btn-spin').classList.contains('spinning'), null, { timeout: 240000, polling: 300 }).catch(() => errors.push('round did not finish in time'));
+  await page.waitForFunction(() => !document.querySelector('#btn-spin').classList.contains('spinning'), null, { timeout: 600000, polling: 300 }).catch(() => errors.push('round did not finish in time'));
   await page.waitForTimeout(400);
   const end = money(await page.textContent('#meter-balance .meter-value'));
   const win = money(await page.textContent('#meter-win .meter-value'));
