@@ -60,12 +60,13 @@ The published book set has 100,000 natural books for base and Ante Bet and 35,00
 
 | Mode | Cost | RTP | Hit rate | Std dev | Max win | Max win frequency |
 |---|---|---|---|---|---|---|
-| base | 1x | 96.00% | 1 in 2.24 | 13.97x | 5,000x | 1 in 87 million (estimate) |
-| ante (Ante Bet) | 1.25x | 96.00% | 1 in 2.23 | 12.94x | 5,000x | 1 in 21 million (estimate) |
+| base | 1x | 96.00% | 1 in 2.25 | 11.81x | 5,000x | 1 in 1.45 million (estimate) |
+| ante (Ante Bet) | 1.25x | 96.00% | 1 in 2.27 | 14.67x | 5,000x | 1 in 2.1 million (estimate) |
 | bonus (Buy Haunted Cauldron) | 100x | 96.00% | 1 in 1.00 | 130.14x | 5,000x | 1 in 200,000 buys (estimate) |
 | fullmoon (Buy Full Moon) | 300x | 96.00% | 1 in 1.00 | 298.31x | 5,000x | 1 in 18,347 buys (estimate) |
+| lootbox (Buy Loot Box) | 92x | 96.00% | 1 in 1.00 | 271.96x | 5,000x | 1 in 1,000 buys |
 
-Base-game feature frequencies: Witch's Spell 1 in 43, Trick or Treat 1 in 72, Haunted Cauldron free spins 1 in 370, Golden Lollipop (Trick or Treat into free spins) 1 in 995, Full Moon 1 in 4,094. In the base game, Trick or Treat returns 19.1% of RTP and Witch's Spell 10.2%.
+Base-game feature frequencies: Witch's Spell 1 in 58, Loot Box 1 in 1,405, Trick or Treat 1 in 72, Haunted Cauldron free spins 1 in 370, Golden Lollipop (Trick or Treat into free spins) 1 in 995, Full Moon 1 in 4,094. In the base game, Trick or Treat returns 19.1% of RTP and Witch's Spell 10.2%.
 
 Ante Bet triggers free spins about 1.7 times as often (1 in 215) and Trick or Treat about 1.5 times as often (1 in 49). The weighting adjusts the raw simulation only moderately: rounds paying at least the cost are 0.94x as likely as simulated in base and in Ante Bet. Buy prices follow each feature's simulated value (raw 101.8% for Haunted Cauldron at 100x, 103.8% for Full Moon at 300x). The 5,000x cap is reached only through free spins; its probability comes from a forced free-spin search (see the report).
 
