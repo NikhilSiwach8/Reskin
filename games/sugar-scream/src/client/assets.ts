@@ -26,6 +26,9 @@ export function panelSrc(name: string): string | null {
   return PANELS.has(name) ? `assets/panel_${name}.webp` : null;
 }
 
+/** Doorway of the painted bonus-entrance hallway as [x0, y0, x1, y1] fractions, or null. */
+export const portalHole: [number, number, number, number] | null = (painted as { portalHole?: [number, number, number, number] | null }).portalHole ?? null;
+
 /** True when a texture was loaded (painted feature backgrounds are optional). */
 export const hasTexture = (name: string) => textures.has(name);
 

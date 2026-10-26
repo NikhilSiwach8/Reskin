@@ -35,7 +35,7 @@ const launch = {
 };
 setSocial(launch.social);
 
-const BUY_ART: Record<string, string> = { bonus: panelSrc('cauldron_icon') ?? 'assets/cauldron.svg', fullmoon: symbolSrc('JK'), lootbox: 'assets/loot_box.svg' };
+const BUY_ART: Record<string, string> = { bonus: panelSrc('cauldron_icon') ?? 'assets/cauldron.svg', fullmoon: symbolSrc('JK'), lootbox: panelSrc('loot_icon') ?? 'assets/loot_box.svg' };
 
 const IDLE_BOARD: Board = [
   ['CC', 'PU', 'BH', 'EY', 'BT'],

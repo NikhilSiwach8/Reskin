@@ -1,6 +1,6 @@
 // DOM user interface: meters, buttons, dialogs, banners, win screens and the Trick or Treat doors.
 import type { KnockPrize } from '../engine/types.ts';
-import { bgSrc, buttonSrc, panelSrc, symbolSrc } from './assets.ts';
+import { bgSrc, buttonSrc, panelSrc, portalHole, symbolSrc } from './assets.ts';
 import { localizeTree, t } from './text.ts';
 
 export const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
@@ -137,6 +137,9 @@ export class Hud {
       ...['win_big', 'win_mega', 'win_monster', 'win_sugar', 'win_max', 'door_treat', 'door_trick', 'door_lollipop'].map(panelSrc),
       'assets/loot_box.svg',
       panelSrc('door'),
+      ...['loot_box_1', 'loot_box_2', 'loot_box_3', 'loot_box_4', 'loot_box_5', 'loot_box_6', 'loot_open', 'loot_pedestal', 'loot_title', 'loot_trigger',
+        'portal_wall', 'portal_doors', 'portal_flash', 'bonus_banner'].map(panelSrc),
+      ...['loot', 'portal_tunnel', 'portal_cauldron', 'portal_fullmoon', 'portal_tot', 'portal_loot', 'portal_exit'].map(bgSrc),
       ...['fs_cauldron', 'fs_fullmoon', 'feature_end', 'tot'].map(bgSrc),
     ];
     for (const src of later) if (src) new Image().src = src;
@@ -144,8 +147,14 @@ export class Hud {
     if (knob) ($('#ante .ante-knob') as HTMLElement).style.backgroundImage = cssUrl(knob);
     const pot = panelSrc('cauldron_icon');
     if (pot) $<HTMLImageElement>('#cauldron img').src = pot;
-    // Full-screen painted backdrops for the loading, intro and Trick or Treat screens.
-    for (const [sel, name] of [['#loading', 'loading'], ['#intro', 'intro'], ['#tot', 'tot']] as const) {
+    const lootTitle = panelSrc('loot_title');
+    if (lootTitle) {
+      $<HTMLImageElement>('#loot-title-art').src = lootTitle;
+      $('#loot-title-art').classList.remove('hidden');
+      $('#loot .loot-title-main').classList.add('hidden');
+    }
+    // Full-screen painted backdrops for the loading, intro, Trick or Treat and Loot Box screens.
+    for (const [sel, name] of [['#loading', 'loading'], ['#intro', 'intro'], ['#tot', 'tot'], ['#loot', 'loot']] as const) {
       const src = bgSrc(name);
       if (!src) continue;
       $(sel).classList.add('painted-bg');
@@ -367,10 +376,19 @@ export class Hud {
     (el as unknown as { _t?: number })._t = window.setTimeout(() => el.classList.add('hidden'), ms);
   }
 
-  async banner(title: string, sub: string, ms: number): Promise<void> {
+  /** Banner over the board; `art` (painted lettering) replaces the text when given. */
+  async banner(title: string, sub: string, ms: number, art?: string | null): Promise<void> {
     const el = $('#banner');
     $('#banner-title').textContent = t(title);
     $('#banner-sub').textContent = t(sub);
+    const img = $<HTMLImageElement>('#banner-art');
+    img.classList.toggle('hidden', !art);
+    $('#banner-title').classList.toggle('hidden', !!art);
+    $('#banner-sub').classList.toggle('hidden', !!art);
+    if (art) {
+      img.src = art;
+      img.alt = t(title);
+    }
     el.classList.remove('hidden');
     el.style.animation = 'none';
     void el.offsetWidth;
@@ -475,35 +493,108 @@ export class Hud {
   }
 
   /**
-   * Bonus entrance: a door rushes up, knocks, swings open onto the bonus's glow and the view
-   * flies through the doorway. `onClosed` runs while the doors fill the screen, so the scene
-   * behind can switch to the bonus before it is revealed. `fast` halves every step.
+   * Bonus entrance, using the painted transition art:
+   *   1. "BONUS!" punches in over the spinning candy tunnel;
+   *   2. the haunted hallway appears with the double doors shut in its archway, and they knock;
+   *   3. the doors swing open onto the bonus's own world (`dest`: cauldron, fullmoon, tot, loot);
+   *   4. the camera flies through the doorway, a flash bursts at the threshold and the world
+   *      fills the screen, then fades onto the game.
+   * `onClosed` runs while the screen is covered, so the scene behind can switch to the bonus.
+   * Without the painted art (or with reduced motion) it just calls `onClosed`.
    */
-  async enterDoor(glow: string, fast: boolean, onClosed: () => void): Promise<void> {
-    if (document.body.classList.contains('reduced')) {
+  async enterDoor(dest: string, fast: boolean, onClosed: () => void): Promise<void> {
+    const wall = panelSrc('portal_wall');
+    const doors = panelSrc('portal_doors');
+    const world = bgSrc(`portal_${dest}`);
+    if (document.body.classList.contains('reduced') || !wall || !doors || !world || !portalHole) {
       onClosed();
       return;
     }
     const el = $('#portal');
-    const art = panelSrc('door') ?? 'assets/door.svg';
-    el.querySelectorAll<HTMLElement>('.portal-door').forEach((d) => (d.style.backgroundImage = cssUrl(art)));
-    el.style.setProperty('--glow', glow);
-    // development builds can slow the entrance down for inspection (window.__doorSlow = 6)
-    const slow = import.meta.env.DEV ? Number((window as unknown as { __doorSlow?: number }).__doorSlow ?? 1) : 1;
-    const k = (fast ? 0.5 : 1) * slow;
+    const k = this.portalSpeed(fast);
     el.style.setProperty('--k', String(k));
+    el.querySelector<HTMLElement>('.portal-dest')!.style.backgroundImage = cssUrl(world);
+    el.querySelector<HTMLImageElement>('.portal-wall')!.src = wall;
+    el.querySelectorAll<HTMLImageElement>('.portal-door img').forEach((i) => (i.src = doors));
+    const banner = panelSrc('bonus_banner');
+    const intro = el.querySelector<HTMLElement>('.portal-intro')!;
+    const tunnel = bgSrc('portal_tunnel');
+    intro.style.backgroundImage = tunnel ? cssUrl(tunnel) : '';
+    el.querySelector<HTMLImageElement>('.portal-banner')!.src = banner ?? '';
+    el.querySelector<HTMLImageElement>('.portal-flash')!.src = panelSrc('portal_flash') ?? '';
+    this.layoutPortal();
     el.className = '';
     void el.offsetWidth;
-    el.classList.add('approach');
+    if (banner || tunnel) {
+      el.classList.add('intro');
+      await wait(1050 * k);
+    }
+    el.classList.add('hall');
     await wait(650 * k);
     el.classList.add('knock');
-    await wait(420 * k);
+    await wait(450 * k);
     onClosed();
     el.classList.add('open');
-    await wait(650 * k);
+    await wait(800 * k);
     el.classList.add('through');
-    await wait(650 * k);
+    await wait(750 * k);
+    el.classList.add('arrive');
+    await wait(700 * k);
     el.className = 'hidden';
+  }
+
+  /**
+   * Leaving a bonus: the moonlit graveyard seen back through the doorway zooms out of a
+   * flash and fades onto the base game. `onSwitch` runs while the screen is covered.
+   */
+  async exitDoor(fast: boolean, onSwitch: () => void): Promise<void> {
+    const world = bgSrc('portal_exit');
+    if (document.body.classList.contains('reduced') || !world) {
+      onSwitch();
+      return;
+    }
+    const el = $('#portal');
+    const k = this.portalSpeed(fast);
+    el.style.setProperty('--k', String(k));
+    el.querySelector<HTMLElement>('.portal-dest')!.style.backgroundImage = cssUrl(world);
+    el.querySelector<HTMLImageElement>('.portal-flash')!.src = panelSrc('portal_flash') ?? '';
+    el.className = '';
+    void el.offsetWidth;
+    el.classList.add('exit');
+    await wait(450 * k);
+    onSwitch();
+    el.classList.add('exit-out');
+    await wait(900 * k);
+    el.className = 'hidden';
+  }
+
+  private portalSpeed(fast: boolean): number {
+    // development builds can slow the transitions down for inspection (window.__doorSlow = 6)
+    const slow = import.meta.env.DEV ? Number((window as unknown as { __doorSlow?: number }).__doorSlow ?? 1) : 1;
+    return (fast ? 0.5 : 1) * slow;
+  }
+
+  /** Sizes the hallway like background-size: cover and puts the door leaves in its doorway. */
+  private layoutPortal(): void {
+    const stage = $('#portal .portal-stage');
+    const img = stage.querySelector<HTMLImageElement>('.portal-wall')!;
+    const iw = img.naturalWidth || 1672;
+    const ih = img.naturalHeight || 941;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const k = Math.max(vw / iw, vh / ih);
+    const w = iw * k;
+    const h = ih * k;
+    Object.assign(stage.style, { width: `${w}px`, height: `${h}px`, left: `${(vw - w) / 2}px`, top: `${(vh - h) / 2}px` });
+    const [x0, y0, x1, y1] = portalHole!;
+    const pad = 0.03;
+    const leaves = stage.querySelector<HTMLElement>('.portal-leaves')!;
+    Object.assign(leaves.style, {
+      left: `${(x0 - (x1 - x0) * pad) * 100}%`, top: `${(y0 - (y1 - y0) * pad) * 100}%`,
+      width: `${(x1 - x0) * (1 + 2 * pad) * 100}%`, height: `${(y1 - y0) * (1 + pad) * 100}%`,
+    });
+    // fly through the middle of the doorway
+    stage.style.transformOrigin = `${((x0 + x1) / 2) * 100}% ${((y0 + y1) / 2) * 100}%`;
   }
 
   /**
@@ -521,10 +612,14 @@ export class Hud {
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'loot-box';
-      b.style.setProperty('--hue', `${i * 55}deg`);
+      const art = panelSrc(`loot_box_${i + 1}`);
+      b.style.setProperty('--hue', art ? '0deg' : `${i * 55}deg`);
       b.style.animationDelay = `${i * 0.08}s`;
       b.setAttribute('aria-label', t(`Loot Box ${i + 1}`));
-      b.innerHTML = '<img src="assets/loot_box.svg" alt="">';
+      const img = document.createElement('img');
+      img.src = art ?? 'assets/loot_box.svg';
+      img.alt = '';
+      b.appendChild(img);
       row.appendChild(b);
       boxes.push(b);
     }
@@ -543,8 +638,18 @@ export class Hud {
     box.classList.add('opening');
     onOpen();
     await wait(auto ? 450 : 900);
+    // the painted burst-open box replaces the closed one
+    const open = panelSrc('loot_open');
+    if (open) {
+      box.querySelector('img')!.src = open;
+      box.classList.add('burst');
+    }
     box.classList.add('opened');
+    if (open) await wait(auto ? 300 : 650);
     const reveal = $('#loot-prize');
+    const pedestal = panelSrc('loot_pedestal');
+    $('#loot-pedestal').classList.toggle('hidden', !pedestal);
+    if (pedestal) $<HTMLImageElement>('#loot-pedestal').src = pedestal;
     const art = $<HTMLImageElement>('#loot-art');
     art.classList.toggle('hidden', !prize.art);
     if (prize.art) art.src = prize.art;

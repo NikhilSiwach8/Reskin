@@ -61,6 +61,8 @@ for path in sources("btn"):
 backgrounds = []
 for path in sources("bg"):
     name = path.stem.split("_", 1)[1]
+    if name == "portal_wall":
+        continue  # imported below as a panel with a transparent doorway
     im = Image.open(path).convert("RGB")
     if im.width > 1920:
         im = im.resize((1920, round(im.height * 1920 / im.width)), Image.LANCZOS)
@@ -80,7 +82,8 @@ for path in sources("panel"):
         print(f"panel_{name}: {path.name} -> public/assets/panel_{name}.webp ({im.width}x{im.height}, native)")
         continue
     im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 8 else 0).getbbox())
-    width = 1200 if name.startswith("win_") else 256 if name.startswith("fx_") else 800 if im.width > im.height else 480
+    big = name.startswith(("win_", "bonus_", "loot_title", "loot_trigger", "loot_pedestal", "portal_doors"))
+    width = 1200 if big else 256 if name.startswith("fx_") else 800 if im.width > im.height else 480
     im = im.resize((width, round(im.height * width / im.width)), Image.LANCZOS)
     im.save(OUT / f"panel_{name}.webp", "WEBP", quality=90, method=6)
     panels.append(name)
@@ -102,6 +105,38 @@ for path in sources("sym"):
     painted.append(sid)
     print(f"sym_{sid}: {path.name} -> public/assets/sym_{sid}.webp")
 
+# The bonus-entrance hallway: its black doorway becomes transparent (flood fill from the
+# centre), so the door leaves and the destination scene can show through it.
+wall = SRC / "bg_portal_wall.webp"
+if wall.exists():
+    import numpy as np
+    from collections import deque
+    im = Image.open(wall).convert("RGB")
+    if im.width > 1920:
+        im = im.resize((1920, round(im.height * 1920 / im.width)), Image.LANCZOS)
+    a = np.asarray(im).astype(int)
+    dark = a.max(axis=2) < 28
+    H, W = dark.shape
+    hole = np.zeros_like(dark)
+    q = deque([(H // 2, W // 2)])
+    hole[H // 2, W // 2] = True
+    while q:
+        y, x = q.popleft()
+        for ny, nx in ((y + 1, x), (y - 1, x), (y, x + 1), (y, x - 1)):
+            if 0 <= ny < H and 0 <= nx < W and dark[ny, nx] and not hole[ny, nx]:
+                hole[ny, nx] = True
+                q.append((ny, nx))
+    alpha = np.where(hole, 0, 255).astype(np.uint8)
+    rgba = np.dstack([a.astype(np.uint8), alpha])
+    Image.fromarray(rgba, "RGBA").save(OUT / "panel_portal_wall.webp", "WEBP", quality=85, method=6)
+    ys, xs = np.nonzero(hole)
+    portal_hole = [round(xs.min() / W, 4), round(ys.min() / H, 4), round((xs.max() + 1) / W, 4), round((ys.max() + 1) / H, 4)]
+    if "portal_wall" not in panels:
+        panels.append("portal_wall")
+    print(f"panel_portal_wall: doorway {portal_hole}")
+else:
+    portal_hole = None
+
 # The Ante plaque's painted toggle knob, cut out so the client can slide it (on/off).
 ante = OUT / "btn_ante.webp"
 if ante.exists():
@@ -117,5 +152,5 @@ if ante.exists():
     if "ante_knob" not in buttons:
         buttons.append("ante_knob")
 
-(ROOT / "src" / "client" / "painted.json").write_text(json.dumps({"symbols": sorted(painted), "buttons": sorted(buttons), "backgrounds": sorted(backgrounds), "panels": sorted(panels)}) + "\n")
+(ROOT / "src" / "client" / "painted.json").write_text(json.dumps({"symbols": sorted(painted), "buttons": sorted(buttons), "backgrounds": sorted(backgrounds), "panels": sorted(panels), "portalHole": portal_hole}) + "\n")
 print(f"{len(painted)} symbols, {len(buttons)} buttons, {len(backgrounds)} backgrounds, {len(panels)} panels")

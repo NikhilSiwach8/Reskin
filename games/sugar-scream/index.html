@@ -64,7 +64,7 @@
       <button id="btn-replay" class="hidden" type="button">Play</button>
     </footer>
 
-    <div id="banner" class="hidden" aria-live="polite"><div id="banner-title"></div><div id="banner-sub"></div></div>
+    <div id="banner" class="hidden" aria-live="polite"><img id="banner-art" class="hidden" alt="" /><div id="banner-title"></div><div id="banner-sub"></div></div>
     <div id="toast" class="hidden" role="status"></div>
 
     <div id="winscreen" class="overlay hidden">
@@ -93,19 +93,26 @@
     </div>
 
     <div id="portal" class="hidden" aria-hidden="true">
+      <div class="portal-dest"></div>
       <div class="portal-stage">
-        <div class="portal-glow"></div>
-        <div class="portal-door left"></div>
-        <div class="portal-door right"></div>
+        <div class="portal-leaves">
+          <div class="portal-door left"><img alt="" /></div>
+          <div class="portal-door right"><img alt="" /></div>
+        </div>
+        <img class="portal-wall" alt="" />
       </div>
+      <div class="portal-intro"><img class="portal-banner" alt="" /></div>
+      <img class="portal-flash" alt="" />
     </div>
 
     <div id="loot" class="overlay hidden">
       <div class="loot-card">
         <div class="loot-title-main">Loot Box!</div>
+        <img id="loot-title-art" class="hidden" alt="Loot Box!" />
         <div id="loot-sub">Pick a box</div>
         <div id="loot-boxes"></div>
         <div id="loot-prize" class="hidden">
+          <img id="loot-pedestal" class="hidden" alt="" />
           <img id="loot-art" alt="" />
           <div id="loot-title"></div>
           <div id="loot-mult"></div>
