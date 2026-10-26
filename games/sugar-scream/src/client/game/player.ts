@@ -3,7 +3,7 @@
 import { applyTumble, cellsOf, winningCells } from '../../engine/board.ts';
 import { FREE_SPINS, SYMBOLS, WINCAP } from '../../engine/config.ts';
 import type { Board, GameEvent, SymbolId } from '../../engine/types.ts';
-import { bgSrc, panelSrc } from '../assets.ts';
+import { bgSrc, panelSrc, symbolSrc } from '../assets.ts';
 import type { Audio } from '../audio.ts';
 import { Hud, wait, type KnockEvent } from '../hud.ts';
 import { t } from '../text.ts';
@@ -19,10 +19,10 @@ export interface PlayerOptions {
 }
 
 const WIN_TIERS = [
-  { min: 2000, title: 'BIG WIN', art: 'win_big' },
-  { min: 5000, title: 'MEGA WIN', art: 'win_mega' },
-  { min: 25000, title: 'MONSTER WIN', art: 'win_monster' },
-  { min: 100000, title: 'SUGAR SCREAM!', art: 'win_sugar' },
+  { min: 1500, title: 'BIG WIN', art: 'win_big' },
+  { min: 4000, title: 'MEGA WIN', art: 'win_mega' },
+  { min: 10000, title: 'MONSTER WIN', art: 'win_monster' },
+  { min: 50000, title: 'SUGAR SCREAM!', art: 'win_sugar' },
   { min: WINCAP, title: 'MAX WIN', art: 'win_max' },
 ];
 
@@ -82,6 +82,7 @@ export class Player {
     this.syncSpeed();
     let lastWin: SymbolId[] = [];
     let freeKind: keyof typeof FREE_SPINS | null = null;
+    let freeTotal = 0;
     const autoMs = () => (this.o.hands() || this.o.turbo() || this.skipping ? 1600 : null);
     for (let i = 0; i < events.length; i++) {
       const e = events[i];
@@ -92,7 +93,7 @@ export class Player {
           this.dropping = null;
           this.board = e.board;
           this.hud.setTumble(null);
-          await this.scene.dropIn(e.board, e.mults);
+          await this.scene.dropIn(e.board, e.mults, e.phase === 'base' && !this.o.turbo() && !this.skipping);
           this.audio.play('land');
           const sc = cellsOf(e.board, 'SC');
           if (sc.length >= 3) {
@@ -115,6 +116,7 @@ export class Player {
             const c = this.scene.centroid(cells);
             return this.scene.floatText(this.o.fmt(w.pay), c.x, c.y);
           });
+          this.hud.messageWins(e.wins.map((w) => ({ src: symbolSrc(w.symbol), count: w.count, pay: this.o.fmt(w.pay) })));
           await Promise.all([this.scene.highlight(winningCells(this.board, lastWin)), ...jobs.slice(0, 1)]);
           this.hud.setTumble(this.o.fmt(e.tumbleTotal));
           break;
@@ -137,10 +139,12 @@ export class Player {
             const p = this.hud.cauldronPoint();
             await this.scene.flingMults(e.cells, p.x || p.y ? this.scene.fromScreen(p.x, p.y) : this.scene.center);
           }
+          this.hud.message(`${this.o.fmt(e.base)} × ${e.mult} = ${this.o.fmt(e.base * e.mult)}`);
           await this.hud.banner(`x${e.mult}`, `${this.o.fmt(e.base)} × ${e.mult} = ${this.o.fmt(e.base * e.mult)}`, this.ms(1300));
           break;
         case 'win':
           this.hud.countWin(e.totalWin - e.amount, e.totalWin, this.o.fmt, this.o.reduced() ? 0 : this.ms(700));
+          this.hud.message(`${freeKind ? 'Total win' : 'Win'} ${this.o.fmt(e.totalWin)}`);
           if (e.kind === 'scatter') await this.hud.banner('Lollipop Pay', this.o.fmt(e.amount), this.ms(1100));
           break;
         case 'trickOrTreat': {
@@ -166,9 +170,11 @@ export class Player {
           void this.scene.shake(600, 14);
           await this.scene.pulseCells(e.cells, this.ms(900));
           this.audio.play('bonus');
+          freeTotal = e.spins;
           const sub = e.kind === 'fullMoon'
-            ? `${e.spins} free spins\nThe Cauldron starts at x${e.cauldron} and every Jack-o'-Lantern counts double.`
-            : `${e.spins} free spins\nJack-o'-Lanterns on winning spins fill the Cauldron, which multiplies every later win.`;
+            ? `Congratulations!\nYou have won ${e.spins} free spins\nThe Cauldron starts at x${e.cauldron} and every Jack-o'-Lantern counts double.`
+            : `Congratulations!\nYou have won ${e.spins} free spins\nJack-o'-Lanterns on winning spins fill the Cauldron, which multiplies every later win.`;
+          this.hud.message(`${def.name}: ${e.spins} free spins`);
           await this.hud.splash(def.name, sub, 'Start', autoMs(), bgSrc(e.kind === 'fullMoon' ? 'fs_fullmoon' : 'fs_cauldron'));
           this.scene.setMode(e.kind);
           this.hud.showFree(def.name, 0, e.spins);
@@ -176,6 +182,7 @@ export class Player {
           break;
         }
         case 'freeSpin':
+          freeTotal = e.total;
           this.hud.showFree(FREE_SPINS[freeKind ?? 'cauldron'].name, e.index, e.total);
           break;
         case 'retrigger':
@@ -191,7 +198,8 @@ export class Player {
           break;
         case 'freeSpinsEnd':
           this.audio.play('end');
-          await this.hud.splash(`${FREE_SPINS[e.kind].name} complete`, `Feature win\n${this.o.fmt(e.featureWin)}`, 'Collect', autoMs(), bgSrc('feature_end'));
+          await this.hud.splash('Congratulations!', `You have won\n${this.o.fmt(e.featureWin)}\nin ${freeTotal} free spins`, 'Collect', autoMs(), bgSrc('feature_end'));
+          freeKind = null;
           this.scene.setMode('base');
           this.hud.hideFree();
           this.hud.setTumble(null);
@@ -204,6 +212,7 @@ export class Player {
           break;
         case 'finalWin':
           this.scene.undim();
+          if (e.amount > 0) this.hud.message(`Win ${this.o.fmt(e.amount)}`);
           if (e.amount >= WIN_TIERS[0].min) await this.bigWin(e.amount);
           break;
       }

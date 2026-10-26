@@ -21,6 +21,11 @@ const SYMBOL_SIZE = S * 0.86;
  */
 const BOARD_FRAME = { left: 111, top: 206, bottom: 918, pitch: 191.75, sliceTop: 215, sliceBottom: 330, sliceSide: 140 };
 
+/** Shard colours per candy when it shatters. */
+const SHARD_COLORS: Partial<Record<SymbolId, number>> = {
+  BH: 0xff2a4a, WP: 0xb04dff, SL: 0x8dff3a, GM: 0xcfe6ff, PA: 0xc8102e, EY: 0xffffff, PU: 0xff8a00, BT: 0x9b3dff, CC: 0xffb300,
+};
+
 interface FrameBox {
   x: number;
   y: number;
@@ -224,7 +229,8 @@ export class Scene {
     this.ambience.layout();
     const portrait = h > w;
     // the bottom HUD (and, in portrait, the row of feature panels above it); matches --hud-h in styles.css
-    const hudH = portrait ? Math.min(214, h * 0.32) + 62 : h <= 460 ? 86 : 124;
+    // plus the message bar above the HUD
+    const hudH = portrait ? Math.min(214, h * 0.32) + 92 : h <= 460 ? 86 + 24 : 124 + 32;
     const top = portrait ? 64 : Math.min(84, h * 0.13);
     const side = portrait ? 0 : Math.min(240, w * 0.16);
     const availW = w - side * 2 - 24;
@@ -272,29 +278,57 @@ export class Scene {
     this.layout();
   }
 
-  /** Current symbols fall out of the bottom of the board, reel by reel. */
+  /** Current symbols fall out of the bottom of the board, column by column (gravity). */
   async dropOut(): Promise<void> {
     const jobs: Promise<void>[] = [];
-    this.views.forEach((col, reel) => col.forEach((v) => {
+    this.views.forEach((col, reel) => col.forEach((v, row) => {
       const y0 = v.root.y;
-      jobs.push(this.tween.wait(reel * 40).then(() => this.tween.run(260, (p) => { v.root.y = y0 + p * BOARD_H * 1.1; }, ease.inQuad)));
+      jobs.push(this.tween.wait(reel * 35 + (ROWS - 1 - row) * 12).then(() => this.tween.run(300, (p) => { v.root.y = y0 + p * (BOARD_H + S); }, ease.inQuad)));
     }));
     await Promise.all(jobs);
   }
 
-  /** A new board drops in from above with a small bounce. */
-  async dropIn(board: Board, mults: MultCell[]): Promise<void> {
+  /**
+   * A new board drops in column by column: each column falls as a stack under gravity and lands
+   * with a jelly squash. In the base game, once 3 Skull Lollipops have landed, every remaining
+   * column is held back and glows before it drops (anticipation for free spins).
+   */
+  async dropIn(board: Board, mults: MultCell[], anticipate = false): Promise<void> {
     this.setBoard(board, mults);
-    const jobs: Promise<void>[] = [];
-    this.views.forEach((col, reel) => col.forEach((v, row) => {
+    const lifts = this.views.map((col) => col.map((v) => {
       const target = v.root.y;
       v.root.y = target - BOARD_H - S;
-      const delay = reel * 70 + (ROWS - 1 - row) * 22;
-      jobs.push(this.tween.wait(delay)
-        .then(() => this.tween.run(340, (p) => { v.root.y = target - (1 - p) * (BOARD_H + S); }, ease.inQuad))
-        .then(() => this.squash(v)));
+      return target;
     }));
+    let scatters = 0;
+    let delay = 0;
+    const jobs: Promise<void>[] = [];
+    for (let reel = 0; reel < REELS; reel++) {
+      const slow = anticipate && scatters >= 3;
+      if (slow) delay += 650;
+      const start = delay;
+      if (slow) jobs.push(this.tween.wait(Math.max(0, start - 650)).then(() => this.columnGlow(reel, 650)));
+      this.views[reel].forEach((v, row) => {
+        const target = lifts[reel][row];
+        jobs.push(this.tween.wait(start + (ROWS - 1 - row) * 18)
+          .then(() => this.tween.run(slow ? 420 : 330, (p) => { v.root.y = target - (1 - p) * (BOARD_H + S); }, ease.inQuad))
+          .then(() => this.squash(v)));
+      });
+      scatters += board[reel].filter((sym) => sym === 'SC').length;
+      delay += 75;
+    }
     await Promise.all(jobs);
+  }
+
+  /** A glowing column marker while the board waits for the last columns (anticipation). */
+  private async columnGlow(reel: number, ms: number): Promise<void> {
+    if (this.reduced) return;
+    const g = new Graphics();
+    for (let i = 3; i >= 1; i--) g.roundRect(reel * S + 6 - i * 6, -10 - i * 6, S - 12 + i * 12, BOARD_H + 20 + i * 12, 26).stroke({ color: 0xff4fd8, width: 8, alpha: 0.25 });
+    g.blendMode = 'add';
+    this.fx.addChild(g);
+    await this.tween.run(ms, (p) => { g.alpha = 0.5 + Math.sin(p * Math.PI * 4) * 0.5; }, ease.linear);
+    g.destroy();
   }
 
   /** Jelly landing: squash wide, then spring back. */
@@ -317,11 +351,14 @@ export class Scene {
         return;
       }
       const glow = v.showGlow(this.glowColor === 0xff4fb0 ? 0xffd34d : this.glowColor);
-      jobs.push(this.tween.run(620, (p) => {
-        v.root.scale.set(1 + Math.sin(p * Math.PI * 2) * 0.12);
-        glow.alpha = Math.sin(p * Math.PI) * 0.9 + 0.1;
-        glow.scale.set(0.8 + p * 0.5);
-      }, ease.linear));
+      // grow, jiggle side to side, keep glowing (the moment before the candies shatter)
+      jobs.push(this.tween.run(760, (p) => {
+        const grow = Math.min(1, p * 4);
+        v.root.scale.set(1 + 0.16 * grow + Math.sin(p * Math.PI * 6) * 0.04);
+        v.root.rotation = Math.sin(p * Math.PI * 8) * 0.09 * grow;
+        glow.alpha = 0.4 + Math.sin(p * Math.PI * 3) * 0.4;
+        glow.scale.set(0.9 + grow * 0.4);
+      }, ease.linear).then(() => { if (!v.root.destroyed) v.root.rotation = 0; }));
     }));
     await Promise.all(jobs);
   }
@@ -338,9 +375,11 @@ export class Scene {
     if (cells.length >= 12) void this.shake(320, 6 + Math.min(10, cells.length - 12));
     const jobs = cells.map((c) => {
       const v = this.views[c.reel][c.row];
+      const color = SHARD_COLORS[v.symbol] ?? 0xffc040;
       this.flash('p_fx_pop', v.root.x, v.root.y, 1.15);
-      this.burst(v.root.x, v.root.y, v.symbol === 'BH' ? 0xff3355 : v.symbol === 'SL' ? 0x8dff3a : v.symbol === 'WP' || v.symbol === 'BT' ? 0xc070ff : 0xffc040, 10);
-      return this.tween.run(220, (p) => { v.root.scale.set(1 + p * 0.4); v.root.alpha = 1 - p; }, ease.outQuad);
+      this.shards(v.root.x, v.root.y, color);
+      this.burst(v.root.x, v.root.y, color, 6);
+      return this.tween.run(170, (p) => { v.root.scale.set(1.16 + p * 0.3); v.root.alpha = 1 - p; }, ease.outQuad);
     });
     await Promise.all(jobs);
   }
@@ -373,8 +412,10 @@ export class Scene {
         const y0 = v.root.y;
         const y1 = this.pos(reel, row).y;
         if (y0 !== y1) {
-          jobs.push(this.tween.wait(reel * 30)
-            .then(() => this.tween.run(300, (p) => { v.root.y = y0 + (y1 - y0) * p; }, ease.inQuad))
+          // gravity: longer drops take longer and arrive faster
+          const ms = 170 + Math.sqrt(Math.abs(y1 - y0) / S) * 120;
+          jobs.push(this.tween.wait(reel * 28 + (ROWS - 1 - row) * 10)
+            .then(() => this.tween.run(ms, (p) => { v.root.y = y0 + (y1 - y0) * p; }, ease.inQuad))
             .then(() => this.squash(v)));
         }
       });
@@ -429,7 +470,8 @@ export class Scene {
     await Promise.all(cells.map(async (c, i) => {
       const v = this.views[c.reel]?.[c.row];
       if (!v) return;
-      await this.tween.wait(i * 120);
+      await this.tween.wait(i * 160);
+      await this.blast(v);
       const orb = new Text({ text: `x${c.value}`, style: { fontFamily: 'Creepster, sans-serif', fontSize: 64, fill: '#ffe066', stroke: { color: '#5a1300', width: 8 } } });
       orb.anchor.set(0.5);
       orb.position.set(v.root.x, v.root.y);
@@ -443,6 +485,25 @@ export class Scene {
       this.burst(orb.x, orb.y, 0xffb300, 10);
       orb.destroy();
     }));
+  }
+
+  /** A Jack-o'-Lantern blasts: it swells, flashes white and throws out a shock ring. */
+  private async blast(v: CellView): Promise<void> {
+    void this.shake(220, 5);
+    const ring = new Graphics().circle(0, 0, S * 0.5).stroke({ color: 0xffe066, width: 14 });
+    ring.blendMode = 'add';
+    ring.position.set(v.root.x, v.root.y);
+    this.fx.addChild(ring);
+    this.burst(v.root.x, v.root.y, 0xffb300, 14);
+    this.flash('p_fx_pop', v.root.x, v.root.y, 1.6);
+    await this.tween.run(320, (p) => {
+      v.root.scale.set(1 + Math.sin(p * Math.PI) * 0.45);
+      v.sprite.tint = p < 0.5 ? 0xffffff : 0xfff0c0;
+      ring.scale.set(0.4 + p * 1.8);
+      ring.alpha = 1 - p;
+    }, ease.outQuad);
+    ring.destroy();
+    if (!v.root.destroyed) v.root.scale.set(1);
   }
 
   /** Floating text over the board (board units). */
@@ -493,6 +554,26 @@ export class Scene {
       f.rotation = p * 0.5;
       f.alpha = p < 0.3 ? 1 : 1 - (p - 0.3) / 0.7;
     }, ease.outQuad).then(() => f.destroy());
+  }
+
+  /** Candy shatters: glossy shards fly out, spin and fall with gravity. */
+  private shards(x: number, y: number, color: number): void {
+    if (this.reduced) return;
+    for (let i = 0; i < 7; i++) {
+      const g = new Graphics().poly([0, -10, 8, 6, -7, 7]).fill({ color }).poly([0, -10, 3, -2, -2, 0]).fill({ color: 0xffffff, alpha: 0.7 });
+      g.position.set(x, y);
+      g.scale.set(0.8 + Math.random() * 0.9);
+      this.fx.addChild(g);
+      const a = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.6;
+      const v0 = 260 + Math.random() * 260;
+      const spin = (Math.random() - 0.5) * 16;
+      void this.tween.run(700, (p) => {
+        const t = p * 0.7;
+        g.position.set(x + Math.cos(a) * v0 * t, y + Math.sin(a) * v0 * t + 900 * t * t);
+        g.rotation = spin * t;
+        g.alpha = p < 0.6 ? 1 : 1 - (p - 0.6) / 0.4;
+      }, ease.linear).then(() => g.destroy());
+    }
   }
 
   burst(x: number, y: number, color: number, n: number): void {

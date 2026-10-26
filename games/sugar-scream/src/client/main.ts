@@ -182,6 +182,7 @@ class Game {
       this.hud.hideLoading();
       this.refresh();
       this.hud.setWin(this.fmtMoney(0));
+      this.hud.tips();
       if (this.settings.intro) {
         const { skipNextTime } = await this.hud.introSplash();
         this.audio.unlock();
@@ -253,6 +254,7 @@ class Game {
     this.roundBet = this.bet;
     this.refresh();
     this.hud.setWin(this.fmtMoney(0));
+    this.hud.message('Good luck!');
     const started = performance.now();
     this.player.startSpin();
     let round: RgsRound;
@@ -308,6 +310,7 @@ class Game {
     }
     this.hud.setWin(this.fmtMoney(winMicros(this.roundBet, payoutCenti)));
     this.hud.setBalance(this.fmtMoney(this.balance));
+    if (payoutCenti === 0) this.hud.tips();
     return feature;
   }
 

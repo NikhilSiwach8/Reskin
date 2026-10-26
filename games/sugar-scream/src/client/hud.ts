@@ -258,12 +258,72 @@ export class Hud {
     b.disabled = !enabled;
   }
 
+  // ---------------------------------------------------------------- message bar
+  private tipTimer = 0;
+  private tipIndex = 0;
+  private static readonly TIPS = [
+    '8 or more matching candies win anywhere',
+    '3 Skull Lollipops start Trick or Treat',
+    '4 Skull Lollipops award Haunted Cauldron free spins',
+    '5 or more Skull Lollipops award Full Moon free spins',
+    'Press space to spin',
+  ];
+
+  /** Plain message under the board (stops the idle tips). */
+  message(text: string): void {
+    clearInterval(this.tipTimer);
+    this.tipTimer = 0;
+    this.setMsg(document.createTextNode(t(text)));
+  }
+
+  /** "12 × [candy] PAYS $1.20" lines for the current tumble. */
+  messageWins(wins: { src: string; count: number; pay: string }[]): void {
+    clearInterval(this.tipTimer);
+    this.tipTimer = 0;
+    const frag = document.createDocumentFragment();
+    wins.forEach((w, i) => {
+      const line = document.createElement('span');
+      line.className = 'msg-win';
+      line.style.animationDelay = `${i * 0.12}s`;
+      const img = document.createElement('img');
+      img.src = w.src;
+      img.alt = '';
+      line.append(`${w.count} × `, img, ` ${t('PAYS')} ${w.pay}`);
+      frag.appendChild(line);
+    });
+    this.setMsg(frag);
+  }
+
+  /** Rotating game tips between rounds. */
+  tips(): void {
+    if (this.tipTimer) return;
+    const show = () => this.setMsg(document.createTextNode(t(Hud.TIPS[this.tipIndex++ % Hud.TIPS.length])));
+    show();
+    this.tipTimer = window.setInterval(show, 4000);
+  }
+
+  private setMsg(content: Node): void {
+    const el = $('#msg-text');
+    el.replaceChildren(content);
+    el.classList.remove('msg-in');
+    void el.offsetWidth;
+    el.classList.add('msg-in');
+  }
+
   // ---------------------------------------------------------------- feature panels
+  /** Free spins counter: how many are left, as the format's players expect. */
   showFree(title: string, index: number, total: number): void {
     $('#fs-panel').classList.remove('hidden');
     document.body.classList.add('in-free');
-    $('#fs-title').textContent = t(title);
-    $('#fs-count').textContent = `${index} / ${total}`;
+    $('#fs-title').textContent = t(`${title}: spins left`);
+    const el = $('#fs-count');
+    const left = String(total - index);
+    if (el.textContent !== left) {
+      el.textContent = left;
+      el.classList.remove('bump');
+      void el.offsetWidth;
+      el.classList.add('bump');
+    }
   }
 
   setCauldron(value: number | null, bump = false): void {
@@ -358,29 +418,20 @@ export class Hud {
   winScreen(tiers: { title: string; until: number; art?: string | null }[], amount: (p: number) => string, x: string, ms: number): Promise<void> {
     const el = $('#winscreen');
     el.classList.remove('hidden');
-    // candy rain made of the game's own symbols
+    // a fountain of candy and coins bursting up from the bottom
     el.querySelector('.candy-rain')?.remove();
-    if (!document.body.classList.contains('reduced')) {
-      const rain = document.createElement('div');
-      rain.className = 'candy-rain';
-      const ids = ['BH', 'WP', 'SL', 'GM', 'PA', 'EY', 'PU', 'BT', 'CC', 'SC', 'JK'] as const;
-      for (let i = 0; i < 26; i++) {
-        const img = document.createElement('img');
-        img.src = symbolSrc(ids[i % ids.length]);
-        img.alt = '';
-        img.style.left = `${Math.random() * 96}%`;
-        img.style.animationDuration = `${2.6 + Math.random() * 2.4}s`;
-        img.style.animationDelay = `${-Math.random() * 4}s`;
-        img.style.setProperty('--spin', `${(Math.random() < 0.5 ? -1 : 1) * (240 + Math.random() * 600)}deg`);
-        rain.appendChild(img);
-      }
-      el.insertBefore(rain, el.children[1] ?? null);
-    }
+    const stopFountain = document.body.classList.contains('reduced') ? () => {} : this.fountain(el);
     $('#win-x').textContent = x;
     // painted tier lettering when imported, else the text title
     let shown = '';
     const showTier = (tier: { title: string; art?: string | null }) => {
       if (shown === tier.title) return;
+      // each new tier punches in with a flash
+      if (shown) {
+        el.classList.remove('punch');
+        void el.offsetWidth;
+        el.classList.add('punch');
+      }
       shown = tier.title;
       const img = $<HTMLImageElement>('#win-art');
       img.classList.toggle('hidden', !tier.art);
@@ -407,6 +458,7 @@ export class Hud {
       };
       const close = () => {
         this.skipOverlay = null;
+        stopFountain();
         el.classList.add('hidden');
         resolve();
       };
@@ -421,6 +473,61 @@ export class Hud {
       };
       frame();
     });
+  }
+
+  /** Candy and gold coins launched up from the bottom centre, arcing out under gravity. */
+  private fountain(host: HTMLElement): () => void {
+    const layer = document.createElement('div');
+    layer.className = 'candy-rain';
+    host.insertBefore(layer, host.children[1] ?? null);
+    const ids = ['BH', 'WP', 'SL', 'GM', 'PA', 'EY', 'PU', 'BT', 'CC', 'SC', 'JK'] as const;
+    type P = { el: HTMLElement; x: number; y: number; vx: number; vy: number; r: number; vr: number };
+    const parts: P[] = [];
+    let raf = 0;
+    let last = performance.now();
+    let spawn = 0;
+    const W = () => host.clientWidth;
+    const H = () => host.clientHeight;
+    const add = () => {
+      const coin = Math.random() < 0.45;
+      const el = document.createElement(coin ? 'div' : 'img');
+      if (coin) el.className = 'coin';
+      else {
+        (el as HTMLImageElement).src = symbolSrc(ids[Math.floor(Math.random() * ids.length)]);
+        (el as HTMLImageElement).alt = '';
+      }
+      layer.appendChild(el);
+      const h = H();
+      parts.push({ el, x: W() / 2 + (Math.random() - 0.5) * 80, y: h + 40, vx: (Math.random() - 0.5) * W() * 0.9, vy: -(h * (1.0 + Math.random() * 0.6)), r: Math.random() * 360, vr: (Math.random() - 0.5) * 720 });
+    };
+    const frame = (now: number) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      spawn += dt;
+      while (spawn > 0.035 && parts.length < 90) {
+        spawn -= 0.035;
+        add();
+      }
+      const g = H() * 1.6;
+      for (let i = parts.length - 1; i >= 0; i--) {
+        const p = parts[i];
+        p.vy += g * dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.r += p.vr * dt;
+        p.el.style.transform = `translate(${p.x}px, ${p.y}px) rotate(${p.r}deg)`;
+        if (p.y > H() + 80 && p.vy > 0) {
+          p.el.remove();
+          parts.splice(i, 1);
+        }
+      }
+      raf = requestAnimationFrame(frame);
+    };
+    raf = requestAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(raf);
+      layer.remove();
+    };
   }
 
   /**
