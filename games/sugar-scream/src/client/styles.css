@@ -125,7 +125,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outl
 #loading { z-index: 30; background: #0b0326; gap: 24px; }
 .bar { width: min(420px, 80vw); height: 14px; border-radius: 10px; background: #2a0a4d; overflow: hidden; border: 2px solid var(--pink); }
 #loading-bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--pink), var(--lime)); transition: width 0.2s; }
-#winscreen { cursor: pointer; overflow: hidden; }
+#winscreen { cursor: pointer; overflow: hidden; z-index: 11; } /* above the bonus screens: hits are celebrated inside them */
 #winscreen .rays { position: absolute; width: 200vmax; height: 200vmax; background: repeating-conic-gradient(rgba(255, 211, 77, 0.16) 0 10deg, transparent 10deg 20deg); animation: spin 14s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 #win-title { position: relative; font-family: var(--fh); font-size: clamp(56px, 12vw, 150px); color: var(--gold); text-shadow: 0 0 30px #ff4fb0, 0 8px 0 #7a1a00; animation: throb 0.9s ease-in-out infinite; letter-spacing: 3px; text-align: center; }

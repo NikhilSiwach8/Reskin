@@ -771,7 +771,7 @@ export class Hud {
    * Trick or Treat. The prizes are fixed by the book; the door the player knocks on only
    * decides where each prize is shown. In autoplay, turbo or replay the doors open by themselves.
    */
-  async trickOrTreat(knocks: KnockEvent[], fmt: (centi: number) => string, auto: boolean, onReveal: (k: KnockEvent) => void): Promise<void> {
+  async trickOrTreat(knocks: KnockEvent[], fmt: (centi: number) => string, auto: boolean, onReveal: (k: KnockEvent) => void | Promise<void>): Promise<void> {
     const overlay = $('#tot');
     const doors = $('#tot-doors');
     doors.innerHTML = '';
@@ -823,8 +823,9 @@ export class Hud {
         prize.querySelector('span')!.textContent = label;
       }
       door.appendChild(prize);
-      onReveal(k);
       $('#tot-total').textContent = `${t('Treats')}: ${fmt(total)}`;
+      // each Treat gets its own win splash over the doorstep before the next knock
+      await onReveal(k);
       await wait(auto ? 450 : 900);
     }
     buttons.forEach((b) => { if (!b.disabled) { b.disabled = true; b.classList.add('dim'); } });

@@ -89,9 +89,11 @@ export class Player {
     let lastWin: SymbolId[] = [];
     let freeKind: keyof typeof FREE_SPINS | null = null;
     let freeTotal = 0;
-    let lootRound = false;
     const fast = () => this.o.turbo() || this.skipping || this.o.hands();
     const autoMs = () => (this.o.hands() || this.o.turbo() || this.skipping ? 1600 : null);
+    // bonus rounds celebrate every hit as it lands (each winning spin, Treat or Loot Box prize),
+    // not the total at the end
+    const perHit = events.some((ev) => ev.type === 'freeSpinsStart' || ev.type === 'trickOrTreat' || ev.type === 'lootBox');
     for (let i = 0; i < events.length; i++) {
       const e = events[i];
       switch (e.type) {
@@ -154,6 +156,7 @@ export class Player {
           this.hud.countWin(e.totalWin - e.amount, e.totalWin, this.o.fmt, this.o.reduced() ? 0 : this.ms(700));
           this.hud.message(`${freeKind ? 'Total win' : 'Win'} ${this.o.fmt(e.totalWin)}`);
           if (e.kind === 'scatter') await this.hud.banner('Lollipop Pay', this.o.fmt(e.amount), this.ms(1100));
+          if (perHit && e.kind === 'spin') await this.winSplash(e.amount);
           break;
         case 'trickOrTreat': {
           this.inFeature = true;
@@ -162,9 +165,10 @@ export class Player {
           await this.hud.enterDoor('tot', fast(), () => this.audio.setMusic('feature'));
           const knocks: KnockEvent[] = [];
           while (events[i + 1]?.type === 'knock') knocks.push(events[++i] as KnockEvent);
-          await this.hud.trickOrTreat(knocks, this.o.fmt, autoMs() !== null, (k) => {
+          await this.hud.trickOrTreat(knocks, this.o.fmt, autoMs() !== null, async (k) => {
             this.audio.play('knock');
             setTimeout(() => this.audio.play(k.prize === 'treat' ? 'treat' : k.prize === 'trick' ? 'boo' : 'lollipop'), 250);
+            if (k.prize === 'treat') await this.winSplash(k.amount);
           });
           this.inFeature = false;
           break;
@@ -236,7 +240,6 @@ export class Player {
             await this.scene.dropIn(this.board, []);
           }
           this.inFeature = true;
-          lootRound = true;
           this.audio.play('bonus');
           void this.scene.shake(500, 10);
           await this.hud.banner('Loot Box!', 'Open a box', this.ms(1300), panelSrc('loot_trigger'));
@@ -258,7 +261,8 @@ export class Player {
           this.scene.undim();
           if (e.amount > 0) {
             this.hud.message(`Win ${this.o.fmt(e.amount)}`);
-            await this.winSplash(e.amount, lootRound);
+            // bonus rounds already celebrated each hit (and showed the bonus total screen)
+            if (!perHit) await this.winSplash(e.amount);
           }
           break;
       }
@@ -268,11 +272,11 @@ export class Player {
   }
 
   /**
-   * Splash for every winning round: the tiers the win reached punch in one after another,
-   * then the total appears at once. Wins below Big Win get the lighter Nice / Sweet splash.
-   * After a Loot Box the prize reveal already showed the tier, so only the total is shown.
+   * Win splash for one hit (a round, or in a bonus each winning spin or Treat): the tiers the
+   * win reached punch in one after another, then the amount appears at once. Wins below Big
+   * Win get the lighter Nice / Sweet splash.
    */
-  private async winSplash(amount: number, skipTiers: boolean): Promise<void> {
+  private async winSplash(amount: number): Promise<void> {
     const fast = this.o.turbo() || this.skipping || this.o.hands();
     const x = `${(amount / 100).toLocaleString('en-US')}x`;
     const big = WIN_TIERS.filter((tier) => amount >= tier.min);
@@ -283,8 +287,8 @@ export class Player {
       return;
     }
     this.audio.play('bigWin');
-    if (!skipTiers) this.audio.sting('bigwin');
-    const tiers = (skipTiers ? big.slice(-1) : big).map((tier) => ({ title: tier.title, art: panelSrc(tier.art) }));
+    this.audio.sting('bigwin');
+    const tiers = big.map((tier) => ({ title: tier.title, art: panelSrc(tier.art) }));
     await this.hud.winSplash(tiers, this.o.fmt(amount), x, { tierMs: fast ? 450 : 900, holdMs: fast ? 1100 : 2200, fountain: true });
   }
 }
