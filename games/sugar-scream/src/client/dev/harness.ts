@@ -20,6 +20,9 @@ const SCENARIOS: [string, ModeName, string][] = [
   ['Buy Cauldron', 'bonus', 'cauldron'],
   ['Buy Full Moon', 'fullmoon', 'fullMoon'],
   ['Max win', 'fullmoon', 'wincap'],
+  ['Loot Box (base)', 'base', 'lootBox'],
+  ['Buy Loot Box', 'lootbox', 'lootBox'],
+  ['Loot Box max', 'lootbox', 'lootMax'],
 ];
 
 type Request = (rgs: RgsClient, amount: number, mode: string) => Promise<{ balance: { amount: number; currency: string }; round: RgsRound }>;

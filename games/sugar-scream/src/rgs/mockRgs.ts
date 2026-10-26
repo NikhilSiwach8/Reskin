@@ -220,7 +220,7 @@ export function mockRgs(options: { dir?: string } = {}): Plugin {
 function scenarioMatches(b: StoredBook, want: string): boolean {
   const events = b.events as { type: string; kind?: string; prize?: string }[];
   const has = (type: string, kind?: string) => events.some((e) => e.type === type && (kind === undefined || e.kind === kind));
-  const feature = has('freeSpinsStart') || has('trickOrTreat') || has('witchSpell');
+  const feature = has('freeSpinsStart') || has('trickOrTreat') || has('witchSpell') || has('lootBox');
   switch (want) {
     case 'loss':
       return b.payoutMultiplier === 0;
@@ -244,6 +244,10 @@ function scenarioMatches(b: StoredBook, want: string): boolean {
       return has('freeSpinsStart', 'fullMoon');
     case 'retrigger':
       return has('retrigger');
+    case 'lootBox':
+      return has('lootBox');
+    case 'lootMax':
+      return events.some((e) => e.type === 'lootBox' && (e as { tier?: string }).tier === 'max');
     default:
       return false;
   }

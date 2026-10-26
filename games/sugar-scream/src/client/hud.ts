@@ -135,9 +135,13 @@ export class Hud {
     // Preload painted screens shown mid-round so they never pop in late.
     const later = [
       ...['win_big', 'win_mega', 'win_monster', 'win_sugar', 'win_max', 'door_treat', 'door_trick', 'door_lollipop'].map(panelSrc),
+      'assets/loot_box.svg',
+      panelSrc('door'),
       ...['fs_cauldron', 'fs_fullmoon', 'feature_end', 'tot'].map(bgSrc),
     ];
     for (const src of later) if (src) new Image().src = src;
+    const knob = buttonSrc('ante_knob');
+    if (knob) ($('#ante .ante-knob') as HTMLElement).style.backgroundImage = cssUrl(knob);
     const pot = panelSrc('cauldron_icon');
     if (pot) $<HTMLImageElement>('#cauldron img').src = pot;
     // Full-screen painted backdrops for the loading, intro and Trick or Treat screens.
@@ -415,64 +419,144 @@ export class Hud {
   }
 
   /** Big / Mega / Sugar Rush win screen with a count-up. Tap to skip. */
-  winScreen(tiers: { title: string; until: number; art?: string | null }[], amount: (p: number) => string, x: string, ms: number): Promise<void> {
+  /**
+   * Win splash shown for every winning round: each tier the win reached punches in one after
+   * the other (painted lettering where imported, else text), then the total win appears at
+   * once (no count-up) and holds. `mini` is the lighter splash for wins below Big Win.
+   * A tap skips straight to the total; a second tap closes.
+   */
+  winSplash(tiers: { title: string; art?: string | null }[], total: string, x: string, opts: { tierMs: number; holdMs: number; mini?: boolean; fountain?: boolean }): Promise<void> {
     const el = $('#winscreen');
-    el.classList.remove('hidden');
-    // a fountain of candy and coins bursting up from the bottom
+    $('#win-title').textContent = t(tiers[0].title);
+    el.classList.remove('hidden', 'show-total', 'punch');
+    el.classList.toggle('mini', !!opts.mini);
     el.querySelector('.candy-rain')?.remove();
-    const stopFountain = document.body.classList.contains('reduced') ? () => {} : this.fountain(el);
+    const stopFountain = opts.fountain && !document.body.classList.contains('reduced') ? this.fountain(el) : () => {};
+    $('#win-amount').textContent = total;
     $('#win-x').textContent = x;
-    // painted tier lettering when imported, else the text title
-    let shown = '';
     const showTier = (tier: { title: string; art?: string | null }) => {
-      if (shown === tier.title) return;
-      // each new tier punches in with a flash
-      if (shown) {
-        el.classList.remove('punch');
-        void el.offsetWidth;
-        el.classList.add('punch');
-      }
-      shown = tier.title;
+      el.classList.remove('punch');
+      void el.offsetWidth;
+      el.classList.add('punch');
       const img = $<HTMLImageElement>('#win-art');
       img.classList.toggle('hidden', !tier.art);
       $('#win-title').classList.toggle('hidden', !!tier.art);
       if (tier.art) {
         img.src = tier.art;
         img.alt = t(tier.title);
-        img.style.animation = 'none';
-        void img.offsetWidth;
-        img.style.animation = '';
       }
       $('#win-title').textContent = t(tier.title);
     };
     return new Promise((resolve) => {
-      const start = performance.now();
-      let finished = false;
-      const finish = () => {
-        if (finished) return;
-        finished = true;
-        $('#win-amount').textContent = amount(1);
-        showTier(tiers[tiers.length - 1]);
-        this.skipOverlay = () => close();
-        setTimeout(close, 1100);
-      };
+      const timers: number[] = [];
+      let done = false;
       const close = () => {
+        if (done) return;
+        done = true;
+        timers.forEach(clearTimeout);
         this.skipOverlay = null;
         stopFountain();
         el.classList.add('hidden');
+        el.classList.remove('show-total', 'mini');
         resolve();
       };
-      this.skipOverlay = finish;
-      const frame = () => {
-        if (finished) return;
-        const p = Math.min(1, (performance.now() - start) / ms);
-        $('#win-amount').textContent = amount(p);
-        showTier(tiers.find((tier) => p <= tier.until) ?? tiers[tiers.length - 1]);
-        if (p >= 1) finish();
-        else requestAnimationFrame(frame);
+      const showTotal = () => {
+        timers.forEach(clearTimeout);
+        showTier(tiers[tiers.length - 1]);
+        el.classList.add('show-total');
+        this.skipOverlay = close;
+        timers.push(window.setTimeout(close, opts.holdMs));
       };
-      frame();
+      this.skipOverlay = showTotal;
+      showTier(tiers[0]);
+      tiers.slice(1).forEach((tier, i) => timers.push(window.setTimeout(() => showTier(tier), (i + 1) * opts.tierMs)));
+      timers.push(window.setTimeout(showTotal, Math.max(1, tiers.length - 1) * opts.tierMs + opts.tierMs * 0.6));
     });
+  }
+
+  /**
+   * Bonus entrance: a door rushes up, knocks, swings open onto the bonus's glow and the view
+   * flies through the doorway. `onClosed` runs while the doors fill the screen, so the scene
+   * behind can switch to the bonus before it is revealed. `fast` halves every step.
+   */
+  async enterDoor(glow: string, fast: boolean, onClosed: () => void): Promise<void> {
+    if (document.body.classList.contains('reduced')) {
+      onClosed();
+      return;
+    }
+    const el = $('#portal');
+    const art = panelSrc('door') ?? 'assets/door.svg';
+    el.querySelectorAll<HTMLElement>('.portal-door').forEach((d) => (d.style.backgroundImage = cssUrl(art)));
+    el.style.setProperty('--glow', glow);
+    // development builds can slow the entrance down for inspection (window.__doorSlow = 6)
+    const slow = import.meta.env.DEV ? Number((window as unknown as { __doorSlow?: number }).__doorSlow ?? 1) : 1;
+    const k = (fast ? 0.5 : 1) * slow;
+    el.style.setProperty('--k', String(k));
+    el.className = '';
+    void el.offsetWidth;
+    el.classList.add('approach');
+    await wait(650 * k);
+    el.classList.add('knock');
+    await wait(420 * k);
+    onClosed();
+    el.classList.add('open');
+    await wait(650 * k);
+    el.classList.add('through');
+    await wait(650 * k);
+    el.className = 'hidden';
+  }
+
+  /**
+   * Loot Box: the player opens one of the boxes. The prize is fixed by the book; the box
+   * picked only decides where it is shown. Autoplay, turbo and replay pick automatically.
+   */
+  async lootBox(count: number, prize: { title: string; art: string | null; mult: string; amount: string }, auto: boolean, onOpen: () => void): Promise<void> {
+    const overlay = $('#loot');
+    const row = $('#loot-boxes');
+    row.innerHTML = '';
+    $('#loot-prize').classList.add('hidden');
+    $('#loot-sub').textContent = t('Pick a box');
+    const boxes: HTMLButtonElement[] = [];
+    for (let i = 0; i < count; i++) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'loot-box';
+      b.style.setProperty('--hue', `${i * 55}deg`);
+      b.style.animationDelay = `${i * 0.08}s`;
+      b.setAttribute('aria-label', t(`Loot Box ${i + 1}`));
+      b.innerHTML = '<img src="assets/loot_box.svg" alt="">';
+      row.appendChild(b);
+      boxes.push(b);
+    }
+    this.splashOpen = true;
+    overlay.classList.remove('hidden');
+    const chosen = await new Promise<number>((resolve) => {
+      const timer = window.setTimeout(() => resolve(Math.floor(Math.random() * count)), auto ? 700 : 15000);
+      boxes.forEach((b, i) => (b.onclick = () => { clearTimeout(timer); resolve(i); }));
+    });
+    boxes.forEach((b, i) => {
+      b.onclick = null;
+      b.disabled = true;
+      if (i !== chosen) b.classList.add('dim');
+    });
+    const box = boxes[chosen];
+    box.classList.add('opening');
+    onOpen();
+    await wait(auto ? 450 : 900);
+    box.classList.add('opened');
+    const reveal = $('#loot-prize');
+    const art = $<HTMLImageElement>('#loot-art');
+    art.classList.toggle('hidden', !prize.art);
+    if (prize.art) art.src = prize.art;
+    $('#loot-title').textContent = t(prize.title);
+    $('#loot-title').classList.toggle('hidden', !!prize.art);
+    $('#loot-mult').textContent = prize.mult;
+    $('#loot-amount').textContent = prize.amount;
+    $('#loot-sub').textContent = '';
+    reveal.classList.remove('hidden');
+    await wait(auto ? 1300 : 2600);
+    overlay.classList.add('hidden');
+    this.splashOpen = false;
   }
 
   /** Candy and gold coins launched up from the bottom centre, arcing out under gravity. */

@@ -1,7 +1,7 @@
 // Book validation. Used by the tests, the math pipeline and the client: the client
 // refuses to play a round whose events are not internally consistent.
 import { applyTumble, cellsOf } from './board.ts';
-import { PAYING, REELS, ROWS, SYMBOLS, WINCAP, clusterPay } from './config.ts';
+import { LOOT_TIERS, PAYING, REELS, ROWS, SYMBOLS, WINCAP, clusterPay } from './config.ts';
 import type { Board, Cell, GameEvent, MultCell, SymbolId } from './types.ts';
 
 export interface ValidationResult {
@@ -48,6 +48,7 @@ export function validateBook(book: { payoutMultiplier: unknown; events: unknown 
   let spinBase = 0; // this spin's tumble win before multipliers
   let spinMult = 1;
   let lastWin: SymbolId[] = [];
+  let lootMult = 0;
 
   events.forEach((e, i) => {
     const where = `event ${i} (${e?.type})`;
@@ -108,9 +109,16 @@ export function validateBook(book: { payoutMultiplier: unknown; events: unknown 
       case 'win':
         if (!isInt(e.amount) || e.amount === 0) errors.push(`${where}: bad amount`);
         if (e.kind === 'spin' && e.amount !== spinBase * spinMult && total + e.amount !== WINCAP) errors.push(`${where}: spin win ${e.amount} != ${spinBase} x ${spinMult}`);
+        if (e.kind === 'loot' && e.amount !== lootMult * 100 && total + e.amount !== WINCAP) errors.push(`${where}: loot win ${e.amount} != ${lootMult}x`);
         total += e.amount;
         if (e.totalWin !== total) errors.push(`${where}: totalWin ${e.totalWin} != running total ${total}`);
         break;
+      case 'lootBox': {
+        const tier = LOOT_TIERS[e.tier];
+        if (!tier || !isInt(e.multiplier) || e.multiplier < tier.min || e.multiplier > tier.max) errors.push(`${where}: bad loot prize`);
+        lootMult = e.multiplier;
+        break;
+      }
       case 'knock':
         if (!isInt(e.index) || e.index > 8) errors.push(`${where}: bad door`);
         break;
@@ -130,7 +138,7 @@ export function validateBook(book: { payoutMultiplier: unknown; events: unknown 
         break;
     }
   });
-  if (reveals === 0) errors.push('book has no reveal');
+  if (reveals === 0 && !events.some((e) => e.type === 'lootBox')) errors.push('book has no reveal');
   if (events[events.length - 1]?.type !== 'finalWin') errors.push('last event must be finalWin');
   if (total > WINCAP) errors.push(`total ${total} exceeds win cap`);
   return { ok: errors.length === 0, errors };

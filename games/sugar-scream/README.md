@@ -4,10 +4,11 @@ A Halloween reskin of the **pay-anywhere tumbling slot** format made famous by P
 
 | New bonus | What it does |
 |---|---|
-| **Witch's Spell** | Base game, 1 in 40 spins: the Witch flies over the board before it is evaluated and turns a handful of candies into one kind, always creating a win. |
+| **Witch's Spell** | Base game, 1 in 56 spins: the Witch flies over the board before it is evaluated and turns a handful of candies into one kind, always creating a win. |
 | **Trick or Treat** | Exactly 3 Skull Lollipops (one short of free spins) start a doorstep pick bonus: knock on up to 3 of 9 doors for Treats (1x to 50x), Tricks, or the Golden Lollipop, which awards free spins. |
 | **Haunted Cauldron** | In free spins, the Jack-o'-Lanterns on each winning spin are poured into a Cauldron that keeps multiplying every later win, instead of only the spin they land on. |
 | **Full Moon** (super free spins) | 5+ Lollipops: 12 spins, the Cauldron starts at x5 and every Jack-o'-Lantern counts double. |
+| **Loot Box** | Drops on 1 in 1,500 base spins, or buy it for 92x: open one of 6 boxes for a Big (15x+), Mega (40x+), Monster (100x+) or Sugar Scream (500x+) win, or the 5,000x Max Win (1 in 1,000 boxes). |
 
 Theme, art, names and code are original; only the game format is borrowed. See [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md) for the full rules, the reskin mapping, the round flow and the book event contract.
 
@@ -81,9 +82,9 @@ Build the upload zips with `npm run math:publish && npm run build && npm run rel
 
 ## Layout and animation
 
-- **Bottom left:** game info (rules and paytable), Buy Feature and the Ante Bet toggle. **Centre:** balance and win. **Bottom right:** bet −/+, autoplay, spin, turbo, sound and settings. On phones in portrait the left group sits above the spin row, with balance and win below.
+- **Bottom left:** game info (rules and paytable), Buy Feature (Haunted Cauldron, Full Moon, Loot Box) and the Ante Bet toggle (its painted knob slides on and off). **Centre:** balance and win. **Bottom right:** bet −/+, autoplay, spin, turbo, sound and settings. On phones in portrait the left group sits above the spin row, with balance and win below.
 - **Animated scene** (`src/client/game/ambience.ts`, `scene.ts`): the background slowly breathes and drifts, and mode-coloured particles float up (sugar sparkles, brew bubbles in Haunted Cauldron, embers in Full Moon). Bats flap across now and then, and the base and free-spin scenes cross-fade. The frame has a pulsing glow and a flickering pumpkin. Symbols breathe, a random one wiggles now and then, and Jack-o'-Lanterns flicker. Landings squash and spring back, wins glow, big clusters, feature triggers and the max win shake the board, the Win meter counts up, and the win screens rain candy.
-- **Presentation in the style of the format's best-known title:** each column drops in as a stack under gravity. Once 3 Skull Lollipops have landed, the remaining columns hold back and glow. Winning candies swell, jiggle and glow, then shatter into shards, and survivors fall with gravity while new candies drop in. A message bar under the board shows "12 × [candy] PAYS $1.20" during tumbles, the running win or free-spin total, and tips between rounds. In free spins, Jack-o'-Lanterns blast (shock ring, flash, shake) before their values fly to the Cauldron. Free spins open with a "Congratulations! You have won 10 free spins" screen and close with "You have won $X in N free spins". The panel counts spins left. Big wins (15x Big, 40x Mega, 100x Monster, 500x Sugar Scream) punch in tier by tier with a flash over a fountain of candy and gold coins.
+- **Presentation in the style of the format's best-known title:** each column drops in as a stack under gravity. Once 3 Skull Lollipops have landed, the remaining columns hold back and glow. Winning candies swell, jiggle and glow, then shatter into shards, and survivors fall with gravity while new candies drop in. A message bar under the board shows "12 × [candy] PAYS $1.20" during tumbles, the running win or free-spin total, and tips between rounds. In free spins, Jack-o'-Lanterns blast (shock ring, flash, shake) before their values fly to the Cauldron. Free spins open with a "Congratulations! You have won 10 free spins" screen and close with "You have won $X in N free spins". The panel counts spins left. Every winning round gets a splash: Nice Win (below 5x) or Sweet Win (5x to 15x) as a quick light splash, and Big (15x), Mega (40x), Monster (100x), Sugar Scream (500x) and Max Win punching in tier by tier over a fountain of candy and gold coins. Then the total win appears at once (no count-up).
 - **Animated interface:** floating logo, breathing spin button, light sweep and hop on Buy, glowing Ante when on, pulsing info button, bubbling Cauldron panel and breathing Trick-or-Treat doors. Everything stops with reduced motion.
 
 ## Verified

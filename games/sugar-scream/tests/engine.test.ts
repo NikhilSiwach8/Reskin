@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BET_MODES, FREE_SPINS, MIN_CLUSTER, REELS, ROWS, WINCAP, clusterPay, scatterPay } from '../src/engine/config.ts';
+import { BET_MODES, FREE_SPINS, LOOT_TIERS, MIN_CLUSTER, REELS, ROWS, WINCAP, clusterPay, scatterPay } from '../src/engine/config.ts';
 import { applyTumble } from '../src/engine/board.ts';
 import { cellsOf, drawGrid, evaluate, forcedScatterGrid, playRound, tumble, type Grid, type ModeName } from '../src/engine/round.ts';
 import { Rng } from '../src/engine/rng.ts';
@@ -168,6 +168,51 @@ describe('features', () => {
       if (book.criteria === 'wincap') continue;
       expect(ofType(book.events, 'freeSpin')).toHaveLength(start.spins + added);
     }
+  });
+});
+
+describe('Loot Box', () => {
+  it('a bought Loot Box pays its tier multiplier (capped at the max win)', () => {
+    const rng = new Rng(31);
+    const seen = new Set<string>();
+    for (let i = 0; i < 4000; i++) {
+      const book = playRound(i, 'lootbox', rng);
+      const loot = ofType(book.events, 'lootBox')[0];
+      const t = LOOT_TIERS[loot.tier];
+      expect(loot.multiplier).toBeGreaterThanOrEqual(t.min);
+      expect(loot.multiplier).toBeLessThanOrEqual(t.max);
+      expect(book.payoutMultiplier).toBe(Math.min(WINCAP, loot.multiplier * 100));
+      expect(validateBook(book).ok).toBe(true);
+      seen.add(loot.tier);
+    }
+    expect([...seen].sort()).toEqual(['big', 'mega', 'monster', 'sugar', 'max'].filter((x) => seen.has(x)).sort());
+    expect(seen.has('big') && seen.has('mega') && seen.has('monster') && seen.has('sugar')).toBe(true);
+  });
+
+  it('the max-win box reaches the 5,000x cap exactly', () => {
+    const rng = new Rng(5);
+    let found = false;
+    for (let i = 0; i < 20000 && !found; i++) {
+      const book = playRound(i, 'lootbox', rng);
+      if (ofType(book.events, 'lootBox')[0].tier !== 'max') continue;
+      found = true;
+      expect(book.criteria).toBe('wincap');
+      expect(book.payoutMultiplier).toBe(WINCAP);
+      expect(book.events.at(-2)?.type).toBe('wincap');
+    }
+    expect(found).toBe(true);
+  });
+
+  it('in the base game a Loot Box only follows a round with no other feature', () => {
+    const rng = new Rng(13);
+    for (let i = 0; i < 200; i++) {
+      const book = playRound(i, 'base', rng, { grid: forcedScatterGrid(rng, 0), noSpell: true, forceLoot: true });
+      expect(ofType(book.events, 'lootBox')).toHaveLength(1);
+      expect(ofType(book.events, 'freeSpinsStart')).toHaveLength(0);
+      expect(validateBook(book).ok).toBe(true);
+    }
+    const book = playRound(1, 'base', rng, { grid: forcedScatterGrid(rng, 4), noSpell: true, forceLoot: true });
+    expect(ofType(book.events, 'lootBox')).toHaveLength(0);
   });
 });
 

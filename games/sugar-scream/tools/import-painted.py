@@ -102,5 +102,20 @@ for path in sources("sym"):
     painted.append(sid)
     print(f"sym_{sid}: {path.name} -> public/assets/sym_{sid}.webp")
 
+# The Ante plaque's painted toggle knob, cut out so the client can slide it (on/off).
+ante = OUT / "btn_ante.webp"
+if ante.exists():
+    from PIL import ImageDraw
+    plaque = Image.open(ante).convert("RGBA")
+    k = plaque.width / 640
+    cx, cy, r = 542 * k, 116 * k, 51 * k
+    knob = plaque.crop((round(cx - r), round(cy - r), round(cx + r), round(cy + r)))
+    mask = Image.new("L", knob.size, 0)
+    ImageDraw.Draw(mask).ellipse((1, 1, knob.width - 2, knob.height - 2), fill=255)
+    knob.putalpha(mask)
+    knob.save(OUT / "btn_ante_knob.webp", "WEBP", quality=92)
+    if "ante_knob" not in buttons:
+        buttons.append("ante_knob")
+
 (ROOT / "src" / "client" / "painted.json").write_text(json.dumps({"symbols": sorted(painted), "buttons": sorted(buttons), "backgrounds": sorted(backgrounds), "panels": sorted(panels)}) + "\n")
 print(f"{len(painted)} symbols, {len(buttons)} buttons, {len(backgrounds)} backgrounds, {len(panels)} panels")

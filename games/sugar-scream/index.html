@@ -38,6 +38,7 @@
           <span class="big">Ante Bet</span>
           <span id="ante-price">1.25x bet</span>
           <span class="small">Lollipops land more often</span>
+          <span class="ante-switch" aria-hidden="true"><span class="ante-knob"></span></span>
         </label>
       </div>
       <!-- centre: balance and win -->
@@ -91,6 +92,28 @@
       </div>
     </div>
 
+    <div id="portal" class="hidden" aria-hidden="true">
+      <div class="portal-stage">
+        <div class="portal-glow"></div>
+        <div class="portal-door left"></div>
+        <div class="portal-door right"></div>
+      </div>
+    </div>
+
+    <div id="loot" class="overlay hidden">
+      <div class="loot-card">
+        <div class="loot-title-main">Loot Box!</div>
+        <div id="loot-sub">Pick a box</div>
+        <div id="loot-boxes"></div>
+        <div id="loot-prize" class="hidden">
+          <img id="loot-art" alt="" />
+          <div id="loot-title"></div>
+          <div id="loot-mult"></div>
+          <div id="loot-amount"></div>
+        </div>
+      </div>
+    </div>
+
     <div id="intro" class="overlay hidden">
       <div class="splash-card intro">
         <div class="intro-logo"><span class="l1">Sugar</span><span class="l2">Scream</span></div>
@@ -100,6 +123,7 @@
           <li><b>3 Skull Lollipops</b>: Trick or Treat. Knock on doors for treats or the Golden Lollipop.</li>
           <li><b>4 Lollipops</b>: Haunted Cauldron free spins. Jack-o'-Lanterns fill a Cauldron that multiplies every later win.</li>
           <li><b>5+ Lollipops</b>: Full Moon. The Cauldron starts at x5 and fills twice as fast.</li>
+          <li><b>Loot Box</b> can drop on any base spin: open a box for a Big, Mega, Monster or Sugar Scream win, or the 5,000x Max Win.</li>
         </ul>
         <label class="check"><input type="checkbox" id="intro-skip" /> Don't show again</label>
         <button id="intro-go" class="cta" type="button">Play</button>

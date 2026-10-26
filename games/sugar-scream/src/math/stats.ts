@@ -144,7 +144,7 @@ export function renderReport(modes: ModeStats[], args: { books: number; seed: nu
     out.push(`- Non-zero-weight books: ${m.nonZeroWeightBooks.toLocaleString('en-US')}`);
     out.push(`- Probability of a round paying less than its cost, after weighting: ${pct(m.zeroProbability, 2)}`);
     out.push(`- Weighting adjustment: rounds paying at least the cost are ${m.aboveScale.toFixed(4)}x as likely as in the raw simulation`);
-    out.push(`- Win-cap estimate: natural cap hits ${m.sim.naturalCaps} / ${m.sim.natural.toLocaleString('en-US')}; natural free-spin rounds ${m.sim.naturalFeature}; forced free-spin cap rate ${m.sim.forcedHits} / ${m.sim.forcedAttempts}; probability used ${m.sim.wincapEstimate.toExponential(3)}`);
+    out.push(`- Win-cap estimate: natural cap hits ${m.sim.naturalCaps} / ${m.sim.natural.toLocaleString('en-US')}; natural free-spin and Loot Box rounds ${m.sim.naturalFeature}; forced cap rate ${m.sim.forcedHits} / ${m.sim.forcedAttempts}; probability used ${m.sim.wincapEstimate.toExponential(3)}`);
     for (const g of m.fixedGroups) out.push(`- Fixed-probability group \`${g.name}\`: ${g.books} books sharing probability ${g.probability.toExponential(3)} (${oneIn(g.probability)})`);
     out.push('', '| Feature tag | Frequency | RTP contribution | Average round win |', '|---|---|---|---|');
     for (const f of m.features) out.push(`| ${f.tag} | ${oneIn(f.probability)} | ${pct(f.rtpContribution, 2)} | ${f.avgWin.toFixed(2)}x |`);

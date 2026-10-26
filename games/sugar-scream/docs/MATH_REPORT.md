@@ -5,75 +5,88 @@ Figures are exact for this book set and its lookup-table weights. They are not a
 
 | Mode | Cost | Books | RTP | Raw sim RTP | Hit rate | Std dev | Max win | Max win frequency |
 |---|---|---|---|---|---|---|---|---|
-| base | 1x | 100,013 | 96.000% | 101.16% | 1 in 2.24 | 13.97x | 5,000x | 1 in 87,100,017 |
-| ante | 1.25x | 100,014 | 96.000% | 101.02% | 1 in 2.23 | 12.94x | 5,000x | 1 in 21,126,763 |
+| base | 1x | 100,017 | 96.000% | 97.75% | 1 in 2.25 | 11.81x | 5,000x | 1 in 1,453,821 |
+| ante | 1.25x | 100,019 | 96.000% | 101.86% | 1 in 2.27 | 14.67x | 5,000x | 1 in 2,100,095 |
 | bonus | 100x | 35,003 | 96.000% | 101.82% | 1 in 1.00 | 130.14x | 5,000x | 1 in 200,000 |
 | fullmoon | 300x | 30,025 | 96.000% | 103.75% | 1 in 1.00 | 298.31x | 5,000x | 1 in 18,347 |
+| lootbox | 92x | 100,025 | 96.000% | 98.87% | 1 in 1.00 | 271.96x | 5,000x | 1 in 1,000 |
 
 ## base mode
 
-- Non-zero-weight books: 100,013
-- Probability of a round paying less than its cost, after weighting: 81.27%
-- Weighting adjustment: rounds paying at least the cost are 0.9394x as likely as in the raw simulation
-- Win-cap estimate: natural cap hits 0 / 100,000; natural free-spin rounds 314; forced free-spin cap rate 13 / 594398; probability used 1.148e-8
-- Fixed-probability group `wincap`: 13 books sharing probability 1.148e-8 (1 in 87,100,000)
+- Non-zero-weight books: 100,017
+- Probability of a round paying less than its cost, after weighting: 81.06%
+- Weighting adjustment: rounds paying at least the cost are 0.9744x as likely as in the raw simulation
+- Win-cap estimate: natural cap hits 0 / 100,000; natural free-spin and Loot Box rounds 371; forced cap rate 17 / 409664; probability used 6.878e-7
+- Fixed-probability group `wincap`: 17 books sharing probability 6.878e-7 (1 in 1,453,821)
 
 | Feature tag | Frequency | RTP contribution | Average round win |
 |---|---|---|---|
-| witchSpell | 1 in 42.74 | 10.24% | 4.38x |
-| trickOrTreat | 1 in 71.55 | 19.11% | 13.68x |
-| cauldron | 1 in 370 | 23.58% | 87.17x |
-| goldenLollipop | 1 in 995 | 8.27% | 82.25x |
-| fullMoon | 1 in 4,094 | 11.32% | 463.55x |
-| retrigger | 1 in 4,435 | 5.26% | 233.37x |
-| wincap | 1 in 87,100,017 | 0.01% | 5000.00x |
+| witchSpell | 1 in 57.50 | 8.21% | 4.72x |
+| trickOrTreat | 1 in 70.83 | 18.03% | 12.77x |
+| cauldron | 1 in 369 | 24.17% | 89.21x |
+| goldenLollipop | 1 in 1,140 | 6.96% | 79.35x |
+| lootBox | 1 in 1,405 | 6.24% | 87.65x |
+| loot_big | 1 in 1,974 | 1.35% | 26.71x |
+| retrigger | 1 in 3,536 | 4.59% | 162.13x |
+| fullMoon | 1 in 5,123 | 5.67% | 290.28x |
+| loot_mega | 1 in 6,841 | 1.02% | 69.69x |
+| loot_monster | 1 in 20,524 | 1.69% | 346.78x |
+| loot_sugar | 1 in 102,622 | 1.99% | 2046.90x |
+| wincap | 1 in 1,453,821 | 0.34% | 5000.00x |
+| loot_max | 1 in 2,746,106 | 0.18% | 5000.00x |
 
 | Round win | Probability |
 |---|---|
-| 0x | 55.3729% |
-| >0x to <1x | 25.8953% |
-| 1x to <2x | 10.9041% |
-| 2x to <5x | 5.8259% |
-| 5x to <10x | 1.1498% |
-| 10x to <20x | 0.5035% |
-| 20x to <50x | 0.1512% |
-| 50x to <100x | 0.1033% |
-| 100x to <500x | 0.0864% |
-| 500x to <1,000x | 0.0028% |
-| 1,000x to <5,000x | 0.0047% |
-| 5,000x (win cap) | 0.0000% |
+| 0x | 55.4738% |
+| >0x to <1x | 25.5897% |
+| 1x to <2x | 11.1740% |
+| 2x to <5x | 5.8233% |
+| 5x to <10x | 1.1021% |
+| 10x to <20x | 0.4317% |
+| 20x to <50x | 0.2007% |
+| 50x to <100x | 0.1004% |
+| 100x to <500x | 0.0994% |
+| 500x to <1,000x | 0.0039% |
+| 1,000x to <5,000x | 0.0010% |
+| 5,000x (win cap) | 0.0001% |
 
 ## ante mode
 
-- Non-zero-weight books: 100,014
-- Probability of a round paying less than its cost, after weighting: 85.62%
-- Weighting adjustment: rounds paying at least the cost are 0.9400x as likely as in the raw simulation
-- Win-cap estimate: natural cap hits 0 / 100,000; natural free-spin rounds 530; forced free-spin cap rate 14 / 600000; probability used 4.733e-8
-- Fixed-probability group `wincap`: 14 books sharing probability 4.733e-8 (1 in 21,126,761)
+- Non-zero-weight books: 100,019
+- Probability of a round paying less than its cost, after weighting: 86.43%
+- Weighting adjustment: rounds paying at least the cost are 0.9288x as likely as in the raw simulation
+- Win-cap estimate: natural cap hits 0 / 100,000; natural free-spin and Loot Box rounds 553; forced cap rate 19 / 412855; probability used 4.762e-7
+- Fixed-probability group `wincap`: 19 books sharing probability 4.762e-7 (1 in 2,100,095)
 
 | Feature tag | Frequency | RTP contribution | Average round win |
 |---|---|---|---|
-| witchSpell | 1 in 40.08 | 10.55% | 5.28x |
-| trickOrTreat | 1 in 49.26 | 22.41% | 13.80x |
-| cauldron | 1 in 215 | 33.88% | 91.16x |
-| goldenLollipop | 1 in 787 | 9.58% | 94.26x |
-| retrigger | 1 in 2,474 | 7.33% | 226.75x |
-| fullMoon | 1 in 2,955 | 10.07% | 371.84x |
-| wincap | 1 in 21,126,763 | 0.02% | 5000.00x |
+| trickOrTreat | 1 in 50.55 | 20.51% | 12.96x |
+| witchSpell | 1 in 60.00 | 6.35% | 4.76x |
+| cauldron | 1 in 247 | 30.48% | 94.28x |
+| goldenLollipop | 1 in 920 | 8.30% | 95.46x |
+| lootBox | 1 in 1,538 | 4.65% | 89.42x |
+| fullMoon | 1 in 2,242 | 11.98% | 335.84x |
+| loot_big | 1 in 2,291 | 0.97% | 27.83x |
+| retrigger | 1 in 2,391 | 6.31% | 188.50x |
+| loot_mega | 1 in 6,729 | 0.88% | 73.82x |
+| loot_monster | 1 in 17,944 | 1.36% | 305.16x |
+| loot_sugar | 1 in 107,665 | 1.35% | 1820.00x |
+| wincap | 1 in 2,100,095 | 0.19% | 5000.00x |
+| loot_max | 1 in 4,433,535 | 0.09% | 5000.00x |
 
 | Round win | Probability |
 |---|---|
-| 0x | 55.1505% |
-| >0x to <1x | 25.4570% |
-| 1x to <2x | 11.0419% |
-| 2x to <5x | 5.7686% |
-| 5x to <10x | 1.3770% |
-| 10x to <20x | 0.6458% |
-| 20x to <50x | 0.2463% |
-| 50x to <100x | 0.1504% |
-| 100x to <500x | 0.1485% |
-| 500x to <1,000x | 0.0122% |
-| 1,000x to <5,000x | 0.0019% |
+| 0x | 55.9137% |
+| >0x to <1x | 25.5443% |
+| 1x to <2x | 10.7743% |
+| 2x to <5x | 5.4001% |
+| 5x to <10x | 1.2790% |
+| 10x to <20x | 0.5183% |
+| 20x to <50x | 0.2601% |
+| 50x to <100x | 0.1319% |
+| 100x to <500x | 0.1635% |
+| 500x to <1,000x | 0.0121% |
+| 1,000x to <5,000x | 0.0028% |
 | 5,000x (win cap) | 0.0000% |
 
 ## bonus mode
@@ -81,7 +94,7 @@ Figures are exact for this book set and its lookup-table weights. They are not a
 - Non-zero-weight books: 35,003
 - Probability of a round paying less than its cost, after weighting: 70.86%
 - Weighting adjustment: rounds paying at least the cost are 0.9022x as likely as in the raw simulation
-- Win-cap estimate: natural cap hits 0 / 35,000; natural free-spin rounds 35000; forced free-spin cap rate 3 / 600000; probability used 5.000e-6
+- Win-cap estimate: natural cap hits 0 / 35,000; natural free-spin and Loot Box rounds 35000; forced cap rate 3 / 600000; probability used 5.000e-6
 - Fixed-probability group `wincap`: 3 books sharing probability 5.000e-6 (1 in 200,000)
 
 | Feature tag | Frequency | RTP contribution | Average round win |
@@ -111,7 +124,7 @@ Figures are exact for this book set and its lookup-table weights. They are not a
 - Non-zero-weight books: 30,025
 - Probability of a round paying less than its cost, after weighting: 68.66%
 - Weighting adjustment: rounds paying at least the cost are 0.8583x as likely as in the raw simulation
-- Win-cap estimate: natural cap hits 1 / 30,000; natural free-spin rounds 30000; forced free-spin cap rate 25 / 458683; probability used 5.450e-5
+- Win-cap estimate: natural cap hits 1 / 30,000; natural free-spin and Loot Box rounds 30000; forced cap rate 25 / 458683; probability used 5.450e-5
 - Fixed-probability group `wincap`: 26 books sharing probability 5.450e-5 (1 in 18,347)
 
 | Feature tag | Frequency | RTP contribution | Average round win |
@@ -134,3 +147,36 @@ Figures are exact for this book set and its lookup-table weights. They are not a
 | 500x to <1,000x | 11.5440% |
 | 1,000x to <5,000x | 3.0841% |
 | 5,000x (win cap) | 0.0055% |
+
+## lootbox mode
+
+- Non-zero-weight books: 100,025
+- Probability of a round paying less than its cost, after weighting: 87.89%
+- Weighting adjustment: rounds paying at least the cost are 0.9476x as likely as in the raw simulation
+- Win-cap estimate: natural cap hits 100 / 100,000; natural free-spin and Loot Box rounds 100000; forced cap rate 25 / 25744; probability used 1.000e-3
+- Fixed-probability group `wincap`: 125 books sharing probability 1.000e-3 (1 in 1,000)
+
+| Feature tag | Frequency | RTP contribution | Average round win |
+|---|---|---|---|
+| lootBox | 1 in 1.00 | 96.00% | 88.32x |
+| loot_big | 1 in 1.42 | 20.67% | 27.02x |
+| loot_mega | 1 in 4.98 | 15.14% | 69.40x |
+| loot_monster | 1 in 13.20 | 24.73% | 300.26x |
+| loot_sugar | 1 in 53.84 | 30.03% | 1487.39x |
+| loot_max | 1 in 1,000 | 5.43% | 5000.00x |
+| wincap | 1 in 1,000 | 5.43% | 5000.00x |
+
+| Round win | Probability |
+|---|---|
+| 0x | 0.0000% |
+| >0x to <1x | 0.0000% |
+| 1x to <2x | 0.0000% |
+| 2x to <5x | 0.0000% |
+| 5x to <10x | 0.0000% |
+| 10x to <20x | 14.0149% |
+| 20x to <50x | 59.7087% |
+| 50x to <100x | 16.7415% |
+| 100x to <500x | 7.5777% |
+| 500x to <1,000x | 0.4913% |
+| 1,000x to <5,000x | 1.3659% |
+| 5,000x (win cap) | 0.1000% |

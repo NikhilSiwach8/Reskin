@@ -11,7 +11,7 @@ const { chromium } = createRequire(import.meta.url)('playwright');
 const ALL = [
   ['base', 'loss'], ['base', 'win'], ['base', 'tumble'], ['base', 'witchSpell'], ['base', 'trickOrTreat'],
   ['base', 'goldenLollipop'], ['base', 'cauldron'], ['ante', 'fullMoon'], ['bonus', 'retrigger'], ['bonus', 'cauldron'],
-  ['fullmoon', 'fullMoon'], ['fullmoon', 'wincap'],
+  ['fullmoon', 'fullMoon'], ['fullmoon', 'wincap'], ['base', 'lootBox'], ['lootbox', 'lootBox'], ['lootbox', 'lootMax'],
 ];
 const wanted = process.argv.slice(2);
 const scenarios = wanted.length ? ALL.filter(([, s]) => wanted.includes(s)) : ALL;

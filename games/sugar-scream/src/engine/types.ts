@@ -62,7 +62,9 @@ export type GameEvent =
   /** End of a winning free spin: Jack-o'-Lanterns are added to the Cauldron and multiply the spin. */
   | { type: 'multiplier'; cells: MultCell[]; landed: number; cauldronBefore: number; mult: number; base: number }
   /** The only event that adds money. `totalWin` is the running round total. */
-  | { type: 'win'; kind: 'spin' | 'scatter' | 'treat'; amount: number; totalWin: number }
+  | { type: 'win'; kind: 'spin' | 'scatter' | 'treat' | 'loot'; amount: number; totalWin: number }
+  /** Loot Box: the player opens one of `boxes`; it holds `tier` at `multiplier` x the bet. */
+  | { type: 'lootBox'; boxes: number; tier: 'big' | 'mega' | 'monster' | 'sugar' | 'max'; multiplier: number }
   | { type: 'trickOrTreat'; cells: Cell[]; knocks: number }
   | ({ type: 'knock'; index: number } & KnockPrize)
   | { type: 'trickOrTreatEnd'; total: number; lollipop: boolean }

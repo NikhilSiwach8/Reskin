@@ -35,7 +35,7 @@ const launch = {
 };
 setSocial(launch.social);
 
-const BUY_ART: Record<string, string> = { bonus: panelSrc('cauldron_icon') ?? 'assets/cauldron.svg', fullmoon: symbolSrc('JK') };
+const BUY_ART: Record<string, string> = { bonus: panelSrc('cauldron_icon') ?? 'assets/cauldron.svg', fullmoon: symbolSrc('JK'), lootbox: 'assets/loot_box.svg' };
 
 const IDLE_BOARD: Board = [
   ['CC', 'PU', 'BH', 'EY', 'BT'],
@@ -287,7 +287,7 @@ class Game {
     const check = validateBook({ payoutMultiplier: payoutCenti, events });
     let feature = false;
     if (check.ok) {
-      feature = events.some((e) => e.type === 'freeSpinsStart' || e.type === 'trickOrTreat');
+      feature = events.some((e) => e.type === 'freeSpinsStart' || e.type === 'trickOrTreat' || e.type === 'lootBox');
       try {
         await this.player.play(events);
       } catch (e) {

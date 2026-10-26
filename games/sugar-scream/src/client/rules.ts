@@ -1,6 +1,6 @@
 // Game rules and paytable, generated from the engine config so they always match the math.
 import {
-  BET_MODES, CAULDRON_SCATTERS, DOORS, FREE_SPINS, FULL_MOON_SCATTERS, KNOCKS, KNOCK_TABLE, MIN_CLUSTER, MULT_VALUES,
+  BET_MODES, CAULDRON_SCATTERS, LOOT_BOXES, LOOT_CHANCE, LOOT_TABLE, LOOT_TIERS, DOORS, FREE_SPINS, FULL_MOON_SCATTERS, KNOCKS, KNOCK_TABLE, MIN_CLUSTER, MULT_VALUES,
   PAYING, RETRIGGER_SCATTERS, RETRIGGER_SPINS, SCATTER_PAYS, SYMBOLS, TRICK_OR_TREAT_SCATTERS, WINCAP,
 } from '../engine/config.ts';
 import { symbolSrc } from './assets.ts';
@@ -38,6 +38,14 @@ export function buildRules(root: HTMLElement, o: { math?: MathSummary; fmt: (cen
     <p>On any base-game spin the Witch can fly over the board before it is evaluated. Her spell turns several candies into one paying candy, always making at least ${MIN_CLUSTER} of it, so the spin always wins.</p>
     <h3>Trick or Treat</h3>
     <p>Exactly ${TRICK_OR_TREAT_SCATTERS} Skull Lollipops after the base-game tumbles start Trick or Treat. Knock on up to ${KNOCKS} of ${DOORS} doors. Each door hides a <b>Treat</b> (${treats}), a <b>Trick</b> (nothing), or the <b>Golden Lollipop</b>, which ends the knocking and awards ${FREE_SPINS.cauldron.spins} Haunted Cauldron free spins. Treats are kept. The prizes are decided when the round starts; the door you choose only decides where each prize is shown. In autoplay the doors open automatically.</p>
+    <h3>Loot Box</h3>
+    <p>On any base-game spin that triggers no other feature, a Loot Box can drop (about 1 in ${Math.round(1 / LOOT_CHANCE).toLocaleString('en-US')} spins). Pick one of ${LOOT_BOXES} boxes to win one of these prizes, a whole-number multiple of the bet in the range shown:</p>
+    <table><tr><th>Prize</th><th>Multiplier</th><th>Chance</th></tr>${LOOT_TABLE.map(([tier, w]) => {
+      const t = LOOT_TIERS[tier];
+      const total = LOOT_TABLE.reduce((sum, [, x]) => sum + x, 0);
+      return `<tr><td>${esc(t.name)}</td><td>${t.min === t.max ? `${t.min.toLocaleString('en-US')}x` : `${t.min}x to ${t.max.toLocaleString('en-US')}x`}</td><td>${((w / total) * 100).toFixed(1)}%</td></tr>`;
+    }).join('')}</table>
+    <p>The prize is decided when the round starts; the box you pick only decides where it is shown. Wins are capped at the maximum win.</p>
     <h3>Haunted Cauldron free spins</h3>
     <p><img src="${symbolSrc('SC')}" alt=""> ${CAULDRON_SCATTERS} Skull Lollipops award ${FREE_SPINS.cauldron.spins} free spins.</p>
     <p><img src="${symbolSrc('JK')}" alt=""> During free spins Jack-o'-Lanterns can land, each carrying a multiplier (${mults}). They stay through the tumbles. When a free spin's tumbles end with a win, the spin's total win is multiplied by the sum of its Jack-o'-Lanterns <b>plus the Cauldron</b>. Then those Jack-o'-Lanterns are poured into the Cauldron, which keeps growing until the feature ends. Jack-o'-Lanterns on a spin without a win are lost.</p>

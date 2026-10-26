@@ -75,7 +75,7 @@ for (const viewport of [{ width: 1600, height: 900 }, { width: 390, height: 844 
   };
   console.log(`${viewport.width}x${viewport.height}`);
   for (let i = 1; i <= 4; i++) await play(`spin ${i}`, () => tap('#btn-spin'));
-  for (const [n, label] of [[1, 'buy cauldron'], [2, 'buy full moon']]) {
+  for (const [n, label] of [[1, 'buy cauldron'], [2, 'buy full moon'], [3, 'buy loot box']]) {
     await play(label, async () => {
       await tap('#btn-buy');
       await tap(`#buy-options .buy-option:nth-child(${n}) button`);

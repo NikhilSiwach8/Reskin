@@ -231,10 +231,10 @@ export class Scene {
     // the bottom HUD (and, in portrait, the row of feature panels above it); matches --hud-h in styles.css
     // plus the message bar above the HUD
     const hudH = portrait ? Math.min(214, h * 0.32) + 92 : h <= 460 ? 86 + 24 : 124 + 32;
-    const top = portrait ? 64 : Math.min(84, h * 0.13);
-    const side = portrait ? 0 : Math.min(240, w * 0.16);
-    const availW = w - side * 2 - 24;
-    const availH = h - hudH - top - 16;
+    const top = portrait ? 58 : Math.min(66, h * 0.1);
+    const side = portrait ? 0 : Math.min(185, w * 0.12);
+    const availW = w - side * 2 - 8;
+    const availH = h - hudH - top - 4;
     const fb = this.frameBox;
     const k = Math.min(availW / fb.w, availH / fb.h);
     this.world.scale.set(k);

@@ -2,13 +2,13 @@
 import {
   BET_MODES, CAULDRON_SCATTERS, DOORS, DRAWS, FREE_SPINS, FULL_MOON_SCATTERS, KNOCKS, KNOCK_TABLE, MIN_CLUSTER,
   MULT_VALUES, PAYING, REELS, RETRIGGER_SCATTERS, RETRIGGER_SPINS, ROWS, SPELL_CELLS, SPELL_CHANCE, SPELL_SYMBOLS,
-  TRICK_OR_TREAT_SCATTERS, WINCAP, clusterPay, scatterPay, type DrawTable,
+  TRICK_OR_TREAT_SCATTERS, WINCAP, LOOT_BOXES, LOOT_CHANCE, LOOT_TABLE, LOOT_TIERS, clusterPay, scatterPay, type DrawTable,
 } from './config.ts';
 import { cellsOf } from './board.ts';
 import { Rng } from './rng.ts';
 import type { Board, Book, Cell, ClusterWin, FreeSpinKind, GameEvent, MultCell, SymbolId } from './types.ts';
 
-export type ModeName = 'base' | 'ante' | 'bonus' | 'fullmoon';
+export type ModeName = 'base' | 'ante' | 'bonus' | 'fullmoon' | 'lootbox';
 
 /** The board plus the multiplier carried by each Jack-o'-Lantern (0 elsewhere). */
 export interface Grid {
@@ -21,6 +21,8 @@ export interface RoundOptions {
   grid?: Grid;
   /** Disable the Witch's Spell (tests). */
   noSpell?: boolean;
+  /** Force a Loot Box at the end of a base round (forced win-cap search, tests). */
+  forceLoot?: boolean;
 }
 
 const clone = (b: Board): Board => b.map((c) => [...c]);
@@ -110,7 +112,7 @@ class RoundBuilder {
   tags = new Set<string>();
 
   /** Adds money, clamping to the win cap. */
-  pay(kind: 'spin' | 'scatter' | 'treat', amount: number): void {
+  pay(kind: 'spin' | 'scatter' | 'treat' | 'loot', amount: number): void {
     if (this.capped || amount <= 0) return;
     const add = Math.min(amount, WINCAP - this.total);
     this.total += add;
@@ -221,10 +223,31 @@ function freeSpins(rb: RoundBuilder, kind: FreeSpinKind, cells: Cell[], rng: Rng
   rb.events.push({ type: 'freeSpinsEnd', kind, featureWin: rb.total - startWin, totalWin: rb.total });
 }
 
+function lootBox(rb: RoundBuilder, rng: Rng): void {
+  const tier = rng.weighted(LOOT_TABLE);
+  const t = LOOT_TIERS[tier];
+  const multiplier = t.min + rng.int(t.max - t.min + 1);
+  rb.tags.add('lootBox');
+  rb.tags.add(`loot_${tier}`);
+  rb.events.push({ type: 'lootBox', boxes: LOOT_BOXES, tier, multiplier });
+  rb.pay('loot', multiplier * 100);
+}
+
+function finish(id: number, rb: RoundBuilder): Book {
+  rb.events.push({ type: 'finalWin', amount: rb.total });
+  if (rb.capped) rb.tags.add('wincap');
+  const criteria = rb.capped ? 'wincap' : rb.total === 0 ? '0' : rb.tags.has('cauldron') || rb.tags.has('fullMoon') ? 'freegame' : rb.tags.has('lootBox') ? 'lootbox' : 'basegame';
+  return { id, payoutMultiplier: rb.total, events: rb.events, criteria, tags: [...rb.tags] };
+}
+
 export function playRound(id: number, mode: ModeName, rng: Rng, opts: RoundOptions = {}): Book {
   const def = BET_MODES.find((m) => m.name === mode);
   if (!def) throw new Error(`unknown mode ${mode}`);
   const rb = new RoundBuilder();
+  if (def.lootBox) {
+    lootBox(rb, rng);
+    return finish(id, rb);
+  }
   let g = opts.grid ? cloneGrid(opts.grid) : def.forcedScatters ? forcedScatterGrid(rng, def.forcedScatters) : drawGrid(rng, def.draw);
   rb.events.push({ type: 'reveal', board: clone(g.board), mults: [], phase: 'base' });
   if (!def.buy && !opts.noSpell && rng.chance(SPELL_CHANCE)) g = castSpell(rb, g, rng);
@@ -236,9 +259,8 @@ export function playRound(id: number, mode: ModeName, rng: Rng, opts: RoundOptio
     if (sc.length >= FULL_MOON_SCATTERS) freeSpins(rb, 'fullMoon', sc, rng);
     else if (sc.length >= CAULDRON_SCATTERS) freeSpins(rb, 'cauldron', sc, rng);
     else if (sc.length === TRICK_OR_TREAT_SCATTERS && trickOrTreat(rb, sc, rng) && !rb.capped) freeSpins(rb, 'cauldron', sc, rng);
+    // Loot Box: only on base / Ante rounds that triggered no other feature
+    else if (!def.buy && (opts.forceLoot || rng.chance(LOOT_CHANCE))) lootBox(rb, rng);
   }
-  rb.events.push({ type: 'finalWin', amount: rb.total });
-  if (rb.capped) rb.tags.add('wincap');
-  const criteria = rb.capped ? 'wincap' : rb.total === 0 ? '0' : rb.tags.has('cauldron') || rb.tags.has('fullMoon') ? 'freegame' : 'basegame';
-  return { id, payoutMultiplier: rb.total, events: rb.events, criteria, tags: [...rb.tags] };
+  return finish(id, rb);
 }

@@ -98,17 +98,17 @@ async function runMode(mode: ModeName, args: Args): Promise<ModeStats> {
   const books = sink.summaries;
   const natural = books.length;
   const naturalCaps = books.filter((b) => b.criteria === 'wincap').length;
-  const naturalFeature = books.filter((b) => b.tags.includes('cauldron') || b.tags.includes('fullMoon')).length;
+  const naturalFeature = books.filter((b) => b.tags.includes('cauldron') || b.tags.includes('fullMoon') || b.tags.includes('lootBox')).length;
 
-  // Forced win-cap search. Only free spins can reach the 10,000x cap, and far less often
-  // than once in the natural sample. The base game and Ante Bet play extra free-spin
-  // rounds from forced 4- and 5-Lollipop boards (Haunted Cauldron and Full Moon) and keep
-  // the ones that reach the cap; the buys simply play more of their own rounds. Each
-  // route's conditional hit rate times its natural frequency estimates the natural win-cap
-  // probability used for the lookup-table weights.
-  const routes: { scatters: number; tag: string }[] = def.forcedScatters
-    ? [{ scatters: def.forcedScatters, tag: '' }]
-    : [{ scatters: 4, tag: 'cauldron' }, { scatters: 5, tag: 'fullMoon' }];
+  // Forced win-cap search. Free spins and the Loot Box can reach the 5,000x cap, far less
+  // often than once in the natural sample. The base game and Ante Bet play extra rounds
+  // from forced 4- and 5-Lollipop boards (Haunted Cauldron and Full Moon) and forced Loot
+  // Boxes, and keep the ones that reach the cap; the buys simply play more of their own
+  // rounds. Each route's conditional hit rate times its natural frequency estimates the
+  // natural win-cap probability used for the lookup-table weights.
+  const routes: { scatters: number; tag: string; loot?: boolean }[] = def.buy
+    ? [{ scatters: 0, tag: '' }]
+    : [{ scatters: 4, tag: 'cauldron' }, { scatters: 5, tag: 'fullMoon' }, { scatters: 0, tag: 'lootBox', loot: true }];
   let attempts = 0;
   let hits = 0;
   let estimate = naturalCaps / natural;
@@ -121,9 +121,11 @@ async function runMode(mode: ModeName, args: Args): Promise<ModeStats> {
     const maxAttempts = Math.ceil(args.forcedAttempts / routes.length);
     while (h < want && a < maxAttempts) {
       a++;
-      const book = def.forcedScatters
+      const book = def.buy
         ? playRound(books.length + 1, mode, frng)
-        : playRound(books.length + 1, mode, frng, { grid: forcedScatterGrid(frng, route.scatters), noSpell: true });
+        : route.loot
+          ? playRound(books.length + 1, mode, frng, { grid: forcedScatterGrid(frng, 0), noSpell: true, forceLoot: true })
+          : playRound(books.length + 1, mode, frng, { grid: forcedScatterGrid(frng, route.scatters), noSpell: true });
       if (book.criteria === 'wincap') {
         book.tags.push('forced');
         sink.add(book);

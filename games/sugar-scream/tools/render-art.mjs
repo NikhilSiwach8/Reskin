@@ -209,6 +209,20 @@ const scenes = {
     <ellipse cx="80" cy="120" rx="16" ry="30" fill="#fff" opacity="0.08"/>
   `, radial('brew', [[0, '#d8ff7a'], [1, '#33a100']], '50%', '50%', '60%') + linear('pot', [[0, '#3a2a4a'], [1, '#0e0716']])),
 
+  // Loot Box: a glossy candy-wrapped gift box with a ribbon, bow and a skull tag.
+  loot_box: svg(240, 260, `
+    <g filter="url(#sh)">
+      <rect x="22" y="104" width="196" height="140" rx="16" fill="url(#body)" stroke="#3a0a55" stroke-width="6"/>
+      <rect x="12" y="74" width="216" height="46" rx="12" fill="url(#lid)" stroke="#3a0a55" stroke-width="6"/>
+      <rect x="104" y="74" width="32" height="170" fill="url(#rib)" stroke="#7a4a00" stroke-width="3"/>
+      <rect x="12" y="150" width="216" height="26" fill="url(#rib)" stroke="#7a4a00" stroke-width="3" opacity="0.95"/>
+      <path d="M120 74 C88 30 44 34 58 62 C66 78 96 78 120 74 Z M120 74 C152 30 196 34 182 62 C174 78 144 78 120 74 Z" fill="url(#rib)" stroke="#7a4a00" stroke-width="4"/>
+      <circle cx="120" cy="72" r="13" fill="#ffd34d" stroke="#7a4a00" stroke-width="4"/>
+      <g transform="translate(176 196) rotate(12)"><rect x="-22" y="-16" width="44" height="34" rx="8" fill="#fff6e0" stroke="#3a0a55" stroke-width="3"/><circle cx="-8" cy="-2" r="5" fill="#3a0a55"/><circle cx="8" cy="-2" r="5" fill="#3a0a55"/><path d="M-8 10 h16" stroke="#3a0a55" stroke-width="3"/></g>
+      ${[[48, 128], [70, 210], [196, 126], [40, 186]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="7" fill="#fff" opacity="0.35"/>`).join('')}
+      ${gloss(60, 92, 26, 8, -8, 0.5)}
+    </g>`, linear('body', [[0, '#ff5fbf'], [1, '#8a0f6a']]) + linear('lid', [[0, '#ff9ad6'], [1, '#c2187f']]) + linear('rib', [[0, '#fff3a0'], [0.5, '#ffc62e'], [1, '#d18a00']], 1, 0) + shadow),
+
   // Front door for Trick or Treat.
   door: svg(200, 300, `
     <rect x="6" y="6" width="188" height="288" rx="90" ry="70" fill="#4a1d0a" stroke="#1a0800" stroke-width="10"/>

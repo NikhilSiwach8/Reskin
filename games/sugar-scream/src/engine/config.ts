@@ -71,7 +71,7 @@ export const MULT_VALUES: Weighted<number> = [
 
 // ------------------------------------------------------------------ Witch's Spell (base game)
 /** Chance per base-game spin that the Witch casts a spell before the first evaluation. */
-export const SPELL_CHANCE = 1 / 40;
+export const SPELL_CHANCE = 1 / 56;
 /** Symbol the spell conjures. */
 export const SPELL_SYMBOLS: Weighted<SymbolId> = [
   ['BH', 3], ['WP', 6], ['SL', 8], ['GM', 10], ['PA', 14], ['EY', 15], ['PU', 16], ['BT', 16], ['CC', 16],
@@ -88,6 +88,22 @@ export type KnockOutcome = 'trick' | 'lollipop' | number;
 export const KNOCK_TABLE: Weighted<KnockOutcome> = [
   ['trick', 260], [100, 220], [200, 180], [300, 120], [500, 90], [1000, 50], [2500, 14], [5000, 3], ['lollipop', 21],
 ];
+
+// ------------------------------------------------------------------ Loot Box
+/** Chance per base / Ante spin (that triggered no other feature) of a Loot Box. */
+export const LOOT_CHANCE = 1 / 1500;
+/** Boxes offered; the player opens one (the prize is decided when the round starts). */
+export const LOOT_BOXES = 6;
+export type LootTier = 'big' | 'mega' | 'monster' | 'sugar' | 'max';
+/** Prize tiers: a multiplier of the bet drawn uniformly between min and max (whole numbers). */
+export const LOOT_TIERS: Record<LootTier, { name: string; min: number; max: number }> = {
+  big: { name: 'Big Win', min: 15, max: 39 },
+  mega: { name: 'Mega Win', min: 40, max: 99 },
+  monster: { name: 'Monster Win', min: 100, max: 499 },
+  sugar: { name: 'Sugar Scream', min: 500, max: 2500 },
+  max: { name: 'Max Win', min: 5000, max: 5000 },
+};
+export const LOOT_TABLE: Weighted<LootTier> = [['big', 700], ['mega', 200], ['monster', 80], ['sugar', 19], ['max', 1]];
 
 // ------------------------------------------------------------------ free spins
 export interface FreeSpinDef {
@@ -120,6 +136,8 @@ export interface BetModeDef {
   draw: DrawTable;
   /** Scatters forced onto the first board (bonus buys). */
   forcedScatters?: number;
+  /** The buy opens a Loot Box directly. */
+  lootBox?: boolean;
   buy?: boolean;
 }
 
@@ -137,6 +155,10 @@ export const BET_MODES: BetModeDef[] = [
   {
     name: 'fullmoon', cost: 300, label: 'Full Moon', draw: 'base', forcedScatters: 5, buy: true,
     description: '12 free spins with the Cauldron starting at 5x and more Jack-o\'-Lanterns. Highest volatility.',
+  },
+  {
+    name: 'lootbox', cost: 92, label: 'Loot Box', draw: 'base', lootBox: true, buy: true,
+    description: 'Open one of 6 Loot Boxes for a Big (15x+), Mega (40x+), Monster (100x+) or Sugar Scream (500x+) win, or the 5,000x Max Win.',
   },
 ];
 
