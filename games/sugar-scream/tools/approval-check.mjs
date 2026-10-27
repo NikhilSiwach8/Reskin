@@ -42,7 +42,11 @@ async function open(params = {}, viewport = { width: 1280, height: 720 }, { intr
     const l = document.querySelector('#loading');
     return !l || l.classList.contains('hidden') || /error|failed|missing|problem|unavailable/i.test(l.textContent ?? '');
   }, null, { timeout: 120000, polling: 200 });
-  if (intro) await page.waitForSelector('#intro', { state: 'visible', timeout: 4000 }).then(() => page.click('#intro-go', { force: true })).catch(() => {});
+  // the intro splash follows a successful authenticate; dismiss it once it is up
+  if (intro && (await page.isHidden('#loading'))) {
+    await page.waitForSelector('#intro', { state: 'visible', timeout: 15000 }).then(() => page.click('#intro-go', { force: true })).catch(() => {});
+    await page.waitForSelector('#intro', { state: 'hidden', timeout: 5000 }).catch(() => {});
+  }
   return page;
 }
 const idle = (page) => page.waitForFunction(() => !document.querySelector('#btn-spin').classList.contains('spinning'), null, { timeout: 600000, polling: 300 });
