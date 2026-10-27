@@ -114,6 +114,10 @@ Checked in this environment (headless Chromium at 1600x900, 390x844, 360x640 and
 - **Not deployed to Stake Engine** (no account here). Built against the documented RGS contract and tested against the local mock only.
 - **Math is not certified.** Figures are exact for the published book set; the win-cap probability is a simulation estimate.
 - **Art:** the game uses the supplied painted art throughout: all 11 symbols, the board frame, backgrounds for the base game and both free-spin modes, every HUD button and panel, the Trick-or-Treat street, doors and reveals, the loading, intro, free-spin intro and feature-complete screens, the five win screens (Big, Mega, Monster, Sugar Scream, Max Win), the Witch's Spell witch, and the spell and candy-pop effects. The vector SVGs in `public/assets/` remain only as fallbacks.
-- **Music licence:** the supplied Halloween track (`art/source/audio/halloween-music.mp3`, "prettyjohn1-halloween-halloween-music-620626") must be licensed for commercial use before release. The sound effects are procedural (Web Audio synthesis).
+- **Music licence:** the supplied Halloween track (`art/source/audio/halloween-music.mp3`, "prettyjohn1-halloween-halloween-music-620626") must be licensed for commercial use before release. The sound effects are spooky and synthesized in Web Audio (no samples, so nothing to license):
+  - **Spins:** a ghostly gust as the board falls, coffin-lid thuds as candies land, a wet splat for each tumble and a haunted music-box chime for each win.
+  - **Bonus symbols:** a church bell tolls for each Skull Lollipop, and Jack-o'-Lanterns burst into flame.
+  - **Bonus entrance:** wind howls down the hallway, knuckles knock, the doors creak open, a whoosh carries you through and an organ chord greets the bonus.
+  - **Features:** the witch cackles over the Witch's Spell and big wins, ghosts wail on Tricks, the cauldron bubbles, and the organ closes a bonus with a minor cadence.
 - **Devices:** only headless Chromium was tested. Real phones, Safari and Firefox still need testing.
 - **English only**; other `lang` values fall back to English.

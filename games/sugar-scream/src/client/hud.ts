@@ -1,5 +1,6 @@
 // DOM user interface: meters, buttons, dialogs, banners, win screens and the Trick or Treat doors.
 import type { KnockPrize } from '../engine/types.ts';
+import type { Sfx } from './audio.ts';
 import { bgSrc, buttonSrc, panelSrc, portalHole, symbolSrc } from './assets.ts';
 import { localizeTree, t } from './text.ts';
 
@@ -51,6 +52,8 @@ export interface HudHandlers {
   settings: (s: Settings) => void;
   openRules: () => void;
   replayPlay: () => void;
+  /** Sound effects for HUD-driven sequences (the bonus door transition). */
+  sound: (name: Sfx) => void;
 }
 
 export type KnockEvent = { index: number } & KnockPrize;
@@ -573,6 +576,7 @@ export class Hud {
     this.layoutPortal();
     el.className = '';
     void el.offsetWidth;
+    this.h.sound('portal');
     if (banner || tunnel) {
       el.classList.add('intro');
       await wait(1050 * k);
@@ -580,13 +584,17 @@ export class Hud {
     el.classList.add('hall');
     await wait(650 * k);
     el.classList.add('knock');
+    this.h.sound('knock');
     await wait(450 * k);
     onClosed();
     el.classList.add('open');
+    this.h.sound('creak');
     await wait(800 * k);
     el.classList.add('through');
+    this.h.sound('whoosh');
     await wait(750 * k);
     el.classList.add('arrive');
+    this.h.sound('arrive');
     await wait(700 * k);
     el.className = 'hidden';
   }
@@ -609,6 +617,7 @@ export class Hud {
     el.className = '';
     void el.offsetWidth;
     el.classList.add('exit');
+    this.h.sound('whoosh');
     await wait(450 * k);
     onSwitch();
     el.classList.add('exit-out');

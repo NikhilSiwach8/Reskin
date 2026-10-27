@@ -284,7 +284,7 @@ export class Player {
     const big = WIN_TIERS.filter((tier) => amount >= tier.min);
     if (!big.length) {
       const small = [...SMALL_TIERS].reverse().find((tier) => amount >= tier.min) ?? SMALL_TIERS[0];
-      this.audio.play('win');
+      this.audio.play('nice');
       await this.hud.winSplash([{ title: small.title }], this.o.fmt(amount), x, { tierMs: fast ? 250 : 450, holdMs: fast ? 550 : 1000, mini: true });
       return;
     }

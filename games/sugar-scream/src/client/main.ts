@@ -99,6 +99,7 @@ class Game {
       buy: (mode) => void this.spin(mode as ModeName),
       settings: (s) => this.applySettings(s),
       replayPlay: () => void this.playReplay(),
+      sound: (name) => this.audio.play(name),
       openRules: () => this.openRules(),
       autoplaySummary: (n) => t(`${n} rounds at ${this.fmtMoney(this.bet * this.spinCost)} each. Autoplay stops if your balance is too low.`),
       buyOptions: () => BUY_MODES.map((m) => ({

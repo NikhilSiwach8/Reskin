@@ -1,12 +1,15 @@
 // Music: one Halloween track cut into phrase-length loops (art/source/audio/), one per
 // game area, cross-faded on the music bus, plus short stings that duck the loop.
 // The procedural music-box loop is the fallback if the files can't load.
-// Effects are procedural (Web Audio synthesis). Music and effects have independent
-// switches, plus the master mute that Stake Engine requires.
+// Effects are spooky and synthesized (Web Audio, no samples): tolling bells, a pipe organ,
+// creaking doors, ghosts, a witch's cackle, thunder, wind and bubbling brew. Music and
+// effects have independent switches, plus the master mute that Stake Engine requires.
 
 export type Sfx =
-  | 'click' | 'drop' | 'land' | 'pop' | 'win' | 'bigWin' | 'spell' | 'scatter' | 'knock' | 'treat' | 'boo'
-  | 'lollipop' | 'bonus' | 'mult' | 'cauldron' | 'retrigger' | 'end';
+  | 'click' | 'drop' | 'land' | 'pop' | 'win' | 'nice' | 'bigWin' | 'spell' | 'scatter' | 'knock' | 'treat' | 'boo'
+  | 'lollipop' | 'bonus' | 'mult' | 'cauldron' | 'retrigger' | 'end'
+  // bonus door transition
+  | 'portal' | 'creak' | 'whoosh' | 'arrive';
 
 export type MusicArea = 'base' | 'feature' | 'free' | 'fullMoon';
 export type Sting = 'bigwin' | 'end';
@@ -184,46 +187,266 @@ export class Audio {
     o.stop(at + dur + 0.05);
   }
 
-  private noise(at: number, dur: number, vol: number, freq: number): void {
+  private noiseBuf?: AudioBuffer;
+
+  /** Exponential attack / decay envelope on a fresh gain node. */
+  private env(at: number, attack: number, dur: number, vol: number): GainNode {
+    const g = this.ctx!.createGain();
+    g.gain.setValueAtTime(0.0001, at);
+    g.gain.exponentialRampToValueAtTime(vol, at + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+    return g;
+  }
+
+  /** Filtered noise with a frequency sweep: wind, whooshes, thuds, splats, thunder. */
+  private noise(at: number, dur: number, vol: number, type: BiquadFilterType, f0: number, f1 = f0, q = 1, attack = 0.005): void {
     const ctx = this.ctx!;
-    const buf = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+    if (!this.noiseBuf) {
+      this.noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+      const d = this.noiseBuf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
     const src = ctx.createBufferSource();
-    src.buffer = buf;
+    src.buffer = this.noiseBuf;
+    src.loop = true;
     const f = ctx.createBiquadFilter();
-    f.type = 'bandpass';
-    f.frequency.value = freq;
+    f.type = type;
+    f.Q.value = q;
+    f.frequency.setValueAtTime(f0, at);
+    if (f1 !== f0) f.frequency.exponentialRampToValueAtTime(f1, at + dur);
+    src.connect(f).connect(this.env(at, attack, dur, vol)).connect(this.sfx!);
+    src.start(at, Math.random() * 1.5);
+    src.stop(at + dur + 0.05);
+  }
+
+  /** A tolling bell: inharmonic partials, the high ones dying first. */
+  private bell(freq: number, at: number, vol: number, dur = 2.4): void {
+    [[1, 1], [2, 0.55], [2.76, 0.4], [5.4, 0.22], [8.93, 0.1]].forEach(([r, v], i) =>
+      this.tone(freq * r, at, dur / (1 + i * 0.7), 'sine', vol * v, this.sfx!, (Math.random() - 0.5) * 6));
+  }
+
+  /** Music-box / celesta note: a sine with a quick metallic overtone. */
+  private celesta(freq: number, at: number, vol: number): void {
+    this.tone(freq, at, 0.9, 'sine', vol, this.sfx!, 4);
+    this.tone(freq * 4, at, 0.18, 'sine', vol * 0.25, this.sfx!);
+  }
+
+  /** Pipe organ: detuned saws an octave apart through a dark low-pass, slow swell. */
+  private organ(freqs: number[], at: number, dur: number, vol: number): void {
+    const ctx = this.ctx!;
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 1500;
     const g = ctx.createGain();
-    g.gain.value = vol;
-    src.connect(f).connect(g).connect(this.sfx!);
-    src.start(at);
+    g.gain.setValueAtTime(0.0001, at);
+    g.gain.exponentialRampToValueAtTime(vol, at + 0.09);
+    g.gain.setValueAtTime(vol, at + dur * 0.6);
+    g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+    lp.connect(g).connect(this.sfx!);
+    for (const f of freqs) {
+      for (const [mul, det] of [[1, -6], [1, 6], [0.5, 0]]) {
+        const o = ctx.createOscillator();
+        o.type = 'sawtooth';
+        o.frequency.value = f * mul;
+        o.detune.value = det;
+        o.connect(lp);
+        o.start(at);
+        o.stop(at + dur + 0.05);
+      }
+    }
+  }
+
+  /** A ghost's "wooo": a wavering triangle that swells up and sighs down, with breath. */
+  private ghost(at: number, dur: number, f0: number, peak: number, f1: number, vol: number): void {
+    const ctx = this.ctx!;
+    const o = ctx.createOscillator();
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(f0, at);
+    o.frequency.exponentialRampToValueAtTime(peak, at + dur * 0.35);
+    o.frequency.exponentialRampToValueAtTime(f1, at + dur);
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = 5.5;
+    const depth = ctx.createGain();
+    depth.gain.value = peak * 0.03;
+    lfo.connect(depth).connect(o.frequency);
+    o.connect(this.env(at, dur * 0.3, dur, vol)).connect(this.sfx!);
+    o.start(at);
+    lfo.start(at);
+    o.stop(at + dur + 0.05);
+    lfo.stop(at + dur + 0.05);
+    this.noise(at, dur, vol * 0.25, 'bandpass', peak * 2, f1 * 2, 6, dur * 0.3);
+  }
+
+  /** A creaking door: a sawtooth whose pitch stutters (stick-slip) through wooden resonances. */
+  private creak(at: number, dur: number, vol: number): void {
+    const ctx = this.ctx!;
+    const o = ctx.createOscillator();
+    o.type = 'sawtooth';
+    const steps = 40;
+    const curve = new Float32Array(steps);
+    let f = 70;
+    for (let i = 0; i < steps; i++) {
+      f = Math.min(130, Math.max(28, f + (Math.random() - 0.45) * 30));
+      curve[i] = f;
+    }
+    o.frequency.setValueCurveAtTime(curve, at, dur);
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 750;
+    bp.Q.value = 3;
+    const pk = ctx.createBiquadFilter();
+    pk.type = 'peaking';
+    pk.frequency.value = 1900;
+    pk.gain.value = 9;
+    o.connect(bp).connect(pk).connect(this.env(at, 0.08, dur, vol)).connect(this.sfx!);
+    o.start(at);
+    o.stop(at + dur + 0.05);
+  }
+
+  /** The witch's cackle: falling "ha-ha-ha" syllables through two vowel formants. */
+  private cackle(at: number, vol: number, count = 7): void {
+    const ctx = this.ctx!;
+    for (let i = 0; i < count; i++) {
+      const s = at + i * 0.12;
+      const pitch = 560 * 0.96 ** i;
+      const o = ctx.createOscillator();
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(pitch * 1.08, s);
+      o.frequency.exponentialRampToValueAtTime(pitch * 0.85, s + 0.08);
+      const g = this.env(s, 0.012, 0.09, 3 * vol * (1 - i * 0.07)); // the narrow formants eat most of the level
+      for (const [ff, q] of [[850, 7], [1350, 9]]) {
+        const bp = ctx.createBiquadFilter();
+        bp.type = 'bandpass';
+        bp.frequency.value = ff;
+        bp.Q.value = q;
+        o.connect(bp).connect(g);
+      }
+      g.connect(this.sfx!);
+      o.start(s);
+      o.stop(s + 0.12);
+    }
+  }
+
+  /** Thunder: a crack, then a long low rumble. */
+  private thunder(at: number, vol: number): void {
+    this.noise(at, 0.25, vol * 0.7, 'bandpass', 1400, 500, 1.5);
+    this.noise(at + 0.05, 2.2, vol, 'lowpass', 260, 50, 1, 0.06);
+  }
+
+  /** Brew bubbles: little sine blips that rise as they burst. */
+  private bubbles(at: number, count: number, vol: number): void {
+    for (let i = 0; i < count; i++) {
+      const s = at + Math.random() * 0.7;
+      const f = 220 + Math.random() * 380;
+      this.tone(f, s, 0.07, 'sine', vol * (0.6 + Math.random() * 0.4), this.sfx!, 0, f * 2.2);
+    }
   }
 
   play(name: Sfx): void {
     if (!this.ctx || this.ctx.state !== 'running' || !this.sfx) return;
     const t = this.ctx.currentTime;
-    const out = this.sfx;
-    const arp = (notes: number[], step: number, type: OscillatorType = 'square', vol = 0.12, dur = 0.18) =>
-      notes.forEach((n, i) => this.tone(440 * 2 ** (n / 12), t + i * step, dur, type, vol, out));
+    const A = 220; // everything sits in A minor with the music
+    const n = (semi: number, base = A) => base * 2 ** (semi / 12);
     switch (name) {
-      case 'click': this.tone(900, t, 0.05, 'square', 0.08, out); break;
-      case 'drop': this.noise(t, 0.25, 0.25, 500); break;
-      case 'land': this.tone(180, t, 0.12, 'sine', 0.3, out, 0, 90); break;
-      case 'pop': this.tone(600 + Math.random() * 300, t, 0.12, 'sine', 0.25, out, 0, 1400); this.noise(t, 0.08, 0.15, 3000); break;
-      case 'win': arp([0, 4, 7, 12], 0.07, 'triangle', 0.18); break;
-      case 'bigWin': arp([0, 4, 7, 12, 16, 19, 24], 0.09, 'square', 0.12, 0.3); break;
-      case 'spell': arp([12, 15, 19, 22, 27, 31], 0.05, 'sine', 0.15, 0.4); this.noise(t, 1.0, 0.12, 6000); break;
-      case 'scatter': this.tone(660, t, 0.4, 'triangle', 0.2, out, 0, 990); break;
-      case 'knock': this.noise(t, 0.06, 0.6, 250); this.noise(t + 0.14, 0.06, 0.6, 250); break;
-      case 'treat': arp([7, 12, 16], 0.06, 'triangle', 0.18); break;
-      case 'boo': this.tone(320, t, 0.7, 'sawtooth', 0.15, out, 0, 110); break;
-      case 'lollipop': arp([0, 7, 12, 19, 24, 31], 0.08, 'triangle', 0.2, 0.4); break;
-      case 'bonus': arp([-12, -5, 0, 3, 7, 12, 15, 19], 0.11, 'square', 0.12, 0.35); break;
-      case 'mult': this.tone(300, t, 0.35, 'square', 0.14, out, 0, 1200); break;
-      case 'cauldron': this.noise(t, 0.5, 0.3, 800); this.tone(140, t, 0.5, 'sine', 0.25, out, 0, 70); break;
-      case 'retrigger': arp([0, 12, 7, 19, 12, 24], 0.07, 'square', 0.12); break;
-      case 'end': arp([12, 7, 3, 0], 0.12, 'triangle', 0.18, 0.4); break;
+      case 'click': // a bone tick
+        this.noise(t, 0.035, 0.7, 'bandpass', 2600, 2600, 4);
+        this.tone(1250, t, 0.03, 'sine', 0.05, this.sfx);
+        break;
+      case 'drop': // the old board is swept away by a ghostly gust
+        this.noise(t, 0.5, 0.9, 'bandpass', 1900, 280, 2.5, 0.04);
+        break;
+      case 'land': // coffin-lid thud
+        this.tone(105, t, 0.24, 'sine', 0.38, this.sfx, 0, 42);
+        this.noise(t, 0.12, 0.18, 'lowpass', 500, 120);
+        break;
+      case 'pop': { // candies shatter: a wet splat and a tiny ghost squeak
+        this.noise(t, 0.16, 0.6, 'bandpass', 1300, 260, 1.4);
+        const f = 700 + Math.random() * 400;
+        this.tone(f, t + 0.02, 0.1, 'triangle', 0.07, this.sfx, 0, f * 1.7);
+        break;
+      }
+      case 'win': { // a haunted music box: a minor arpeggio on a random chord of the key
+        const root = [0, 5, 7, -2][Math.floor(Math.random() * 4)];
+        [12, 15, 19, 24].forEach((s, i) => this.celesta(n(root + s), t + i * 0.09, 0.13));
+        break;
+      }
+      case 'nice': // small win splash: a ghostly choir and a high bell
+        [0, 3, 7].forEach((s) => this.ghost(t, 1.1, n(s + 12) * 0.98, n(s + 12), n(s + 12) * 0.97, 0.06));
+        this.bell(n(24), t + 0.05, 0.08, 1.4);
+        break;
+      case 'bigWin': // the organ thunders, the bell tolls, the witch laughs
+        this.organ([n(-12), n(-5), n(0), n(3), n(7)], t, 2.4, 0.07);
+        this.thunder(t, 0.35);
+        this.bell(n(0), t + 0.1, 0.16);
+        this.cackle(t + 0.7, 0.4);
+        break;
+      case 'spell': // the witch flies over: a gust, a cackle, falling sparkles
+        this.noise(t, 0.8, 0.6, 'bandpass', 500, 2600, 3, 0.2);
+        this.cackle(t + 0.15, 0.5);
+        [31, 27, 24, 22, 19, 15].forEach((s, i) => this.celesta(n(s), t + 0.3 + i * 0.07, 0.06));
+        break;
+      case 'scatter': // a Skull Lollipop lands: a church bell tolls
+        this.bell(n(-12), t, 0.22, 2.8);
+        this.noise(t, 0.6, 0.06, 'bandpass', 3000, 6000, 8, 0.1);
+        break;
+      case 'knock': // knuckles on old wood, twice
+        for (const d of [0, 0.17]) {
+          this.tone(150, t + d, 0.09, 'sine', 0.42, this.sfx, 0, 95);
+          this.noise(t + d, 0.06, 0.45, 'bandpass', 650, 400, 2);
+        }
+        break;
+      case 'treat': // a creepy chime climbing up
+        [0, 3, 7, 12, 15].forEach((s, i) => this.celesta(n(s + 12), t + i * 0.06, 0.11));
+        this.bell(n(24), t + 0.3, 0.06, 1.2);
+        break;
+      case 'boo': // a ghost jumps out
+        this.ghost(t, 1.0, 260, 540, 190, 0.22);
+        this.noise(t, 0.3, 0.15, 'bandpass', 900, 300, 1.5);
+        break;
+      case 'lollipop': // the Golden Lollipop: bells cascade over a choir
+        [24, 19, 15, 12, 7].forEach((s, i) => this.bell(n(s), t + i * 0.1, 0.07, 1.6));
+        [0, 3, 7].forEach((s) => this.ghost(t + 0.2, 1.4, n(s + 12) * 0.97, n(s + 12), n(s + 12), 0.05));
+        this.organ([n(-12), n(0), n(3), n(7)], t + 0.2, 1.4, 0.05);
+        break;
+      case 'bonus': // a bonus is coming: thunder clap, organ stab, a tolling bell
+        this.thunder(t, 0.4);
+        this.organ([n(-12), n(-9), n(-6), n(0)], t + 0.05, 1.3, 0.08); // diminished: dread
+        this.bell(n(-12), t + 0.1, 0.18, 3);
+        break;
+      case 'portal': // the hallway: wind howls through the dark
+        this.noise(t, 1.5, 1.8, 'bandpass', 380, 1100, 9, 0.5);
+        this.noise(t + 0.4, 1.2, 1.0, 'bandpass', 700, 420, 12, 0.4);
+        this.ghost(t + 0.3, 1.3, 180, 260, 150, 0.1);
+        break;
+      case 'creak': // the old doors swing open
+        this.creak(t, 1.2, 0.9);
+        this.noise(t, 1.2, 0.12, 'lowpass', 300, 120, 1, 0.2);
+        break;
+      case 'whoosh': // through the doorway
+        this.noise(t, 0.7, 1.1, 'bandpass', 260, 2400, 2, 0.25);
+        break;
+      case 'arrive': // the bonus world: a swelling organ chord and a bell
+        this.organ([n(-12), n(-5), n(0), n(3)], t, 1.6, 0.06);
+        this.bell(n(12), t + 0.1, 0.09, 2);
+        break;
+      case 'mult': // a Jack-o'-Lantern bursts into flame and its value flies off
+        this.noise(t, 0.45, 0.55, 'lowpass', 3200, 500, 1, 0.02);
+        this.ghost(t + 0.05, 0.45, 380, 1150, 1150, 0.08);
+        break;
+      case 'cauldron': // the brew bubbles up
+        this.bubbles(t, 12, 0.12);
+        this.tone(68, t, 0.6, 'sine', 0.25, this.sfx, 0, 55);
+        break;
+      case 'retrigger': // more spins: double toll and a cackle
+        this.bell(n(-12), t, 0.18, 2.2);
+        this.bell(n(-5), t + 0.35, 0.14, 2.2);
+        this.cackle(t + 0.5, 0.4, 5);
+        break;
+      case 'end': // the bonus closes: an organ cadence and a last bell
+        this.organ([n(-7), n(-2), n(2), n(5)], t, 0.8, 0.06); // D minor
+        this.organ([n(-12), n(-5), n(0), n(3)], t + 0.75, 1.5, 0.07); // A minor
+        this.bell(n(0), t + 0.75, 0.12, 2.4);
+        break;
     }
   }
 }
