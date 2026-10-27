@@ -21,14 +21,23 @@ const CURRENCIES: Record<string, CurrencyMeta> = {
   TWD: { symbol: 'NT$', decimals: 2 }, NOK: { symbol: 'kr', decimals: 2 }, KWD: { symbol: 'KD', decimals: 2 }, JOD: { symbol: 'JD', decimals: 2 },
   CRC: { symbol: '₡', decimals: 2 }, TND: { symbol: 'TND', decimals: 2, after: true }, SGD: { symbol: 'SG$', decimals: 2 },
   MYR: { symbol: 'RM', decimals: 2 }, OMR: { symbol: 'OMR', decimals: 2, after: true }, QAR: { symbol: 'QAR', decimals: 2, after: true },
-  BHD: { symbol: 'BD', decimals: 2 }, XGC: { symbol: 'GC', decimals: 0, after: true }, XSC: { symbol: 'SC', decimals: 2, after: true },
+  BHD: { symbol: 'BD', decimals: 2 }, XGC: { symbol: 'GC', decimals: 2, after: true }, XSC: { symbol: 'SC', decimals: 2, after: true },
 };
 
-/** Formats an RGS integer amount. Uses a fixed en-US number format so text never breaks for other `lang` values. */
+/** Social-casino currencies (stake.us): shown with a GC / SC suffix, never a "$". */
+export const SOCIAL_CURRENCIES = new Set(['XGC', 'XSC']);
+
+/**
+ * Formats an RGS integer amount. Uses a fixed en-US number format so text never breaks for other
+ * `lang` values. Sub-unit amounts are never rounded away: a $0.10 bet paying 0.25x shows $0.025,
+ * so extra decimals (up to the RGS's 6) appear only when the amount needs them.
+ */
 export function formatMoney(micros: number, currency: string, opts: { decimals?: number } = {}): string {
   const meta = CURRENCIES[currency] ?? { symbol: currency, decimals: 2, after: true };
-  const decimals = opts.decimals ?? meta.decimals;
-  const value = micros / API_MULTIPLIER;
+  let decimals = opts.decimals ?? meta.decimals;
+  const m = Math.round(micros);
+  while (decimals < 6 && m % 10 ** (6 - decimals) !== 0) decimals++;
+  const value = m / API_MULTIPLIER;
   const num = new Intl.NumberFormat('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(value);
   return meta.after ? `${num} ${meta.symbol}` : `${meta.symbol}${num}`;
 }

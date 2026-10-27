@@ -99,6 +99,9 @@ async function readJson(req: IncomingMessage): Promise<Record<string, unknown>> 
   }
 }
 
+/** Dev-only: a `cur-XXX` marker in the session ID picks the currency (e.g. cur-EUR, cur-XSC). */
+const currencyOf = (sessionID: string) => /cur-([A-Z]{3})/.exec(sessionID)?.[1] ?? 'USD';
+
 const toRound = (r: NonNullable<Session['round']>) => ({
   betID: r.bookId,
   amount: r.amount,
@@ -148,7 +151,7 @@ export function mockRgs(options: { dir?: string } = {}): Plugin {
           if (path === '/wallet/authenticate') {
             if (!s) sessions.set(sessionID, (s = { balance: 1_000 * API_MULTIPLIER, round: null }));
             return send(res, 200, {
-              balance: { amount: s.balance, currency: 'USD' },
+              balance: { amount: s.balance, currency: currencyOf(sessionID) },
               round: s.round?.active ? toRound(s.round) : null,
               config: {
                 gameID: 'sugar-scream-dev',
@@ -159,7 +162,7 @@ export function mockRgs(options: { dir?: string } = {}): Plugin {
                 betLevels: BET_LEVELS,
                 betModes: {},
                 jurisdiction: {
-                  socialCasino: url.searchParams.get('social') === '1',
+                  socialCasino: url.searchParams.get('social') === '1' || ['XGC', 'XSC'].includes(currencyOf(sessionID)),
                   disabledFullscreen: false, disabledTurbo: false, disabledSuperTurbo: false, disabledAutoplay: false,
                   disabledSlamstop: false, disabledSpacebar: false, disabledBuyFeature: false, displayNetPosition: false,
                   displayRTP: false, displaySessionTimer: false, minimumRoundDuration: 0,
@@ -172,7 +175,7 @@ export function mockRgs(options: { dir?: string } = {}): Plugin {
 
           switch (path) {
             case '/wallet/balance':
-              return send(res, 200, { balance: { amount: s.balance, currency: 'USD' } });
+              return send(res, 200, { balance: { amount: s.balance, currency: currencyOf(sessionID) } });
             case '/wallet/play':
             case '/dev/force': {
               if (s.round?.active) return send(res, 400, { error: 'ERR_VAL', message: 'round already active' });
@@ -192,13 +195,13 @@ export function mockRgs(options: { dir?: string } = {}): Plugin {
               s.balance -= cost;
               const payoutMultiplier = book.payoutMultiplier / 100;
               s.round = { mode: mode.name, amount, payoutMultiplier, costMultiplier: mode.cost, state: book.events, bookId: book.id, active: payoutMultiplier > 0 };
-              return send(res, 200, { balance: { amount: s.balance, currency: 'USD' }, round: toRound(s.round) });
+              return send(res, 200, { balance: { amount: s.balance, currency: currencyOf(sessionID) }, round: toRound(s.round) });
             }
             case '/wallet/end-round': {
               if (!s.round?.active) return send(res, 400, { error: 'ERR_VAL', message: 'no active round' });
               s.balance += Math.round(s.round.amount * s.round.payoutMultiplier);
               s.round.active = false;
-              return send(res, 200, { balance: { amount: s.balance, currency: 'USD' } });
+              return send(res, 200, { balance: { amount: s.balance, currency: currencyOf(sessionID) } });
             }
             case '/bet/event': {
               if (!s.round?.active) return send(res, 400, { error: 'ERR_VAL', message: 'no active round' });

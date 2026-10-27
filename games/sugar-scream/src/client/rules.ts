@@ -37,7 +37,7 @@ export function buildRules(root: HTMLElement, o: { math?: MathSummary; fmt: (cen
     <h3>Witch's Spell</h3>
     <p>On any base-game spin the Witch can fly over the board before it is evaluated. Her spell turns several candies into one paying candy, always making at least ${MIN_CLUSTER} of it, so the spin always wins.</p>
     <h3>Trick or Treat</h3>
-    <p>Exactly ${TRICK_OR_TREAT_SCATTERS} Skull Lollipops after the base-game tumbles start Trick or Treat. Knock on up to ${KNOCKS} of ${DOORS} doors. Each door hides a <b>Treat</b> (${treats}), a <b>Trick</b> (nothing), or the <b>Golden Lollipop</b>, which ends the knocking and awards ${FREE_SPINS.cauldron.spins} Haunted Cauldron free spins. Treats are kept. The prizes are decided when the round starts; the door you choose only decides where each prize is shown. In autoplay the doors open automatically.</p>
+    <p>Exactly ${TRICK_OR_TREAT_SCATTERS} Skull Lollipops after the base-game tumbles start Trick or Treat. Knock on up to ${KNOCKS} of ${DOORS} doors. Each door hides a <b>Treat</b> (${treats}), a <b>Trick</b> (nothing), or the <b>Golden Lollipop</b>, which ends the knocking and awards ${FREE_SPINS.cauldron.spins} Haunted Cauldron free spins. Treats are kept. The prizes are decided when the round starts; the door you choose only decides where each prize is shown. In autoplay and replays the doors open automatically.</p>
     <h3>Loot Box</h3>
     <p>On any base-game spin that triggers no other feature, a Loot Box can drop (about 1 in ${Math.round(1 / LOOT_CHANCE).toLocaleString('en-US')} spins). Pick one of ${LOOT_BOXES} boxes to win one of these prizes, a whole-number multiple of the bet in the range shown:</p>
     <table><tr><th>Prize</th><th>Multiplier</th><th>Chance</th></tr>${LOOT_TABLE.map(([tier, w]) => {
@@ -45,7 +45,7 @@ export function buildRules(root: HTMLElement, o: { math?: MathSummary; fmt: (cen
       const total = LOOT_TABLE.reduce((sum, [, x]) => sum + x, 0);
       return `<tr><td>${esc(t.name)}</td><td>${t.min === t.max ? `${t.min.toLocaleString('en-US')}x` : `${t.min}x to ${t.max.toLocaleString('en-US')}x`}</td><td>${((w / total) * 100).toFixed(1)}%</td></tr>`;
     }).join('')}</table>
-    <p>The prize is decided when the round starts; the box you pick only decides where it is shown. Wins are capped at the maximum win.</p>
+    <p>The prize is decided when the round starts; the box you pick only decides where it is shown. In autoplay and replays a box opens automatically. Wins are capped at the maximum win.</p>
     <h3>Haunted Cauldron free spins</h3>
     <p><img src="${symbolSrc('SC')}" alt=""> ${CAULDRON_SCATTERS} Skull Lollipops award ${FREE_SPINS.cauldron.spins} free spins.</p>
     <p><img src="${symbolSrc('JK')}" alt=""> During free spins Jack-o'-Lanterns can land, each carrying a multiplier (${mults}). They stay through the tumbles. When a free spin's tumbles end with a win, the spin's total win is multiplied by the sum of its Jack-o'-Lanterns <b>plus the Cauldron</b>. Then those Jack-o'-Lanterns are poured into the Cauldron, which keeps growing until the feature ends. Jack-o'-Lanterns on a spin without a win are lost.</p>
@@ -58,9 +58,18 @@ export function buildRules(root: HTMLElement, o: { math?: MathSummary; fmt: (cen
     <table><tr><th>Mode</th><th>Cost</th><th>RTP</th><th>Max win</th></tr>${modeRows}</table>
     ${o.math ? '' : '<p>RTP information is not available.</p>'}
     <p>The maximum win is ${(WINCAP / 100).toLocaleString('en-US')}x the bet per round. When a round reaches it, the round ends immediately and the win is paid.</p>
-    <h3>Controls</h3>
-    <p>Spin with the spin button or the spacebar. Pressing spin during a round speeds up the animations (slam stop). Turbo plays rounds faster. Autoplay asks for confirmation and can stop when a feature triggers. Sound and music can be switched off in Settings or with the speaker button.</p>
-    <p>Malfunction voids all pays and plays. All results are decided by the server when the round starts; animations do not affect them. Unfinished rounds are resumed when the game is reloaded.</p>
+    <h3>How to play</h3>
+    <ul>
+      <li><b>Bet:</b> choose your bet with − and + under the spin button (bottom right), or with the slider in Bonus Games. Your balance is shown bottom left.</li>
+      <li><b>Spin:</b> press the big spin button or the spacebar. Pressing spin again during a round speeds up the animations (slam stop); the result does not change.</li>
+      <li><b>Autoplay</b> (circular arrows): pick the number of rounds and press Start to confirm. It can stop when a feature triggers, and stops if your balance is too low. Press it again to stop.</li>
+      <li><b>Turbo</b> (lightning): plays rounds faster. Loot Box and Trick-or-Treat picks still wait for you.</li>
+      <li><b>Sound</b> (speaker): mutes or unmutes everything. Music and effects volumes are in the menu.</li>
+      <li><b>Bonus</b> (bottom left): opens Bonus Games, where you can switch Ante Bet on or off and buy a feature. Every buy asks for confirmation.</li>
+      <li><b>Menu</b> (☰): music and effects volume, reduced motion, the intro screen and these rules.</li>
+      <li><b>Win screens:</b> tap to skip to the amount, tap again to close.</li>
+    </ul>
+    <p>Malfunction voids all pays and plays. All results are decided by the server when the round starts; animations do not affect them. If the display ever differs from the server's result, the server's result is the one that counts and is paid. Unfinished rounds are resumed when the game is reloaded.</p>
   `;
   localizeTree(root);
 }

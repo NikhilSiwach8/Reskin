@@ -311,9 +311,20 @@ export class Hud {
     document.body.classList.toggle('reduced', s.reduced);
   }
 
+  /** Replay: only the play button, the win meter, the sound switch and the replay details stay. */
   setReplayMode(): void {
-    document.querySelectorAll('#hud > div').forEach((e) => e.classList.add('hidden'));
+    document.body.classList.add('replay');
     $('#btn-replay').classList.remove('hidden');
+    $('#replay-info').classList.remove('hidden');
+  }
+
+  /** The replayed round's bet, mode, cost and win multiplier. */
+  setReplayInfo(i: { bet: string; mode: string; cost: string; mult: string; win: string }): void {
+    $('#ri-bet').textContent = i.bet;
+    $('#ri-mode').textContent = t(i.mode);
+    $('#ri-cost').textContent = i.cost;
+    $('#ri-mult').textContent = i.mult;
+    $('#ri-win').textContent = i.win;
   }
 
   setReplayButton(text: string, enabled: boolean): void {
@@ -656,7 +667,7 @@ export class Hud {
 
   /**
    * Loot Box: the player opens one of the boxes. The prize is fixed by the book; the box
-   * picked only decides where it is shown. Autoplay, turbo and replay pick automatically.
+   * picked only decides where it is shown. Autoplay and replay pick automatically.
    */
   async lootBox(count: number, prize: { title: string; art: string | null; mult: string; amount: string }, auto: boolean, fast: boolean, onOpen: () => void): Promise<void> {
     const overlay = $('#loot');
@@ -778,7 +789,7 @@ export class Hud {
 
   /**
    * Trick or Treat. The prizes are fixed by the book; the door the player knocks on only
-   * decides where each prize is shown. In autoplay, turbo or replay the doors open by themselves.
+   * decides where each prize is shown. In autoplay or replay the doors open by themselves.
    */
   async trickOrTreat(knocks: KnockEvent[], fmt: (centi: number) => string, auto: boolean, fast: boolean, onReveal: (k: KnockEvent) => void | Promise<void>): Promise<void> {
     const overlay = $('#tot');

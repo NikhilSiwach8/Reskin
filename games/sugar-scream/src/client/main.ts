@@ -13,10 +13,10 @@ import { Audio } from './audio.ts';
 import { Player } from './game/player.ts';
 import { Scene } from './game/scene.ts';
 import { Hud, wait, type Settings as UiSettings } from './hud.ts';
-import { formatMoney, winMicros } from './money.ts';
+import { formatMoney, SOCIAL_CURRENCIES, winMicros } from './money.ts';
 import { RgsClient, errorMessage, type Jurisdiction, type RgsConfig, type RgsRound } from './rgs.ts';
 import { buildRules, type MathSummary } from './rules.ts';
-import { setSocial, t } from './text.ts';
+import { isSocial, localizeTree, setSocial, t } from './text.ts';
 
 type DevRequest = (rgs: RgsClient, amount: number, mode: string) => Promise<{ balance: { amount: number; currency: string }; round: RgsRound }>;
 
@@ -24,7 +24,8 @@ const params = new URLSearchParams(location.search);
 const launch = {
   sessionID: params.get('sessionID') ?? '',
   rgsUrl: params.get('rgs_url') ?? '',
-  lang: params.get('lang') ?? 'en',
+  // English is the only language; anything malformed is sent to the RGS as `en`
+  lang: /^[a-z]{2}(-[a-z]{2})?$/i.test(params.get('lang') ?? '') ? params.get('lang')! : 'en',
   currency: params.get('currency') ?? 'USD',
   social: params.get('social') === 'true' || params.get('social') === '1',
   replay: params.get('replay') === 'true',
@@ -32,8 +33,13 @@ const launch = {
   version: params.get('version') ?? '',
   mode: params.get('mode') ?? 'base',
   event: params.get('event') ?? '',
+  /** Replay bet amount (RGS integer, 6 implied decimals); defaults to 1.00. */
+  amount: Number(params.get('amount')) > 0 ? Number(params.get('amount')) : 1_000_000,
 };
-setSocial(launch.social);
+setSocial(launch.social || SOCIAL_CURRENCIES.has(launch.currency));
+
+// mobile: no pinch or double-tap zoom (iOS ignores user-scalable=no; CSS touch-action covers double tap)
+for (const ev of ['gesturestart', 'gesturechange', 'dblclick']) document.addEventListener(ev, (e) => e.preventDefault(), { passive: false });
 
 const BUY_ART: Record<string, string> = { bonus: panelSrc('cauldron_icon') ?? 'assets/cauldron.svg', fullmoon: symbolSrc('JK'), lootbox: panelSrc('loot_icon') ?? 'assets/loot_box.svg' };
 
@@ -177,6 +183,11 @@ class Game {
       this.config = auth.config;
       this.balance = auth.balance.amount;
       this.currency = auth.balance.currency || launch.currency;
+      // stake.us: social wording follows the jurisdiction flag or a social currency, not only the URL
+      if (!isSocial() && (auth.config.jurisdiction?.socialCasino || SOCIAL_CURRENCIES.has(this.currency))) {
+        setSocial(true);
+        localizeTree(document.body);
+      }
       this.levels = auth.config.betLevels
         .filter((l) => l >= auth.config.minBet && l <= auth.config.maxBet && l % (auth.config.stepBet || 1) === 0)
         .sort((a, b) => a - b);
@@ -327,7 +338,11 @@ class Game {
   private async resume(round: RgsRound): Promise<void> {
     this.busy = true;
     this.roundBet = round.amount ?? this.bet;
+    // show the bet the round was played at
+    const level = this.levels.indexOf(this.roundBet);
+    if (level >= 0) this.betIndex = level;
     this.refresh();
+    if (level < 0) this.hud.setBet(this.fmtMoney(this.roundBet), false, false, true);
     await this.hud.banner('Resuming your round', '', 1400);
     this.player.startSpin();
     await this.presentRound(round);
@@ -403,7 +418,16 @@ class Game {
     this.hud.setReplayButton('Loading…', false);
     try {
       this.replayRound = await this.rgs.replay(launch.game, launch.version, launch.mode, launch.event);
-      this.roundBet = 1_000_000;
+      this.roundBet = launch.amount;
+      const cost = this.replayRound.costMultiplier ?? BET_MODES.find((m) => m.name === launch.mode)?.cost ?? 1;
+      this.hud.setReplayInfo({
+        bet: this.fmtMoney(this.roundBet),
+        mode: BET_MODES.find((m) => m.name === launch.mode)?.label ?? launch.mode,
+        cost: `${cost}x = ${this.fmtMoney(this.roundBet * cost)}`,
+        mult: `${this.replayRound.payoutMultiplier.toLocaleString('en-US')}x`,
+        win: this.fmtMoney(Math.round(this.roundBet * this.replayRound.payoutMultiplier)),
+      });
+      this.hud.setWin(this.fmtMoney(0));
       this.hud.hideLoading();
       this.hud.setReplayButton('Play', true);
     } catch (e) {
