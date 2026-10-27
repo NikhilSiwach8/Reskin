@@ -33,6 +33,11 @@ for (const [i, [mode, scenario]] of scenarios.entries()) {
   page.on('response', async (r) => {
     if (r.url().includes('/rgs/dev/force')) round = await r.json().catch(() => null);
   });
+  // play the pick bonuses like a player: tap a Loot Box / door once they are offered (turbo no longer picks by itself)
+  await page.addInitScript(() => setInterval(() => {
+    document.querySelector('#loot:not(.hidden) .loot-box:not(:disabled)')?.click();
+    document.querySelector('#tot:not(.hidden) .door:not(:disabled)')?.click();
+  }, 500));
   await page.goto(`http://localhost:5199/?sessionID=smoke-${scenario}-${Date.now()}&rgs_url=localhost:5199/rgs&lang=en&currency=USD`);
   await page.waitForSelector('#loading', { state: 'hidden', timeout: 120000 }); // the mock RGS loads every book set on first use
   // dismiss the intro splash

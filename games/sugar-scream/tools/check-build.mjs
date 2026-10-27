@@ -49,6 +49,11 @@ for (const viewport of [{ width: 1600, height: 900 }, { width: 390, height: 844 
   page.on('requestfailed', (r) => problems.push(`failed ${r.url()}`));
   page.on('pageerror', (e) => problems.push(`page error: ${e.message}`));
   page.on('console', (m) => m.type() === 'error' && problems.push(`console: ${m.text()}`));
+  // play the pick bonuses like a player: tap a Loot Box / door once they are offered (turbo no longer picks by itself)
+  await page.addInitScript(() => setInterval(() => {
+    document.querySelector('#loot:not(.hidden) .loot-box:not(:disabled)')?.click();
+    document.querySelector('#tot:not(.hidden) .door:not(:disabled)')?.click();
+  }, 500));
   await page.goto(`http://localhost:5197${PREFIX}index.html?sessionID=build-${Date.now()}&rgs_url=localhost:5197/rgs&lang=en&currency=USD`);
   await page.waitForSelector('#loading', { state: 'hidden', timeout: 120000 });
   await page.evaluate(() => document.querySelector('#intro-go')?.click());

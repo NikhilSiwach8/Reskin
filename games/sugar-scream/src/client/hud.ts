@@ -649,7 +649,7 @@ export class Hud {
    * Loot Box: the player opens one of the boxes. The prize is fixed by the book; the box
    * picked only decides where it is shown. Autoplay, turbo and replay pick automatically.
    */
-  async lootBox(count: number, prize: { title: string; art: string | null; mult: string; amount: string }, auto: boolean, onOpen: () => void): Promise<void> {
+  async lootBox(count: number, prize: { title: string; art: string | null; mult: string; amount: string }, auto: boolean, fast: boolean, onOpen: () => void): Promise<void> {
     const overlay = $('#loot');
     const row = $('#loot-boxes');
     row.innerHTML = '';
@@ -685,7 +685,7 @@ export class Hud {
     const box = boxes[chosen];
     box.classList.add('opening');
     onOpen();
-    await wait(auto ? 450 : 900);
+    await wait(fast ? 450 : 900);
     // the painted burst-open box replaces the closed one
     const open = panelSrc('loot_open');
     if (open) {
@@ -693,7 +693,7 @@ export class Hud {
       box.classList.add('burst');
     }
     box.classList.add('opened');
-    if (open) await wait(auto ? 300 : 650);
+    if (open) await wait(fast ? 300 : 650);
     const reveal = $('#loot-prize');
     const pedestal = panelSrc('loot_pedestal');
     $('#loot-pedestal').classList.toggle('hidden', !pedestal);
@@ -707,7 +707,7 @@ export class Hud {
     $('#loot-amount').textContent = prize.amount;
     $('#loot-sub').textContent = '';
     reveal.classList.remove('hidden');
-    await wait(auto ? 1300 : 2600);
+    await wait(fast ? 1300 : 2600);
     overlay.classList.add('hidden');
     this.splashOpen = false;
   }
@@ -771,7 +771,7 @@ export class Hud {
    * Trick or Treat. The prizes are fixed by the book; the door the player knocks on only
    * decides where each prize is shown. In autoplay, turbo or replay the doors open by themselves.
    */
-  async trickOrTreat(knocks: KnockEvent[], fmt: (centi: number) => string, auto: boolean, onReveal: (k: KnockEvent) => void | Promise<void>): Promise<void> {
+  async trickOrTreat(knocks: KnockEvent[], fmt: (centi: number) => string, auto: boolean, fast: boolean, onReveal: (k: KnockEvent) => void | Promise<void>): Promise<void> {
     const overlay = $('#tot');
     const doors = $('#tot-doors');
     doors.innerHTML = '';
@@ -805,7 +805,7 @@ export class Hud {
       const door = buttons[chosen];
       door.disabled = true;
       door.classList.add('knocked');
-      await wait(auto ? 150 : 350);
+      await wait(fast ? 150 : 350);
       const prize = document.createElement('div');
       const art = panelSrc(`door_${k.prize}`);
       const label = k.prize === 'treat' ? fmt(k.amount) : k.prize === 'trick' ? t('BOO!') : t('Free Spins!');
@@ -826,10 +826,10 @@ export class Hud {
       $('#tot-total').textContent = `${t('Treats')}: ${fmt(total)}`;
       // each Treat gets its own win splash over the doorstep before the next knock
       await onReveal(k);
-      await wait(auto ? 450 : 900);
+      await wait(fast ? 450 : 900);
     }
     buttons.forEach((b) => { if (!b.disabled) { b.disabled = true; b.classList.add('dim'); } });
-    await wait(auto ? 500 : 1300);
+    await wait(fast ? 500 : 1300);
     overlay.classList.add('hidden');
     this.splashOpen = false;
   }

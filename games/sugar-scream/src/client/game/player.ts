@@ -93,9 +93,6 @@ export class Player {
     const autoMs = () => (this.o.hands() || this.o.turbo() || this.skipping ? 1600 : null);
     // bonus rounds celebrate every hit as it lands (each winning spin, Treat or Loot Box prize),
     // not the total at the end
-    // in free spins each paying tumble gets its own splash; `tumbleSoFar` is this spin's tumble win so far
-    let tumbleSoFar = 0;
-    let multiplied = false;
     const perHit = events.some((ev) => ev.type === 'freeSpinsStart' || ev.type === 'trickOrTreat' || ev.type === 'lootBox');
     for (let i = 0; i < events.length; i++) {
       const e = events[i];
@@ -106,8 +103,6 @@ export class Player {
           this.dropping = null;
           this.board = e.board;
           this.hud.setTumble(null);
-          tumbleSoFar = 0;
-          multiplied = false;
           await this.scene.dropIn(e.board, e.mults, e.phase === 'base' && !this.o.turbo() && !this.skipping);
           this.audio.play('land');
           const sc = cellsOf(e.board, 'SC');
@@ -134,8 +129,6 @@ export class Player {
           this.hud.messageWins(e.wins.map((w) => ({ src: symbolSrc(w.symbol), count: w.count, pay: this.o.fmt(w.pay) })));
           await Promise.all([this.scene.highlight(winningCells(this.board, lastWin)), ...jobs.slice(0, 1)]);
           this.hud.setTumble(this.o.fmt(e.tumbleTotal));
-          if (freeKind) await this.winSplash(e.tumbleTotal - tumbleSoFar);
-          tumbleSoFar = e.tumbleTotal;
           break;
         }
         case 'tumble': {
@@ -151,7 +144,6 @@ export class Player {
           break;
         }
         case 'multiplier':
-          multiplied = e.mult > 1;
           if (e.cells.length) {
             this.audio.play('mult');
             const p = this.hud.cauldronPoint();
@@ -164,8 +156,8 @@ export class Player {
           this.hud.countWin(e.totalWin - e.amount, e.totalWin, this.o.fmt, this.o.reduced() ? 0 : this.ms(700));
           this.hud.message(`${freeKind ? 'Total win' : 'Win'} ${this.o.fmt(e.totalWin)}`);
           if (e.kind === 'scatter') await this.hud.banner('Lollipop Pay', this.o.fmt(e.amount), this.ms(1100));
-          // the spin that triggered the bonus, or a free spin's win after the Jack-o'-Lanterns multiply it
-          if (perHit && e.kind === 'spin' && (!freeKind || multiplied)) await this.winSplash(e.amount);
+          // one splash per spin once its tumble chain (and any multiplier) has finished
+          if (perHit && e.kind === 'spin') await this.winSplash(e.amount);
           break;
         case 'trickOrTreat': {
           this.inFeature = true;
@@ -174,7 +166,8 @@ export class Player {
           await this.hud.enterDoor('tot', fast(), () => this.audio.setMusic('feature'));
           const knocks: KnockEvent[] = [];
           while (events[i + 1]?.type === 'knock') knocks.push(events[++i] as KnockEvent);
-          await this.hud.trickOrTreat(knocks, this.o.fmt, autoMs() !== null, async (k) => {
+          // only autoplay and replays pick by themselves; turbo just plays the reveals faster
+          await this.hud.trickOrTreat(knocks, this.o.fmt, this.o.hands(), autoMs() !== null, async (k) => {
             this.audio.play('knock');
             setTimeout(() => this.audio.play(k.prize === 'treat' ? 'treat' : k.prize === 'trick' ? 'boo' : 'lollipop'), 250);
             if (k.prize === 'treat') await this.winSplash(k.amount);
@@ -259,7 +252,7 @@ export class Player {
             art: panelSrc(`win_${e.tier}`),
             mult: `x${e.multiplier.toLocaleString('en-US')}`,
             amount: this.o.fmt(Math.min(WINCAP, e.multiplier * 100)),
-          }, autoMs() !== null, () => this.audio.play('knock'));
+          }, this.o.hands(), autoMs() !== null, () => this.audio.play('knock'));
           this.audio.play('bigWin');
           this.audio.sting('bigwin');
           await this.hud.exitDoor(fast(), () => this.audio.setMusic('base'));
