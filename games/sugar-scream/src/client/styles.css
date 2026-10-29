@@ -566,6 +566,7 @@ body.replay .hud-left, body.replay .hud-right .tile, body.replay #btn-auto, body
 /* ------------------------------------------------------------------ video clips */
 #clip { position: fixed; inset: 0; z-index: 13; background: #000; opacity: 0; transition: opacity 0.12s; cursor: pointer; }
 #clip.on { opacity: 1; }
+#clip:not(.on) { pointer-events: none; }
 #clip video { display: block; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
 /* the real win, over a win clip (the clips carry no amount): under the painted tier title */
 #clip-amount { position: absolute; left: 0; right: 0; bottom: 8%; text-align: center; pointer-events: none; }

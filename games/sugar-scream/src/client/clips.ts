@@ -19,8 +19,10 @@ export interface PlayOptions {
   skipTo?: number;
 }
 
-/** Milliseconds a clip may take to start before the caller falls back (it may play next time). */
+/** Milliseconds a clip may take to show its first frame before the caller falls back (it may play next time). */
 const START_TIMEOUT = 4000;
+/** A clip whose picture stops moving for this long (network stall) is abandoned so the game never sits on black. */
+const STALL_TIMEOUT = 2500;
 
 export class Clips {
   private layer = document.getElementById('clip') as HTMLElement;
@@ -78,8 +80,14 @@ export class Clips {
       let started = false;
       let done = false;
       let raf = 0;
+      let cueRan = false;
+      let lastTime = -1;
+      let lastMove = performance.now();
       const runCues = (upTo: number) => {
-        while (cues.length && cues[0][0] <= upTo) cues.shift()![1]();
+        while (cues.length && cues[0][0] <= upTo) {
+          cueRan = true;
+          cues.shift()![1]();
+        }
       };
       const finish = (ok: boolean) => {
         if (done) return;
@@ -91,6 +99,7 @@ export class Clips {
         this.layer.removeEventListener('pointerdown', onTap);
         if (ok) runCues(Infinity);
         v.pause();
+        v.removeEventListener('timeupdate', onFrame);
         this.layer.classList.add('hidden');
         this.layer.classList.remove('on');
         this.playing = false;
@@ -113,6 +122,15 @@ export class Clips {
       const tick = () => {
         v.volume = Math.max(0, Math.min(1, this.volume()));
         runCues(v.currentTime);
+        // stalled (the stream stopped arriving): give up rather than leave the player on black;
+        // if nothing has been cued yet the caller falls back to its own animation
+        const now = performance.now();
+        if (v.currentTime !== lastTime || v.paused) {
+          lastTime = v.currentTime;
+          lastMove = now;
+        } else if (now - lastMove > STALL_TIMEOUT / (v.playbackRate || 1)) {
+          return finish(cueRan);
+        }
         raf = requestAnimationFrame(tick);
       };
       // slow to start (network, a busy device): fall back this time only; an error marks it broken
@@ -122,26 +140,40 @@ export class Clips {
       v.addEventListener('ended', onEnded);
       v.addEventListener('error', onError);
       this.layer.addEventListener('pointerdown', onTap);
+      // the layer is laid out but invisible and click-through until the first frame is on screen
+      // (some browsers do not decode a video that is display: none)
+      this.layer.classList.remove('hidden', 'on');
       v.src = src;
       // a new source resets playbackRate to the default rate, so set both
       v.defaultPlaybackRate = opts.rate ?? 1;
       v.playbackRate = opts.rate ?? 1;
       v.volume = Math.max(0, Math.min(1, this.volume()));
       v.muted = false;
-      const begin = () => {
-        if (done) return;
+      // show the clip only once a real frame has been drawn: "playing" alone can come before any
+      // picture (a slow or stalled stream would otherwise be a black screen)
+      const show = () => {
+        if (done || started) return;
         started = true;
-        this.layer.classList.remove('hidden');
-        void this.layer.offsetWidth;
+        clearTimeout(timer);
         this.layer.classList.add('on');
         this.onPlaying(true);
+        lastMove = performance.now();
         tick();
       };
-      v.play().then(begin).catch((e: DOMException) => {
+      function onFrame() {
+        if (v.currentTime > 0 && v.readyState >= 2) show();
+      }
+      const waitForFrame = () => {
+        if (done) return;
+        v.addEventListener('timeupdate', onFrame);
+        const rvfc = (v as HTMLVideoElement & { requestVideoFrameCallback?: (cb: () => void) => number }).requestVideoFrameCallback;
+        if (rvfc) rvfc.call(v, () => show());
+      };
+      v.play().then(waitForFrame).catch((e: DOMException) => {
         // autoplay with sound refused: play the pictures silently rather than not at all
         if (e?.name === 'NotAllowedError' && !done) {
           v.muted = true;
-          v.play().then(begin).catch(() => finish(false));
+          v.play().then(waitForFrame).catch(() => finish(false));
         } else finish(false);
       });
     });
