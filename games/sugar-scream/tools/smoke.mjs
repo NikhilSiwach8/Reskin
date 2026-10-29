@@ -42,6 +42,9 @@ for (const [i, [mode, scenario]] of scenarios.entries()) {
   await page.waitForSelector('#loading', { state: 'hidden', timeout: 120000 }); // the mock RGS loads every book set on first use
   // dismiss the intro splash
   await page.waitForSelector('#intro', { state: 'visible', timeout: 10000 }).then(() => page.evaluate(() => document.querySelector('#intro-go').click())).catch(() => {});
+  // the slot intro clip follows Start: tap it away like a player
+  await page.waitForSelector('#clip:not(.hidden)', { timeout: 6000 }).then(() => page.dispatchEvent('#clip', 'pointerdown')).catch(() => {});
+  await page.waitForSelector('#clip', { state: 'hidden', timeout: 5000 }).catch(() => {});
   // Turbo keeps long bonus rounds short; results must still settle identically.
   await page.evaluate(() => document.querySelector('#btn-turbo').click());
   const start = money(await page.textContent('#meter-balance .meter-value'));

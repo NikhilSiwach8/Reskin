@@ -46,6 +46,9 @@ async function open(params = {}, viewport = { width: 1280, height: 720 }, { intr
   if (intro && (await page.isHidden('#loading'))) {
     await page.waitForSelector('#intro', { state: 'visible', timeout: 15000 }).then(() => page.click('#intro-go', { force: true })).catch(() => {});
     await page.waitForSelector('#intro', { state: 'hidden', timeout: 5000 }).catch(() => {});
+    // the slot intro clip follows Start: tap it away like a player
+    await page.waitForSelector('#clip:not(.hidden)', { timeout: 6000 }).then(() => page.dispatchEvent('#clip', 'pointerdown')).catch(() => {});
+    await page.waitForSelector('#clip', { state: 'hidden', timeout: 5000 }).catch(() => {});
   }
   return page;
 }

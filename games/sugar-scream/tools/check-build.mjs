@@ -57,6 +57,9 @@ for (const viewport of [{ width: 1600, height: 900 }, { width: 390, height: 844 
   await page.goto(`http://localhost:5197${PREFIX}index.html?sessionID=build-${Date.now()}&rgs_url=localhost:5197/rgs&lang=en&currency=USD`);
   await page.waitForSelector('#loading', { state: 'hidden', timeout: 120000 });
   await page.evaluate(() => document.querySelector('#intro-go')?.click());
+  // the slot intro clip follows Start: tap it away like a player
+  await page.waitForSelector('#clip:not(.hidden)', { timeout: 6000 }).then(() => page.dispatchEvent('#clip', 'pointerdown')).catch(() => {});
+  await page.waitForSelector('#clip', { state: 'hidden', timeout: 5000 }).catch(() => {});
   await page.click('#btn-turbo', { force: true });
   const settle = async (label) => {
     // dialogs (free-spin intro / outro) continue by themselves in turbo
