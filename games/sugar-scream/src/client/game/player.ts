@@ -16,6 +16,8 @@ export interface PlayerOptions {
   reduced: () => boolean;
   /** Autoplay or replay: dialogs continue by themselves. */
   hands: () => boolean;
+  /** Replay mode: nobody is playing, so the bonus picks open by themselves. */
+  replay: () => boolean;
   /** What the round cost, in centi-bet (100 for a spin, 125 with Ante Bet, 10000 for a 100x buy). */
   cost: () => number;
 }
@@ -200,8 +202,8 @@ export class Player {
           await this.hud.enterDoor('tot', fast(), () => this.audio.setMusic('feature'));
           const knocks: KnockEvent[] = [];
           while (events[i + 1]?.type === 'knock') knocks.push(events[++i] as KnockEvent);
-          // only autoplay and replays pick by themselves; turbo just plays the reveals faster
-          await this.hud.trickOrTreat(knocks, this.o.fmt, this.o.hands(), autoMs() !== null, async (k) => {
+          // the player always knocks, in autoplay and turbo too; only replays pick by themselves
+          await this.hud.trickOrTreat(knocks, this.o.fmt, this.o.replay(), autoMs() !== null, async (k) => {
             this.audio.play('knock');
             setTimeout(() => this.audio.play(k.prize === 'treat' ? 'treat' : k.prize === 'trick' ? 'boo' : 'lollipop'), 250);
             if (k.prize === 'treat') await this.winSplash(k.amount, 100);
@@ -295,7 +297,7 @@ export class Player {
             art: panelSrc(`win_${e.tier}`),
             mult: `x${e.multiplier.toLocaleString('en-US')}`,
             amount: this.o.fmt(Math.min(WINCAP, e.multiplier * 100)),
-          }, this.o.hands(), autoMs() !== null, () => this.audio.play('knock'));
+          }, this.o.replay(), autoMs() !== null, () => this.audio.play('knock'));
           this.audio.play('bigWin');
           this.audio.sting('bigwin');
           await this.hud.exitDoor(fast(), () => this.audio.setMusic('base'));

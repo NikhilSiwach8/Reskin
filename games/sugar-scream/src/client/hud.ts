@@ -753,7 +753,7 @@ export class Hud {
 
   /**
    * Loot Box: the player opens one of the boxes. The prize is fixed by the book; the box
-   * picked only decides where it is shown. Autoplay and replay pick automatically.
+   * picked only decides where it is shown. Only replays pick automatically.
    */
   async lootBox(count: number, prize: { title: string; art: string | null; mult: string; amount: string }, auto: boolean, fast: boolean, onOpen: () => void): Promise<void> {
     const overlay = $('#loot');
@@ -779,7 +779,7 @@ export class Hud {
     }
     this.splashOpen = true;
     overlay.classList.remove('hidden');
-    // the player picks (no time limit); only autoplay and replays pick by themselves
+    // the player picks (no time limit, autoplay included); only replays pick by themselves
     const chosen = await new Promise<number>((resolve) => {
       const timer = auto ? window.setTimeout(() => resolve(Math.floor(Math.random() * count)), 700) : 0;
       const nudge = auto ? 0 : window.setTimeout(() => row.classList.add('nudge'), 5000);
@@ -882,7 +882,7 @@ export class Hud {
 
   /**
    * Trick or Treat. The prizes are fixed by the book; the door the player knocks on only
-   * decides where each prize is shown. In autoplay or replay the doors open by themselves.
+   * decides where each prize is shown. Only in replays do the doors open by themselves.
    */
   async trickOrTreat(knocks: KnockEvent[], fmt: (centi: number) => string, auto: boolean, fast: boolean, onReveal: (k: KnockEvent) => void | Promise<void>): Promise<void> {
     const overlay = $('#tot');
@@ -904,7 +904,7 @@ export class Hud {
     overlay.classList.remove('hidden');
     $('#tot-sub').textContent = t('Knock on 3 doors');
     for (const k of knocks) {
-      // the player knocks (no time limit); only autoplay and replays knock by themselves
+      // the player knocks (no time limit, autoplay included); only replays knock by themselves
       const chosen = await new Promise<number>((resolve) => {
         const open = buttons.map((b, i) => [b, i] as const).filter(([b]) => !b.disabled);
         const timer = auto ? window.setTimeout(() => resolve(open.some(([, i]) => i === k.index) ? k.index : open[0][1]), 450) : 0;

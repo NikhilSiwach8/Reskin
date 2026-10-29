@@ -126,7 +126,7 @@ Checked in this environment (headless Chromium at 1600x900, 390x844, 360x640 and
 
 - 21 unit tests pass. All 12 end-to-end scenarios (loss, win, tumble chain, Witch's Spell, Trick or Treat, Golden Lollipop, Haunted Cauldron from the base game, Full Moon from Ante Bet, retrigger, both buys, max win) settle to the cent with no page errors.
 - The client validates every book with the engine's validator before playing it, rebuilding every tumble from the compact events.
-- Spacebar spin, slam stop, turbo (Loot Box and Trick-or-Treat picks wait for the player with no time limit, and the doors and boxes wiggle after 5 s without a pick; only autoplay and replays pick by themselves), autoplay with confirmation and stop-on-feature, Ante Bet toggle, buy confirmation, mute plus separate music and effects switches, reduced motion, social-mode wording, replay mode, active-round resume.
+- Spacebar spin, slam stop, turbo (Loot Box and Trick-or-Treat picks always wait for the player, in autoplay too, with no time limit, and the doors and boxes wiggle after 5 s without a pick; only replays pick by themselves), autoplay with confirmation and stop-on-feature, Ante Bet toggle, buy confirmation, mute plus separate music and effects switches, reduced motion, social-mode wording, replay mode, active-round resume.
 - The production build contains no dev code and makes no external requests.
 
 ## Unfinished / not verified

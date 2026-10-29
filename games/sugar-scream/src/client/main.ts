@@ -181,6 +181,7 @@ class Game {
       turbo: () => this.settings.turbo && !this.jurisdiction?.disabledTurbo,
       reduced: () => this.settings.reduced,
       hands: () => this.autoplay !== null || launch.replay,
+      replay: () => launch.replay,
       cost: () => Math.round(this.roundCost * 100),
     }, IDLE_BOARD);
     this.applySettings(this.settings);
