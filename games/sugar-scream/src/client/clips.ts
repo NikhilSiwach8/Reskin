@@ -19,8 +19,8 @@ export interface PlayOptions {
   skipTo?: number;
 }
 
-/** Seconds a clip may take to start before the caller falls back. */
-const START_TIMEOUT = 2500;
+/** Milliseconds a clip may take to start before the caller falls back (it may play next time). */
+const START_TIMEOUT = 4000;
 
 export class Clips {
   private layer = document.getElementById('clip') as HTMLElement;
@@ -115,11 +115,9 @@ export class Clips {
         runCues(v.currentTime);
         raf = requestAnimationFrame(tick);
       };
+      // slow to start (network, a busy device): fall back this time only; an error marks it broken
       const timer = window.setTimeout(() => {
-        if (!started) {
-          this.broken.add(src);
-          finish(false);
-        }
+        if (!started) finish(false);
       }, START_TIMEOUT);
       v.addEventListener('ended', onEnded);
       v.addEventListener('error', onError);
