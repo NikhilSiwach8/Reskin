@@ -5,6 +5,7 @@ import { FREE_SPINS, LOOT_TIERS, SYMBOLS, WINCAP } from '../../engine/config.ts'
 import type { Board, GameEvent, SymbolId } from '../../engine/types.ts';
 import { bgSrc, panelSrc, symbolSrc } from '../assets.ts';
 import type { Audio } from '../audio.ts';
+import type { ClipName } from '../clips.ts';
 import { Hud, wait, type KnockEvent } from '../hud.ts';
 import { t } from '../text.ts';
 import type { Scene } from './scene.ts';
@@ -129,8 +130,11 @@ export class Player {
           break;
         }
         case 'witchSpell':
-          this.audio.play('spell');
-          void this.hud.banner("Witch's Spell!", t(`${SYMBOLS[e.symbol].name} conjured`), this.ms(1600));
+          // the witch's cut-in clip, then her spell lands on the board (the banner if no clip)
+          if (!(await this.clip('spell'))) {
+            this.audio.play('spell');
+            void this.hud.banner("Witch's Spell!", t(`${SYMBOLS[e.symbol].name} conjured`), this.ms(1600));
+          }
           await this.scene.spell(e.cells, e.symbol);
           this.board = e.board;
           break;
@@ -212,7 +216,9 @@ export class Player {
           break;
         }
         case 'trickOrTreatEnd':
-          if (e.lollipop) await this.hud.banner('Golden Lollipop!', 'Haunted Cauldron free spins', this.ms(1600));
+          if (e.lollipop) {
+            if (!(await this.clip('lollipop'))) await this.hud.banner('Golden Lollipop!', 'Haunted Cauldron free spins', this.ms(1600));
+          }
           else await this.hud.exitDoor(fast(), () => this.audio.setMusic('base'));
           break;
         case 'freeSpinsStart': {
@@ -247,13 +253,16 @@ export class Player {
           }
           break;
         case 'retrigger':
-          this.audio.play('retrigger');
-          this.audio.play('lollipop');
           this.audio.haptic([50, 40, 90]);
           this.scene.celebrate();
           void this.scene.shake(400, 8);
           await this.scene.pulseCells(e.cells, this.ms(700));
-          await this.hud.banner(`+${e.added} Free Spins`, '', this.ms(1300));
+          // the retrigger clip says +5 (the only retrigger award); the banner covers anything else
+          if (e.added !== 5 || !(await this.clip('retrigger'))) {
+            this.audio.play('retrigger');
+            this.audio.play('lollipop');
+            await this.hud.banner(`+${e.added} Free Spins`, '', this.ms(1300));
+          }
           break;
         case 'cauldron':
           this.audio.play('cauldron');
@@ -261,9 +270,12 @@ export class Player {
           await wait(this.ms(350));
           break;
         case 'freeSpinsEnd':
-          this.audio.play('end');
-          this.audio.sting('end');
-          await this.hud.splash('Congratulations!', `You have won\n${this.o.fmt(e.featureWin)}\nin ${freeTotal} free spins`, 'Collect', autoMs(), bgSrc('feature_end'));
+          // the free-spins total clip with the real win on it; the Congratulations screen if no clip
+          if (!(await this.hud.clipWithAmount('fs-total', this.o.fmt(e.featureWin), t(`in ${freeTotal} free spins`), 1.2, fast() ? 1.5 : 1))) {
+            this.audio.play('end');
+            this.audio.sting('end');
+            await this.hud.splash('Congratulations!', `You have won\n${this.o.fmt(e.featureWin)}\nin ${freeTotal} free spins`, 'Collect', autoMs(), bgSrc('feature_end'));
+          }
           freeKind = null;
           await this.hud.exitDoor(fast(), () => {
             this.scene.setMode('base');
@@ -324,6 +336,12 @@ export class Player {
    * win reached punch in one after another, then the amount appears at once. Wins below Big
    * Win get the lighter Nice / Sweet splash.
    */
+  /** Plays a moment clip (faster in turbo, slam stop and autoplay); false if it could not play. */
+  private clip(name: ClipName): Promise<boolean> {
+    const fast = this.o.turbo() || this.skipping || this.o.hands();
+    return this.hud.clips?.play(name, { rate: fast ? 1.6 : 1 }) ?? Promise.resolve(false);
+  }
+
   private async winSplash(amount: number, minSmall: number): Promise<void> {
     const fast = this.o.turbo() || this.skipping || this.o.hands();
     const x = `${(amount / 100).toLocaleString('en-US')}x`;

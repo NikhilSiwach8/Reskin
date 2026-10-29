@@ -8,7 +8,8 @@ export type ClipName =
   | 'intro'
   | 'entry-cauldron' | 'entry-fullmoon' | 'entry-tot' | 'entry-loot'
   | 'win-big' | 'win-mega' | 'win-monster' | 'win-sugar' | 'win-max'
-  | 'scare-ghost' | 'scare-witch' | 'scare-pumpkin' | 'scare-skull';
+  | 'scare-ghost' | 'scare-witch' | 'scare-pumpkin' | 'scare-skull' | 'scare-eyeball' | 'scare-bat' | 'scare-apple'
+  | 'spell' | 'retrigger' | 'lollipop' | 'fs-total';
 
 export interface PlayOptions {
   /** Playback speed (turbo, slam stop and autoplay play faster). */

@@ -28,6 +28,8 @@ export interface Settings {
   scares: boolean;
   /** Phone vibration on big moments. */
   haptics: boolean;
+  /** Cosmetic board skin. */
+  skin: 'classic' | 'bloodmoon' | 'ghost';
 }
 
 export interface BuyOption {
@@ -117,6 +119,10 @@ export class Hud {
         h.settings(this.settings);
       });
     }
+    document.querySelectorAll<HTMLButtonElement>('#set-skin button').forEach((b) => b.addEventListener('click', () => {
+      this.settings = { ...this.settings, skin: b.dataset.skin as Settings['skin'] };
+      h.settings(this.settings);
+    }));
     for (const id of ['music', 'sfx'] as const) {
       $<HTMLInputElement>(`#set-${id}`).addEventListener('input', (e) => {
         const v = Number((e.target as HTMLInputElement).value) / 100;
@@ -326,6 +332,7 @@ export class Hud {
   showSettings(s: Settings): void {
     this.settings = { ...s };
     for (const id of ['reduced', 'intro', 'scares', 'haptics'] as const) $<HTMLInputElement>(`#set-${id}`).checked = s[id];
+    document.querySelectorAll<HTMLButtonElement>('#set-skin button').forEach((b) => b.classList.toggle('on', b.dataset.skin === s.skin));
     $<HTMLInputElement>('#set-music').value = String(Math.round((s.music ? s.musicVol : 0) * 100));
     $<HTMLInputElement>('#set-sfx').value = String(Math.round((s.sfx ? s.sfxVol : 0) * 100));
     document.body.classList.toggle('reduced', s.reduced);
@@ -652,6 +659,27 @@ export class Hud {
    * once (no count-up) and holds. `mini` is the lighter splash for wins below Big Win.
    * A tap skips straight to the total; a second tap closes.
    */
+  /**
+   * A clip with an amount overlaid (win clips, the free-spins total): the amount lands at
+   * `landAt` seconds; a first tap jumps there, a second closes. False if the clip could not play.
+   */
+  async clipWithAmount(name: ClipName, value: string, sub: string, landAt: number, rate: number): Promise<boolean> {
+    if (!this.clips) return false;
+    const amount = $('#clip-amount');
+    amount.querySelector('.ca-value')!.textContent = value;
+    amount.querySelector('.ca-x')!.textContent = sub;
+    amount.classList.add('hidden');
+    amount.classList.remove('show');
+    const land = () => {
+      amount.classList.remove('hidden');
+      void amount.offsetWidth;
+      amount.classList.add('show');
+    };
+    const ok = await this.clips.play(name, { rate, cues: [[landAt, land]], skipTo: landAt });
+    amount.classList.add('hidden');
+    return ok;
+  }
+
   async winSplash(
     tiers: { title: string; art?: string | null }[],
     total: string,
@@ -659,21 +687,7 @@ export class Hud {
     opts: { tierMs: number; holdMs: number; mini?: boolean; fountain?: boolean; clip?: { name: ClipName; landAt: number; rate: number }; onCss?: () => void },
   ): Promise<void> {
     // Big Win and above: the win clip climbs through the tiers and the real amount lands on it
-    if (opts.clip && this.clips) {
-      const amount = $('#clip-amount');
-      amount.querySelector('.ca-value')!.textContent = total;
-      amount.querySelector('.ca-x')!.textContent = x;
-      amount.classList.add('hidden');
-      amount.classList.remove('show');
-      const land = () => {
-        amount.classList.remove('hidden');
-        void amount.offsetWidth;
-        amount.classList.add('show');
-      };
-      const ok = await this.clips.play(opts.clip.name, { rate: opts.clip.rate, cues: [[opts.clip.landAt, land]], skipTo: opts.clip.landAt });
-      amount.classList.add('hidden');
-      if (ok) return;
-    }
+    if (opts.clip && (await this.clipWithAmount(opts.clip.name, total, x, opts.clip.landAt, opts.clip.rate))) return;
     opts.onCss?.();
     return this.cssWinSplash(tiers, total, x, opts);
   }

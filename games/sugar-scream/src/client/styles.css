@@ -631,3 +631,11 @@ body.reduced #combo, body.reduced #peek { animation: none !important; }
 #guide .guide-btns { display: flex; justify-content: space-between; gap: 10px; }
 #guide .guide-skip { border: none; background: none; color: #6a4a7a; font-weight: 700; font-size: 15px; }
 #guide .guide-next { padding: 8px 22px; }
+
+/* board skin chips in the menu */
+.pop-skin { display: flex; flex-direction: column; gap: 6px; font-weight: 700; text-transform: uppercase; font-size: 15px; letter-spacing: 0.5px; }
+#set-skin { display: flex; gap: 6px; }
+#set-skin button { flex: 1; padding: 6px 4px; border-radius: 12px; border: 3px solid #1a0430; background: #fff; color: #1a0430; font-weight: 700; font-size: 12px; text-transform: none; }
+#set-skin button[data-skin='bloodmoon'] { background: linear-gradient(180deg, #ffd0c8, #ff8a7a); }
+#set-skin button[data-skin='ghost'] { background: linear-gradient(180deg, #e4f6ff, #9cc8ff); }
+#set-skin button.on { outline: 3px solid #ff2e9a; outline-offset: 1px; }

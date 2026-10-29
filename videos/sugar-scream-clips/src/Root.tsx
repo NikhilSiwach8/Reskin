@@ -2,6 +2,7 @@ import { Composition, Folder } from "remotion";
 import { BonusEntry } from "./BonusEntry";
 import { Jumpscare } from "./Jumpscare";
 import { LoadingLoop } from "./LoadingLoop";
+import { FreeSpinsTotal, LollipopReveal, Retrigger, SpellCut } from "./Moments";
 import { SlotIntro } from "./SlotIntro";
 import { WinClip } from "./WinClip";
 
@@ -35,6 +36,15 @@ const GAME_CLIPS = [
   { id: "scare-witch", component: Jumpscare, frames: 45, props: { background: "bg_base", monster: "panel_witch", tease: "", tagline: "", calm: 0, sting: false } },
   { id: "scare-pumpkin", component: Jumpscare, frames: 45, props: { background: "bg_fullmoon", monster: "sym_JK", tease: "", tagline: "", calm: 0, sting: false } },
   { id: "scare-skull", component: Jumpscare, frames: 45, props: { background: "bg_cauldron", monster: "sym_SC", tease: "", tagline: "", calm: 0, sting: false } },
+  { id: "scare-eyeball", component: Jumpscare, frames: 45, props: { background: "bg_portal_tot", monster: "sym_EY", tease: "", tagline: "", calm: 0, sting: false } },
+  { id: "scare-bat", component: Jumpscare, frames: 45, props: { background: "bg_loot", monster: "sym_BT", tease: "", tagline: "", calm: 0, sting: false } },
+  { id: "scare-apple", component: Jumpscare, frames: 45, props: { background: "bg_fs_fullmoon", monster: "sym_PA", tease: "", tagline: "", calm: 0, sting: false } },
+  // in-game moments (short; each ends on a white flash back to the board)
+  { id: "spell", component: SpellCut, frames: 54, props: {} },
+  { id: "retrigger", component: Retrigger, frames: 66, props: { spins: 5 } },
+  { id: "lollipop", component: LollipopReveal, frames: 78, props: { spins: 10 } },
+  // the game overlays the real total at 1.2 s
+  { id: "fs-total", component: FreeSpinsTotal, frames: 120, props: {} },
 ];
 export const GAME_CLIP_IDS = GAME_CLIPS.map((c) => c.id);
 

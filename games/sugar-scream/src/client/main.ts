@@ -71,7 +71,7 @@ interface Settings extends UiSettings {
 
 function loadSettings(): Settings {
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const defaults: Settings = { turbo: false, reduced, muted: false, music: true, sfx: true, musicVol: 0.7, sfxVol: 0.8, intro: true, scares: true, haptics: true, ante: false };
+  const defaults: Settings = { turbo: false, reduced, muted: false, music: true, sfx: true, musicVol: 0.7, sfxVol: 0.8, intro: true, scares: true, haptics: true, skin: 'classic', ante: false };
   try {
     return { ...defaults, ...JSON.parse(localStorage.getItem('ss-settings') ?? '{}') };
   } catch {
@@ -261,7 +261,7 @@ class Game {
         writeFlag('ss-guide-done');
       }
       // warm the cache for the clips a session is likely to need, after the game has settled
-      window.setTimeout(() => void this.clips.prefetch(['entry-tot', 'win-big', 'entry-cauldron', 'scare-ghost', 'scare-witch', 'scare-pumpkin', 'scare-skull', 'win-mega', 'entry-loot', 'entry-fullmoon']), 5000);
+      window.setTimeout(() => void this.clips.prefetch(['entry-tot', 'win-big', 'entry-cauldron', 'scare-ghost', 'scare-witch', 'scare-pumpkin', 'scare-skull', 'spell', 'win-mega', 'retrigger', 'fs-total', 'entry-loot', 'lollipop', 'entry-fullmoon', 'scare-eyeball', 'scare-bat', 'scare-apple']), 5000);
       if (auth.round && (auth.round.active ?? true) && auth.round.payoutMultiplier !== undefined) await this.resume(auth.round);
     } catch (e) {
       this.hud.setLoading(1, errorMessage(e));
@@ -373,7 +373,7 @@ class Game {
     const now = Date.now();
     if (!this.settings.scares || this.autoplay || this.settings.turbo || launch.replay) return;
     if (this.roundsPlayed < 4 || now - this.lastScare < 120_000 || Math.random() >= 1 / 18) return;
-    const pick: ClipName[] = ['scare-ghost', 'scare-witch', 'scare-pumpkin', 'scare-skull'];
+    const pick: ClipName[] = ['scare-ghost', 'scare-witch', 'scare-pumpkin', 'scare-skull', 'scare-eyeball', 'scare-bat', 'scare-apple'];
     this.audio.haptic(250);
     if (await this.clips.play(pick[Math.floor(Math.random() * pick.length)])) this.lastScare = now;
   }
@@ -521,6 +521,7 @@ class Game {
     this.audio.hapticsOn = s.haptics;
     this.audio.apply();
     this.scene.reduced = s.reduced;
+    this.scene.setSkin(s.skin);
     this.hud.showSettings(this.settings);
     this.setTurbo(s.turbo);
     saveSettings(this.settings);

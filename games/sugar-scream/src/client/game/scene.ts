@@ -100,6 +100,10 @@ export class Scene {
   private readonly frameGlow = new Graphics();
   private readonly lantern = new Graphics();
   private glowColor = 0xff4fb0;
+  private frameSprite?: Container & { tint: number };
+  private mode: 'base' | 'cauldron' | 'fullMoon' = 'base';
+  /** Cosmetic board skin (a local setting): tints the backdrop and the frame, never the symbols. */
+  private skin: BoardSkin = 'classic';
   private readonly panel = new Sprite();
   /** Board-unit box covered by the frame (for layout). */
   private frameBox: FrameBox = { x: -55, y: -46, w: BOARD_W + 110, h: BOARD_H + 92 };
@@ -121,6 +125,7 @@ export class Scene {
     this.grid.mask = this.gridMask;
     this.grid.sortableChildren = true;
     const frame = this.makeFrame();
+    this.frameSprite = frame as Container & { tint: number };
     this.frameGlow.blendMode = 'add';
     this.lantern.blendMode = 'add';
     this.world.addChild(this.frameGlow, frame, this.lantern, this.gridMask, this.grid, this.fx);
@@ -326,13 +331,22 @@ export class Scene {
   }
 
   setMode(mode: 'base' | 'cauldron' | 'fullMoon'): void {
+    this.mode = mode;
     // A painted feature background when one exists, else the base scene tinted for the feature.
     const name = mode === 'base' ? 'bg' : mode === 'fullMoon' ? 'bg_fullmoon' : 'bg_cauldron';
     const own = mode === 'base' || hasTexture(name);
-    this.ambience.setBackground(tex(own ? name : 'bg'), own ? 0xffffff : mode === 'fullMoon' ? 0xffb0a0 : 0xd8c8ff, mode as AmbientMode);
-    this.glowColor = mode === 'fullMoon' ? 0xff6a1a : mode === 'cauldron' ? 0x9dff4a : 0xff4fb0;
+    const look = SKINS[this.skin];
+    this.ambience.setBackground(tex(own ? name : 'bg'), mulTint(own ? 0xffffff : mode === 'fullMoon' ? 0xffb0a0 : 0xd8c8ff, look.bg), mode as AmbientMode);
+    this.glowColor = look.glow ?? (mode === 'fullMoon' ? 0xff6a1a : mode === 'cauldron' ? 0x9dff4a : 0xff4fb0);
+    if (this.frameSprite) this.frameSprite.tint = look.frame;
     this.drawFrameGlow();
     this.layout();
+  }
+
+  setSkin(skin: BoardSkin): void {
+    if (!SKINS[skin] || skin === this.skin) return;
+    this.skin = skin;
+    this.setMode(this.mode);
   }
 
   /** Current symbols fall out of the bottom of the board, column by column (gravity). */
@@ -715,4 +729,19 @@ export class Scene {
       }, ease.outCubic).then(() => this.release(g));
     }
   }
+}
+
+export type BoardSkin = 'classic' | 'bloodmoon' | 'ghost';
+
+/** Board skins: a tint for the backdrop and the frame, and the frame's glow colour (null keeps the mode's). */
+const SKINS: Record<BoardSkin, { bg: number; frame: number; glow: number | null }> = {
+  classic: { bg: 0xffffff, frame: 0xffffff, glow: null },
+  bloodmoon: { bg: 0xff8a7a, frame: 0xffa8a0, glow: 0xff2a2a },
+  ghost: { bg: 0x9cc8ff, frame: 0xd4f2ff, glow: 0x7fe8ff },
+};
+
+/** Multiplies two 0xRRGGBB tints channel by channel. */
+function mulTint(a: number, b: number): number {
+  const ch = (c: number, s: number) => Math.round((((a >> s) & 255) * ((b >> s) & 255)) / 255) << s;
+  return ch(a, 16) | ch(a, 8) | ch(a, 0);
 }

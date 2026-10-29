@@ -117,12 +117,18 @@ Build the upload zips with `npm run math:publish && npm run build && npm run rel
   - **Bonus previews:** each Bonus Games card has a Preview button that plays that bonus's entrance clip. Nothing is bought.
   - **Session panel:** the menu's Session panel shows the session time, rounds, total bet, total won, net result and biggest win.
   - **Jurisdiction displays:** when the RGS sets the `displaySessionTimer`, `displayNetPosition` or `displayRTP` flags, a line in the top-left corner keeps them on screen.
+- **Board skins** (menu): Classic, Blood Moon (red) and Ghost Light (pale blue). They tint the backdrop and the candy-cane frame and change its glow, never the symbols. Purely cosmetic, saved on the device.
 - **Video clips** (`src/client/clips.ts`, made with Remotion in [videos/sugar-scream-clips](../../videos/sugar-scream-clips)):
   - **Loading screen:** a silent, seamless loop of the painted loading art (the brew glowing, embers rising, candies drifting down the sides) plays behind the progress bar. The painting is its poster, so it shows at once, and reduced motion keeps it still.
   - **Intro:** the slot intro plays after Start.
   - **Bonus entrances:** the bonus entry clip (candy tunnel, hallway, the doors open, into the bonus world) replaces the CSS door transition. The scene switches while the camera dives through the doorway.
   - **Big wins:** the win clip for the highest tier reached plays for Big Win and above. It climbs through the tiers, and the real amount lands on it.
-  - **Jumpscares:** a jumpscare can follow a losing spin, never in the first rounds, autoplay or turbo, and at most every two minutes. It can be switched off in the menu.
+  - **Moments:**
+    - A Witch's Spell cut-in (the witch streaks across before her spell lands).
+    - A retrigger burst ("+5 Free Spins").
+    - The Golden Lollipop reveal.
+    - A free-spins total screen with the real win and spin count overlaid.
+  - **Jumpscares:** one of seven jumpscares (ghost, witch, pumpkin, skull, eyeball, bat, poison apple) can follow a losing spin, never in the first rounds, autoplay or turbo, and at most every two minutes. It can be switched off in the menu.
 
   Each clip comes as a landscape (1280x720) and a portrait (540x960) cut, and the one matching the screen plays full screen. Turbo, slam stop and autoplay play the clips faster, and a tap skips them. The game's music steps aside while a clip plays its own sound, which follows mute and the volume sliders. Reduced motion turns the clips off. If a clip cannot play (codec, network, autoplay policy), the CSS animation plays instead. The jumpscare's flashes stay under three a second (photosensitivity).
 - **Animated interface:** floating logo, breathing spin button, light sweep and hop on Buy, glowing Ante when on, pulsing info button, bubbling Cauldron panel and breathing Trick-or-Treat doors. Everything stops with reduced motion.
