@@ -39,6 +39,17 @@ const launch = {
 };
 setSocial(launch.social || SOCIAL_CURRENCIES.has(launch.currency));
 
+// The loading screen's looping clip (silent, made with Remotion): start it before anything else
+// loads, in the cut that fits the screen. Reduced motion keeps the still painting (its poster).
+{
+  const v = document.getElementById('loading-video') as HTMLVideoElement | null;
+  if (v && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    v.src = `assets/clips/loading-${innerHeight > innerWidth ? 'p' : 'l'}.mp4`;
+    v.muted = true;
+    v.play().catch(() => {});
+  }
+}
+
 // mobile: no pinch or double-tap zoom (iOS ignores user-scalable=no; CSS touch-action covers double tap)
 for (const ev of ['gesturestart', 'gesturechange', 'dblclick']) document.addEventListener(ev, (e) => e.preventDefault(), { passive: false });
 

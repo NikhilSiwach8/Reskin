@@ -7,6 +7,7 @@ Short promo clips for [Sugar Scream](../../games/sugar-scream), made with [Remot
 | Intro | `Slot-Intro` | 10 s | The witch streaks across the sky, the logo slams in, candies rain, the five bonuses are named, "Win up to 5,000x" |
 | Bonus-Entry | `Entry-Haunted-Cauldron`, `Entry-Full-Moon`, `Entry-Trick-or-Treat`, `Entry-Loot-Box` | 7 s | The game's door transition: candy tunnel and BONUS! banner, the haunted hallway, a knock, the doors creak open, the camera dives through into the bonus world and its title lands |
 | Wins | `Win-Big`, `Win-Mega`, `Win-Monster`, `Win-Sugar-Scream`, `Win-Max` | 4.5 to 6.3 s | The win climbs through its tiers like in the game (Big, then Mega, ...) over rays and a fountain of candy and coins, the amount counting up in step |
+| Loading | `game-loading-l`, `game-loading-p` | 6 s loop | The painted loading art breathing, the brew glowing, embers rising and candies drifting down the sides; silent and seamless, behind the game's progress bar |
 | Jumpscares | `Jumpscare-Ghost`, `Jumpscare-Witch`, `Jumpscare-Pumpkin`, `Jumpscare-Skull` | 5.8 to 6.3 s | A dark, flickering scene with a heartbeat and a rising drone, then the creature slams into the camera (inverted, shaking, strobing, RGB split, screech), then the logo |
 
 ## Commands

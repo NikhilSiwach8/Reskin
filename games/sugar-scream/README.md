@@ -111,6 +111,7 @@ Build the upload zips with `npm run math:publish && npm run build && npm run rel
   - **Vibration:** on phones that support it (Android), big moments vibrate: scatters, heavy clusters, chains, bonus triggers, big wins and jumpscares. Vibration can be switched off in the menu.
   - **Honest small wins:** a win smaller than what the round cost is not celebrated (no Nice Win splash). It is a net loss, shown plainly on the win meter. In a bonus, a hit below 1x the bet gets no splash.
 - **Video clips** (`src/client/clips.ts`, made with Remotion in [videos/sugar-scream-clips](../../videos/sugar-scream-clips)):
+  - **Loading screen:** a silent, seamless loop of the painted loading art (the brew glowing, embers rising, candies drifting down the sides) plays behind the progress bar. The painting is its poster, so it shows at once, and reduced motion keeps it still.
   - **Intro:** the slot intro plays after Start.
   - **Bonus entrances:** the bonus entry clip (candy tunnel, hallway, the doors open, into the bonus world) replaces the CSS door transition. The scene switches while the camera dives through the doorway.
   - **Big wins:** the win clip for the highest tier reached plays for Big Win and above. It climbs through the tiers, and the real amount lands on it.

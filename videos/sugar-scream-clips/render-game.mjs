@@ -17,7 +17,7 @@ try {
 
 const OUT = "../../games/sugar-scream/public/assets/clips";
 const IDS = [
-  "intro", "entry-cauldron", "entry-fullmoon", "entry-tot", "entry-loot",
+  "loading", "intro", "entry-cauldron", "entry-fullmoon", "entry-tot", "entry-loot",
   "win-big", "win-mega", "win-monster", "win-sugar", "win-max",
   "scare-ghost", "scare-witch", "scare-pumpkin", "scare-skull",
 ];
@@ -31,7 +31,7 @@ for (const id of wanted.length ? IDS.filter((i) => wanted.includes(i)) : IDS) {
     console.log(`rendering ${id}-${o}`);
     execFileSync("npx", ["remotion", "render", `game-${id}-${o}`, raw, "--codec=h264", "--crf=16", `--scale=${scale}`, "--log=error"], { stdio: "inherit" });
     const tmp = `out/game/${id}-${o}.tmp.mp4`;
-    execFileSync(ffmpeg[0], [...ffmpeg.slice(1), "-v", "error", "-y", "-i", raw, "-vf", `scale=${size}:flags=lanczos`, "-c:v", "libx264", "-preset", "slow", "-crf", "28", "-pix_fmt", "yuv420p", "-af", audioFilter, "-c:a", "aac", "-b:a", "96k", "-movflags", "+faststart", tmp], { stdio: "inherit" });
+    execFileSync(ffmpeg[0], [...ffmpeg.slice(1), "-v", "error", "-y", "-i", raw, "-vf", `scale=${size}:flags=lanczos`, "-c:v", "libx264", "-preset", "slow", "-crf", "28", "-pix_fmt", "yuv420p", ...(id === "loading" ? ["-an"] : ["-af", audioFilter, "-c:a", "aac", "-b:a", "96k"]), "-movflags", "+faststart", tmp], { stdio: "inherit" });
     renameSync(tmp, `${OUT}/${id}-${o}.mp4`);
     rmSync(raw);
   }

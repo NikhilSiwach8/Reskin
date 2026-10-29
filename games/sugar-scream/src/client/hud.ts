@@ -205,6 +205,13 @@ export class Hud {
 
   hideLoading(): void {
     $('#loading').classList.add('hidden');
+    // the loading loop is done: free its decoder
+    const v = document.getElementById('loading-video') as HTMLVideoElement | null;
+    if (v) {
+      v.pause();
+      v.removeAttribute('src');
+      v.load();
+    }
   }
 
   setBalance(text: string): void {

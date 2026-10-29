@@ -1,6 +1,7 @@
 import { Composition, Folder } from "remotion";
 import { BonusEntry } from "./BonusEntry";
 import { Jumpscare } from "./Jumpscare";
+import { LoadingLoop } from "./LoadingLoop";
 import { SlotIntro } from "./SlotIntro";
 import { WinClip } from "./WinClip";
 
@@ -9,6 +10,7 @@ import { WinClip } from "./WinClip";
 // the amount out (the game overlays the real win) and the jumpscares open straight on the scare.
 const WIN_TIERS = ["panel_win_big", "panel_win_mega", "panel_win_monster", "panel_win_sugar", "panel_win_max"];
 const GAME_CLIPS = [
+  { id: "loading", component: LoadingLoop, frames: 180, props: {} },
   { id: "intro", component: SlotIntro, frames: 300, props: {} },
   { id: "entry-cauldron", component: BonusEntry, frames: 165, props: { world: "bg_portal_cauldron", title: "Haunted Cauldron", subtitle: "10 FREE SPINS", accent: "#9dff4a", track: "music_free" } },
   { id: "entry-fullmoon", component: BonusEntry, frames: 165, props: { world: "bg_portal_fullmoon", title: "Full Moon", subtitle: "12 FREE SPINS · CAULDRON STARTS AT x5", accent: "#ff5a2a", track: "music_fullmoon" } },
