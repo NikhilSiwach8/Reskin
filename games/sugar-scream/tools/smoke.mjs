@@ -45,6 +45,8 @@ for (const [i, [mode, scenario]] of scenarios.entries()) {
   // the slot intro clip follows Start: tap it away like a player
   await page.waitForSelector('#clip.on', { timeout: 6000 }).then(() => page.dispatchEvent('#clip', 'pointerdown')).catch(() => {});
   await page.waitForSelector('#clip', { state: 'hidden', timeout: 5000 }).catch(() => {});
+  // a first visit shows the controls guide: skip it like a player
+  await page.waitForSelector('#guide:not(.hidden)', { timeout: 3000 }).then(() => page.click('#guide .guide-skip', { force: true })).catch(() => {});
   // Turbo keeps long bonus rounds short; results must still settle identically.
   await page.evaluate(() => document.querySelector('#btn-turbo').click());
   const start = money(await page.textContent('#meter-balance .meter-value'));

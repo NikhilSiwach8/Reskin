@@ -110,6 +110,13 @@ Build the upload zips with `npm run math:publish && npm run build && npm run rel
     - Retriggers burst into confetti.
   - **Vibration:** on phones that support it (Android), big moments vibrate: scatters, heavy clusters, chains, bonus triggers, big wins and jumpscares. Vibration can be switched off in the menu.
   - **Honest small wins:** a win smaller than what the round cost is not celebrated (no Nice Win splash). It is a net loss, shown plainly on the win meter. In a bonus, a hit below 1x the bet gets no splash.
+- **Sharing, guidance and session tools:**
+  - **Share a big win:** after a Big Win or more, a "Share this win" button copies a replay link. Anyone with the link watches the real round, clips included.
+    - The link is only built when the launch gives the game's ID and version, which a replay needs. Otherwise the button copies the round's bet ID, which Stake's bet history can replay and share.
+  - **First-session guide:** on a first visit, a short spotlight tour shows Spin, the bet, Bonus Games, Autoplay/Turbo/Sound and the menu. The menu's "How to play" runs it again.
+  - **Bonus previews:** each Bonus Games card has a Preview button that plays that bonus's entrance clip. Nothing is bought.
+  - **Session panel:** the menu's Session panel shows the session time, rounds, total bet, total won, net result and biggest win.
+  - **Jurisdiction displays:** when the RGS sets the `displaySessionTimer`, `displayNetPosition` or `displayRTP` flags, a line in the top-left corner keeps them on screen.
 - **Video clips** (`src/client/clips.ts`, made with Remotion in [videos/sugar-scream-clips](../../videos/sugar-scream-clips)):
   - **Loading screen:** a silent, seamless loop of the painted loading art (the brew glowing, embers rising, candies drifting down the sides) plays behind the progress bar. The painting is its poster, so it shows at once, and reduced motion keeps it still.
   - **Intro:** the slot intro plays after Start.

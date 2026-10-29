@@ -164,8 +164,10 @@ export function mockRgs(options: { dir?: string } = {}): Plugin {
                 jurisdiction: {
                   socialCasino: url.searchParams.get('social') === '1' || ['XGC', 'XSC'].includes(currencyOf(sessionID)),
                   disabledFullscreen: false, disabledTurbo: false, disabledSuperTurbo: false, disabledAutoplay: false,
-                  disabledSlamstop: false, disabledSpacebar: false, disabledBuyFeature: false, displayNetPosition: false,
-                  displayRTP: false, displaySessionTimer: false, minimumRoundDuration: 0,
+                  disabledSlamstop: false, disabledSpacebar: false, disabledBuyFeature: false,
+                  // dev-only: a `jur-flags` marker in the session ID turns the jurisdiction displays on
+                  displayNetPosition: sessionID.includes('jur-flags'), displayRTP: sessionID.includes('jur-flags'), displaySessionTimer: sessionID.includes('jur-flags'),
+                  minimumRoundDuration: 0,
                 },
               },
               meta: null,

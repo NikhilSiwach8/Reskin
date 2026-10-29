@@ -564,7 +564,7 @@ body.replay .hud-left, body.replay .hud-right .tile, body.replay #btn-auto, body
 #rules-body li { margin: 4px 0; }
 
 /* ------------------------------------------------------------------ video clips */
-#clip { position: fixed; inset: 0; z-index: 13; background: #000; opacity: 0; transition: opacity 0.12s; cursor: pointer; }
+#clip { position: fixed; inset: 0; z-index: 16; background: #000; opacity: 0; transition: opacity 0.12s; cursor: pointer; }
 #clip.on { opacity: 1; }
 #clip:not(.on) { pointer-events: none; }
 #clip video { display: block; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
@@ -610,3 +610,24 @@ body.reduced #combo, body.reduced #peek { animation: none !important; }
 #tot-doors.nudge .door:not(:disabled), #loot-boxes.nudge .loot-box:not(:disabled) { animation: nudge 1.6s ease-in-out infinite; }
 #tot-doors.nudge .door:not(:disabled):nth-child(2n), #loot-boxes.nudge .loot-box:not(:disabled):nth-child(2n) { animation-delay: -0.8s; }
 @keyframes nudge { 0%, 70%, 100% { rotate: 0deg; } 76% { rotate: -5deg; } 82% { rotate: 5deg; } 88% { rotate: -3deg; } 94% { rotate: 2deg; } }
+
+/* ------------------------------------------------------------------ session, sharing, guide */
+#session-bar { position: fixed; z-index: 4; top: max(8px, env(safe-area-inset-top)); left: max(10px, env(safe-area-inset-left)); padding: 4px 12px; border-radius: 999px; background: rgba(11, 0, 20, 0.82); border: 2px solid rgba(255, 255, 255, 0.7); color: #fff; font-weight: 700; font-size: clamp(12px, 1.5vmin, 16px); font-variant-numeric: tabular-nums; pointer-events: none; white-space: nowrap; }
+#btn-share { position: fixed; z-index: 4; left: 50%; translate: -50% 0; bottom: calc(var(--win-h) + var(--hud-h, 0px) + 52px + var(--stack-lift, 0px)); padding: 8px 18px; border-radius: 999px; border: 3px solid #fff; background: linear-gradient(180deg, #ffd34d, #c98a00); color: #2a0040; font-weight: 700; font-size: clamp(14px, 1.8vmin, 18px); box-shadow: 0 4px 0 #6a4200, 0 0 18px rgba(255, 211, 77, 0.7); animation: share-in 0.4s cubic-bezier(0.2, 1.6, 0.4, 1); }
+@keyframes share-in { from { scale: 0.4; opacity: 0; } }
+.pop-btn { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px; border-radius: 16px; border: 3px solid #1a0430; background: #fff; color: #1a0430; font-weight: 700; font-size: 15px; text-transform: uppercase; letter-spacing: 1px; }
+.pop-btn .pop-i { background: #1a0430; color: #fff; font-style: normal; font-family: inherit; }
+#session-stats { display: grid; grid-template-columns: 1fr auto; gap: 8px 18px; margin: 0; font-size: 17px; text-align: left; }
+#session-stats dt { opacity: 0.8; }
+#session-stats dd { margin: 0; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+.bc-art { position: relative; }
+.bc-preview { position: absolute; z-index: 2; right: 8px; bottom: 8px; padding: 4px 10px; border-radius: 999px; border: 2px solid #fff; background: rgba(26, 4, 48, 0.85); color: #fff; font-weight: 700; font-size: clamp(11px, 1.2vw, 14px); }
+#guide { position: fixed; inset: 0; z-index: 20; }
+#guide .guide-spot { position: fixed; border-radius: 22px; box-shadow: 0 0 0 9999px rgba(5, 0, 15, 0.72), 0 0 0 4px var(--gold), 0 0 30px rgba(255, 211, 77, 0.8); transition: left 0.35s, top 0.35s, width 0.35s, height 0.35s; pointer-events: none; }
+#guide .guide-tip { position: fixed; padding: 14px 16px 12px; border-radius: 18px; background: #fff7fc; color: #1a0430; border: 4px solid #1a0430; box-shadow: 0 8px 0 rgba(26, 4, 48, 0.35); }
+#guide .guide-tip.in { animation: pop-in 0.25s cubic-bezier(0.2, 1.5, 0.4, 1); }
+#guide .guide-step { font-size: 12px; font-weight: 700; letter-spacing: 2px; opacity: 0.6; }
+#guide .guide-text { margin: 4px 0 12px; font-size: 17px; line-height: 1.35; }
+#guide .guide-btns { display: flex; justify-content: space-between; gap: 10px; }
+#guide .guide-skip { border: none; background: none; color: #6a4a7a; font-weight: 700; font-size: 15px; }
+#guide .guide-next { padding: 8px 22px; }

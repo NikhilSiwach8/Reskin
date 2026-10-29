@@ -22,6 +22,8 @@ export interface Jurisdiction {
 }
 
 export interface RgsConfig {
+  /** The game's ID on Stake Engine (used for replay links), when the RGS sends it. */
+  gameID?: string;
   minBet: number;
   maxBet: number;
   stepBet: number;
@@ -31,6 +33,9 @@ export interface RgsConfig {
 }
 
 export interface RgsRound {
+  /** The bet's ID: the event a replay link points at. */
+  betID?: number | string;
+  event?: number | string | null;
   payoutMultiplier: number;
   costMultiplier?: number;
   active?: boolean;

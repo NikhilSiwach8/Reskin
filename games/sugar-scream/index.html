@@ -89,7 +89,24 @@
       <label class="pop-toggle"><span>Intro screen</span><input type="checkbox" id="set-intro" /><i></i></label>
       <label class="pop-toggle"><span>Jumpscares</span><input type="checkbox" id="set-scares" /><i></i></label>
       <label class="pop-toggle"><span>Vibration</span><input type="checkbox" id="set-haptics" /><i></i></label>
+      <button id="btn-session" class="pop-btn" type="button"><span class="pop-i">⏱</span> Session</button>
+      <button id="btn-guide" class="pop-btn" type="button"><span class="pop-i">?</span> How to play</button>
       <button id="btn-rules" type="button"><span class="pop-i">i</span> Game info</button>
+    </div>
+
+    <!-- jurisdiction display (session timer, net position, RTP) when the RGS asks for it -->
+    <div id="session-bar" class="hidden" aria-live="off"></div>
+    <!-- after a big win: share it as a replay -->
+    <button id="btn-share" class="hidden" type="button">🔗 <span>Share this win</span></button>
+
+    <!-- first-session guide: a spotlight on each control in turn -->
+    <div id="guide" class="hidden" role="dialog" aria-modal="true" aria-label="How to play">
+      <div class="guide-spot"></div>
+      <div class="guide-tip">
+        <div class="guide-step"></div>
+        <p class="guide-text"></p>
+        <div class="guide-btns"><button class="guide-skip" type="button">Skip</button><button class="guide-next cta" type="button">Next</button></div>
+      </div>
     </div>
 
     <div id="banner" class="hidden" aria-live="polite"><img id="banner-art" class="hidden" alt="" /><div id="banner-title"></div><div id="banner-sub"></div></div>
@@ -216,6 +233,14 @@
         <label class="check"><input type="checkbox" id="auto-stop-feature" checked /> Stop when a feature triggers</label>
         <p id="auto-summary"></p>
         <button id="auto-start" class="cta" type="button" disabled>Start</button>
+      </div>
+    </div>
+
+    <div id="modal-session" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="session-title">
+      <div class="modal-card small">
+        <button class="modal-close" type="button" aria-label="Close">✕</button>
+        <h2 id="session-title">Session</h2>
+        <dl id="session-stats"></dl>
       </div>
     </div>
 

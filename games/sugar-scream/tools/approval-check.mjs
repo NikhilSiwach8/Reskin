@@ -49,6 +49,8 @@ async function open(params = {}, viewport = { width: 1280, height: 720 }, { intr
     // the slot intro clip follows Start: tap it away like a player
     await page.waitForSelector('#clip.on', { timeout: 6000 }).then(() => page.dispatchEvent('#clip', 'pointerdown')).catch(() => {});
     await page.waitForSelector('#clip', { state: 'hidden', timeout: 5000 }).catch(() => {});
+    // a first visit shows the controls guide: skip it like a player
+    await page.waitForSelector('#guide:not(.hidden)', { timeout: 3000 }).then(() => page.click('#guide .guide-skip', { force: true })).catch(() => {});
   }
   return page;
 }
@@ -163,8 +165,8 @@ for (const [cur, expect, social] of [['USD', /^\$1,000\.00$/], ['EUR', /^€1,00
   await page.click('#btn-buy', { force: true });
   await page.waitForTimeout(600);
   const plays = page.requests.filter((r) => r === '/wallet/play').length;
-  const disabled = await page.isDisabled('#buy-options .buy-option:nth-child(2) button');
-  await page.click('#buy-options .buy-option:nth-child(2) button', { force: true });
+  const disabled = await page.isDisabled('#buy-options .buy-option:nth-child(2) .bc-buy');
+  await page.click('#buy-options .buy-option:nth-child(2) .bc-buy', { force: true });
   await page.waitForTimeout(800);
   const confirmOpen = await page.isVisible('#modal-confirm');
   check('RGS requests', 'A bet above the balance sends no play request', disabled && !confirmOpen && page.requests.filter((r) => r === '/wallet/play').length === plays);
@@ -214,7 +216,7 @@ for (const [cur, expect, social] of [['USD', /^\$1,000\.00$/], ['EUR', /^€1,00
   // High cost modes: buying asks for confirmation
   await page.click('#btn-buy', { force: true });
   await page.waitForFunction(() => [...document.querySelectorAll('#buy-cards .buy-card')].every((c) => c.getAnimations().every((a) => a.playState !== 'running')), null, { timeout: 5000, polling: 50 });
-  await page.click('#buy-options .buy-option:nth-child(1) button', { force: true });
+  await page.click('#buy-options .buy-option:nth-child(1) .bc-buy', { force: true });
   await page.waitForTimeout(300);
   const confirm = await page.isVisible('#modal-confirm');
   const confirmText = await text(page, '#confirm-text');

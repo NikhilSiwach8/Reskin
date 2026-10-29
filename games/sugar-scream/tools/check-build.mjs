@@ -60,6 +60,8 @@ for (const viewport of [{ width: 1600, height: 900 }, { width: 390, height: 844 
   // the slot intro clip follows Start: tap it away like a player
   await page.waitForSelector('#clip.on', { timeout: 6000 }).then(() => page.dispatchEvent('#clip', 'pointerdown')).catch(() => {});
   await page.waitForSelector('#clip', { state: 'hidden', timeout: 5000 }).catch(() => {});
+  // a first visit shows the controls guide: skip it like a player
+  await page.waitForSelector('#guide:not(.hidden)', { timeout: 3000 }).then(() => page.click('#guide .guide-skip', { force: true })).catch(() => {});
   await page.click('#btn-turbo', { force: true });
   const settle = async (label) => {
     // dialogs (free-spin intro / outro) continue by themselves in turbo
@@ -88,7 +90,7 @@ for (const viewport of [{ width: 1600, height: 900 }, { width: 390, height: 844 
       await tap('#btn-buy');
       // the cards fly in: tap Buy once they have landed (a tap mid-flight can hit the backdrop and close the sheet)
       await page.waitForFunction(() => [...document.querySelectorAll('#buy-cards .buy-card')].every((c) => c.getAnimations().every((a) => a.playState !== 'running')), null, { timeout: 5000, polling: 50 });
-      await tap(`#buy-options .buy-option:nth-child(${n}) button`);
+      await tap(`#buy-options .buy-option:nth-child(${n}) .bc-buy`);
       await tap('#confirm-yes');
     });
   }

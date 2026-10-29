@@ -39,6 +39,8 @@ export interface BuyOption {
   affordable: boolean;
   /** Volatility 1 (low) to 5 (highest), shown as a bar on the card. */
   vol: number;
+  /** The bonus entry clip the card's Preview button plays. */
+  preview?: ClipName;
 }
 
 export interface HudHandlers {
@@ -56,6 +58,8 @@ export interface HudHandlers {
   autoplaySummary: (n: number) => string;
   settings: (s: Settings) => void;
   openRules: () => void;
+  /** Session statistics for the Session panel, as label / value rows. */
+  session: () => [string, string][];
   replayPlay: () => void;
   /** Sound effects for HUD-driven sequences (the bonus door transition). */
   sound: (name: Sfx) => void;
@@ -88,6 +92,8 @@ export class Hud {
       if (!$('#menu-pop').classList.contains('hidden') && !(e.target as HTMLElement).closest('#menu-pop, #btn-menu')) this.toggleMenu(false);
     });
     $('#btn-rules').addEventListener('click', () => { this.toggleMenu(false); h.openRules(); });
+    $('#btn-session').addEventListener('click', () => { this.toggleMenu(false); this.openSession(); });
+    $('#btn-guide').addEventListener('click', () => { this.toggleMenu(false); void this.guide(); });
     $('#bp-minus').addEventListener('click', () => h.betStep(-1));
     $('#bp-plus').addEventListener('click', () => h.betStep(1));
     $<HTMLInputElement>('#bp-slider').addEventListener('input', (e) => h.betIndex(Number((e.target as HTMLInputElement).value)));
@@ -483,6 +489,94 @@ export class Hud {
   }
 
   // ---------------------------------------------------------------- transient messages
+  // ---------------------------------------------------------------- session, sharing, guide
+  private openSession(): void {
+    this.renderSession();
+    this.open('#modal-session');
+  }
+
+  /** Refreshes the Session panel's rows (called every second while it is open). */
+  renderSession(): void {
+    const dl = $('#session-stats');
+    dl.innerHTML = '';
+    for (const [label, value] of this.h.session()) {
+      const dt = document.createElement('dt');
+      dt.textContent = t(label);
+      const dd = document.createElement('dd');
+      dd.textContent = value;
+      dl.append(dt, dd);
+    }
+  }
+
+  sessionOpen(): boolean {
+    return !$('#modal-session').classList.contains('hidden');
+  }
+
+  /** The always-visible session line some jurisdictions ask for; null hides it. */
+  setSessionBar(text: string | null): void {
+    const el = $('#session-bar');
+    el.classList.toggle('hidden', text === null);
+    if (text !== null) el.textContent = t(text);
+  }
+
+  /** After a big win: a button that copies its replay link (or bet ID); null hides it. */
+  setShare(share: { text: string; isLink: boolean } | null): void {
+    const b = $<HTMLButtonElement>('#btn-share');
+    b.classList.toggle('hidden', share === null);
+    b.onclick = null;
+    if (!share) return;
+    b.querySelector('span')!.textContent = t(share.isLink ? 'Share this win' : 'Copy bet ID');
+    b.onclick = async () => {
+      const ok = await copyText(share.text);
+      if (!ok) this.toast(share.text, 12000);
+      else this.toast(share.isLink ? 'Replay link copied: anyone with it can watch this round.' : `Bet ID ${share.text} copied: find the round in your bet history to replay or share it.`, 5000);
+    };
+  }
+
+  /**
+   * First-session guide: a spotlight moves from control to control with a line of text each.
+   * Resolves when the player finishes or skips it.
+   */
+  async guide(): Promise<void> {
+    const steps: [string, string][] = [
+      ['#btn-spin', 'Tap Spin (or press the spacebar) to play. 8 or more matching candies anywhere on the board win, and winners tumble away for more.'],
+      ['#meter-bet', 'Choose your bet with − and +.'],
+      ['#btn-buy', 'Bonus Games: switch Ante Bet on, or watch and buy a bonus.'],
+      ['#hud .hud-col', 'Autoplay, Turbo and Sound.'],
+      ['#btn-menu', 'The menu: volume, settings, your session and the full game rules.'],
+    ];
+    const el = $('#guide');
+    const spot = el.querySelector<HTMLElement>('.guide-spot')!;
+    const tip = el.querySelector<HTMLElement>('.guide-tip')!;
+    this.splashOpen = true;
+    el.classList.remove('hidden');
+    for (let i = 0; i < steps.length; i++) {
+      const target = document.querySelector(steps[i][0]);
+      const r = target?.getBoundingClientRect();
+      if (!r || r.width === 0) continue;
+      const pad = 10;
+      Object.assign(spot.style, { left: `${r.left - pad}px`, top: `${r.top - pad}px`, width: `${r.width + pad * 2}px`, height: `${r.height + pad * 2}px` });
+      tip.querySelector('.guide-step')!.textContent = `${i + 1} / ${steps.length}`;
+      tip.querySelector('.guide-text')!.textContent = t(steps[i][1]);
+      tip.querySelector('.guide-next')!.textContent = t(i === steps.length - 1 ? 'Got it' : 'Next');
+      // the tip sits on whichever side of the spotlight has more room
+      const below = r.top < innerHeight / 2;
+      const w = Math.min(360, innerWidth - 24);
+      const left = Math.max(12, Math.min(innerWidth - w - 12, r.left + r.width / 2 - w / 2));
+      Object.assign(tip.style, { width: `${w}px`, left: `${left}px`, top: below ? `${r.bottom + pad + 14}px` : 'auto', bottom: below ? 'auto' : `${innerHeight - r.top + pad + 14}px` });
+      tip.classList.remove('in');
+      void tip.offsetWidth;
+      tip.classList.add('in');
+      const skip = await new Promise<boolean>((resolve) => {
+        tip.querySelector<HTMLButtonElement>('.guide-next')!.onclick = () => resolve(false);
+        tip.querySelector<HTMLButtonElement>('.guide-skip')!.onclick = () => resolve(true);
+      });
+      if (skip) break;
+    }
+    el.classList.add('hidden');
+    this.splashOpen = false;
+  }
+
   toast(msg: string, ms = 3500): void {
     const el = $('#toast');
     el.textContent = t(msg);
@@ -986,7 +1080,7 @@ export class Hud {
       options.forEach((o, i) => {
         const price = cards[i].querySelector('.bc-price')!;
         if (price.textContent !== o.price) price.textContent = o.price;
-        cards[i].querySelector('button')!.disabled = !o.affordable;
+        cards[i].querySelector<HTMLButtonElement>('.bc-buy')!.disabled = !o.affordable;
       });
       return;
     }
@@ -1002,7 +1096,17 @@ export class Hud {
       card.querySelector('.bc-vol span')!.textContent = t('Volatility');
       card.querySelector<HTMLElement>('.bc-vol i')!.style.setProperty('--v', String(o.vol));
       card.querySelector('.bc-price')!.textContent = o.price;
-      const b = card.querySelector('button')!;
+      if (o.preview) {
+        // watch the bonus entrance before buying (just the clip; nothing is bought)
+        const p = document.createElement('button');
+        p.type = 'button';
+        p.className = 'bc-preview';
+        p.textContent = `▶ ${t('Preview')}`;
+        p.addEventListener('click', () => void this.clips?.play(o.preview!));
+        p.hidden = !this.clips?.available();
+        card.querySelector('.bc-art')!.appendChild(p);
+      }
+      const b = card.querySelector<HTMLButtonElement>('.bc-buy')!;
       b.textContent = t('Buy');
       b.disabled = !o.affordable;
       b.addEventListener('click', async () => {
@@ -1028,5 +1132,28 @@ export class Hud {
       $('#confirm-yes').addEventListener('click', yes);
       $('#confirm-no').addEventListener('click', no);
     });
+  }
+}
+
+/** Copies text to the clipboard; false if the browser (or the hosting frame) does not allow it. */
+async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    let ok = false;
+    try {
+      ok = document.execCommand('copy');
+    } catch {
+      ok = false;
+    }
+    ta.remove();
+    return ok;
   }
 }

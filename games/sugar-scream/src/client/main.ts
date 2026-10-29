@@ -106,6 +106,8 @@ class Game {
   private clips = new Clips();
   /** Jumpscares: never in the first few rounds, then rarely and at most every two minutes. */
   private roundsPlayed = 0;
+  /** This session's play, for the Session panel and the jurisdiction session bar (RGS amounts). */
+  private session = { start: Date.now(), rounds: 0, bet: 0, won: 0, best: 0, bestX: 0 };
   /** Cost multiplier of the round being shown (1 spin, 1.25 Ante Bet, 100 for a buy, ...). */
   private roundCost = 1;
   private lastScare = 0;
@@ -125,6 +127,18 @@ class Game {
       replayPlay: () => void this.playReplay(),
       sound: (name) => this.audio.play(name),
       openRules: () => this.openRules(),
+      session: () => {
+        const s = this.session;
+        const net = s.won - s.bet;
+        return [
+          ['Session time', clock(Date.now() - s.start)],
+          ['Rounds', String(s.rounds)],
+          ['Total bet', this.fmtMoney(s.bet)],
+          ['Total won', this.fmtMoney(s.won)],
+          ['Net result', `${net >= 0 ? '+' : '−'}${this.fmtMoney(Math.abs(net))}`],
+          ['Biggest win', s.best > 0 ? `${this.fmtMoney(s.best)} (${s.bestX.toLocaleString('en-US')}x)` : '–'],
+        ];
+      },
       autoplaySummary: (n) => t(`${n} rounds at ${this.fmtMoney(this.bet * this.spinCost)} each. Autoplay stops if your balance is too low.`),
       buyOptions: () => BUY_MODES.map((m) => ({
         mode: m.name,
@@ -134,6 +148,7 @@ class Game {
         art: BUY_ART[m.name],
         affordable: this.bet * m.cost <= this.balance,
         vol: ({ bonus: 3, fullmoon: 5, lootbox: 4 } as Record<string, number>)[m.name] ?? 3,
+        preview: ({ bonus: 'entry-cauldron', fullmoon: 'entry-fullmoon', lootbox: 'entry-loot' } as Record<string, ClipName>)[m.name],
       })),
       buyText: (mode) => {
         const m = BUY_MODES.find((b) => b.name === mode)!;
@@ -233,6 +248,18 @@ class Game {
         // the slot intro clip (tap to skip)
         await this.clips.play('intro');
       }
+      // the session clock ticks for the bar and an open Session panel
+      this.session.start = Date.now();
+      this.updateSessionBar();
+      window.setInterval(() => {
+        this.updateSessionBar();
+        if (this.hud.sessionOpen()) this.hud.renderSession();
+      }, 1000);
+      // a first visit gets the short guide to the controls (the menu can show it again)
+      if (!auth.round?.active && !readFlag('ss-guide-done')) {
+        await this.hud.guide();
+        writeFlag('ss-guide-done');
+      }
       // warm the cache for the clips a session is likely to need, after the game has settled
       window.setTimeout(() => void this.clips.prefetch(['entry-tot', 'win-big', 'entry-cauldron', 'scare-ghost', 'scare-witch', 'scare-pumpkin', 'scare-skull', 'win-mega', 'entry-loot', 'entry-fullmoon']), 5000);
       if (auth.round && (auth.round.active ?? true) && auth.round.payoutMultiplier !== undefined) await this.resume(auth.round);
@@ -305,6 +332,7 @@ class Game {
     this.busy = true;
     this.roundBet = this.bet;
     this.refresh();
+    this.hud.setShare(null);
     this.hud.setWin(this.fmtMoney(0));
     this.hud.message('Good luck!');
     const started = performance.now();
@@ -315,6 +343,8 @@ class Game {
       this.balance = res.balance.amount;
       this.hud.setBalance(this.fmtMoney(this.balance));
       round = res.round;
+      this.session.rounds++;
+      this.session.bet += cost;
     } catch (e) {
       await this.player.abortSpin();
       this.hud.toast(errorMessage(e));
@@ -348,6 +378,41 @@ class Game {
     if (await this.clips.play(pick[Math.floor(Math.random() * pick.length)])) this.lastScare = now;
   }
 
+  /**
+   * A replay link for a round when the game knows its Stake game ID and version (the replay
+   * launch needs both), else the bet ID, which Stake's bet history can replay and share.
+   */
+  private shareFor(round: RgsRound): { text: string; isLink: boolean } | null {
+    const event = round.betID ?? round.event;
+    if (event === undefined || event === null) return null;
+    const game = launch.game || this.config?.gameID;
+    if (game && launch.version) {
+      const q = new URLSearchParams({
+        replay: 'true', game, version: launch.version, mode: round.mode ?? 'base', event: String(event),
+        rgs_url: launch.rgsUrl, currency: this.currency, lang: launch.lang, amount: String(round.amount ?? this.roundBet),
+      });
+      if (isSocial()) q.set('social', 'true');
+      return { text: `${location.origin}${location.pathname}?${q}`, isLink: true };
+    }
+    return { text: String(event), isLink: false };
+  }
+
+  /** The session line (timer, net position, RTP) for jurisdictions whose RGS flags ask for it. */
+  private updateSessionBar(): void {
+    const j = this.jurisdiction;
+    const parts: string[] = [];
+    if (j?.displaySessionTimer) parts.push(`⏱ ${clock(Date.now() - this.session.start)}`);
+    if (j?.displayNetPosition) {
+      const net = this.session.won - this.session.bet;
+      parts.push(`Net ${net >= 0 ? '+' : '−'}${this.fmtMoney(Math.abs(net))}`);
+    }
+    if (j?.displayRTP) {
+      const rtp = this.math?.modes.find((m) => m.mode === this.spinMode)?.rtp;
+      parts.push(`RTP ${rtp !== undefined ? (rtp * 100).toFixed(2) : '96.00'}%`);
+    }
+    this.hud.setSessionBar(parts.length ? parts.join('  ·  ') : null);
+  }
+
   /** Validates and plays a round, then settles it with end-round. Returns whether a feature triggered. */
   private async presentRound(round: RgsRound): Promise<boolean> {
     const events = round.state as GameEvent[];
@@ -377,9 +442,20 @@ class Game {
         this.stopAutoplay();
       }
     }
-    this.hud.setWin(this.fmtMoney(winMicros(this.roundBet, payoutCenti)));
+    const won = winMicros(this.roundBet, payoutCenti);
+    this.hud.setWin(this.fmtMoney(won));
     this.hud.setBalance(this.fmtMoney(this.balance));
     if (payoutCenti === 0) this.hud.tips();
+    if (!launch.replay) {
+      this.session.won += won;
+      if (won > this.session.best) {
+        this.session.best = won;
+        this.session.bestX = round.payoutMultiplier;
+      }
+      this.updateSessionBar();
+      // Big Win and above: offer the round as a replay to share
+      if (payoutCenti >= 1500) this.hud.setShare(this.shareFor(round));
+    }
     return feature;
   }
 
@@ -508,4 +584,29 @@ void game.boot();
 
 if (import.meta.env.DEV) {
   void import('./dev/harness.ts').then((m) => m.mountHarness((mode, request) => game.devScenario(mode, request)));
+}
+
+/** h:mm:ss (or m:ss under an hour). */
+function clock(ms: number): string {
+  const s = Math.floor(ms / 1000);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const ss = String(s % 60).padStart(2, '0');
+  return h ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`;
+}
+
+function readFlag(key: string): boolean {
+  try {
+    return localStorage.getItem(key) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function writeFlag(key: string): void {
+  try {
+    localStorage.setItem(key, '1');
+  } catch {
+    /* storage unavailable: the guide shows again next time */
+  }
 }
