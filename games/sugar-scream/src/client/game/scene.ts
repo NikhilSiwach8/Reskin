@@ -737,7 +737,7 @@ export type BoardSkin = 'classic' | 'bloodmoon' | 'ghost';
 const SKINS: Record<BoardSkin, { bg: number; frame: number; glow: number | null }> = {
   classic: { bg: 0xffffff, frame: 0xffffff, glow: null },
   bloodmoon: { bg: 0xff8a7a, frame: 0xffa8a0, glow: 0xff2a2a },
-  ghost: { bg: 0x9cc8ff, frame: 0xd4f2ff, glow: 0x7fe8ff },
+  ghost: { bg: 0x6fa8ff, frame: 0xa8dcff, glow: 0x7fe8ff },
 };
 
 /** Multiplies two 0xRRGGBB tints channel by channel. */
