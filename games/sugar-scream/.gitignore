@@ -3,3 +3,4 @@ dist/
 math-output/*
 !math-output/README.md
 release/
+tools/.*.tmp.*
