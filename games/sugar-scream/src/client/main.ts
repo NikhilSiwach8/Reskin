@@ -60,7 +60,7 @@ interface Settings extends UiSettings {
 
 function loadSettings(): Settings {
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const defaults: Settings = { turbo: false, reduced, muted: false, music: true, sfx: true, musicVol: 0.7, sfxVol: 0.8, intro: true, scares: true, ante: false };
+  const defaults: Settings = { turbo: false, reduced, muted: false, music: true, sfx: true, musicVol: 0.7, sfxVol: 0.8, intro: true, scares: true, haptics: true, ante: false };
   try {
     return { ...defaults, ...JSON.parse(localStorage.getItem('ss-settings') ?? '{}') };
   } catch {
@@ -95,6 +95,8 @@ class Game {
   private clips = new Clips();
   /** Jumpscares: never in the first few rounds, then rarely and at most every two minutes. */
   private roundsPlayed = 0;
+  /** Cost multiplier of the round being shown (1 spin, 1.25 Ante Bet, 100 for a buy, ...). */
+  private roundCost = 1;
   private lastScare = 0;
 
   constructor() {
@@ -168,6 +170,7 @@ class Game {
       turbo: () => this.settings.turbo && !this.jurisdiction?.disabledTurbo,
       reduced: () => this.settings.reduced,
       hands: () => this.autoplay !== null || launch.replay,
+      cost: () => Math.round(this.roundCost * 100),
     }, IDLE_BOARD);
     this.applySettings(this.settings);
     this.hud.showSettings(this.settings);
@@ -329,6 +332,7 @@ class Game {
     if (!this.settings.scares || this.autoplay || this.settings.turbo || launch.replay) return;
     if (this.roundsPlayed < 4 || now - this.lastScare < 120_000 || Math.random() >= 1 / 18) return;
     const pick: ClipName[] = ['scare-ghost', 'scare-witch', 'scare-pumpkin', 'scare-skull'];
+    this.audio.haptic(250);
     if (await this.clips.play(pick[Math.floor(Math.random() * pick.length)])) this.lastScare = now;
   }
 
@@ -336,6 +340,7 @@ class Game {
   private async presentRound(round: RgsRound): Promise<boolean> {
     const events = round.state as GameEvent[];
     const payoutCenti = Math.round(round.payoutMultiplier * 100);
+    this.roundCost = round.costMultiplier ?? BET_MODES.find((m) => m.name === (round.mode ?? 'base'))?.cost ?? 1;
     const check = validateBook({ payoutMultiplier: payoutCenti, events });
     let feature = false;
     if (check.ok) {
@@ -425,6 +430,7 @@ class Game {
     this.audio.sfxOn = s.sfx;
     this.audio.musicVol = s.musicVol;
     this.audio.sfxVol = s.sfxVol;
+    this.audio.hapticsOn = s.haptics;
     this.audio.apply();
     this.scene.reduced = s.reduced;
     this.hud.showSettings(this.settings);

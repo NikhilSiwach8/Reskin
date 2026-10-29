@@ -26,6 +26,8 @@ export interface Settings {
   intro: boolean;
   /** Occasional jumpscare clips between rounds. */
   scares: boolean;
+  /** Phone vibration on big moments. */
+  haptics: boolean;
 }
 
 export interface BuyOption {
@@ -103,7 +105,7 @@ export class Hud {
         this.toggleMenu(false);
       }
     });
-    for (const id of ['reduced', 'intro', 'scares'] as const) {
+    for (const id of ['reduced', 'intro', 'scares', 'haptics'] as const) {
       $<HTMLInputElement>(`#set-${id}`).addEventListener('change', (e) => {
         this.settings = { ...this.settings, [id]: (e.target as HTMLInputElement).checked };
         h.settings(this.settings);
@@ -310,7 +312,7 @@ export class Hud {
 
   showSettings(s: Settings): void {
     this.settings = { ...s };
-    for (const id of ['reduced', 'intro', 'scares'] as const) $<HTMLInputElement>(`#set-${id}`).checked = s[id];
+    for (const id of ['reduced', 'intro', 'scares', 'haptics'] as const) $<HTMLInputElement>(`#set-${id}`).checked = s[id];
     $<HTMLInputElement>('#set-music').value = String(Math.round((s.music ? s.musicVol : 0) * 100));
     $<HTMLInputElement>('#set-sfx').value = String(Math.round((s.sfx ? s.sfxVol : 0) * 100));
     document.body.classList.toggle('reduced', s.reduced);
@@ -411,11 +413,50 @@ export class Hud {
     el.classList.toggle('hidden', value === null);
     if (value === null) return;
     $('#cauldron-value').textContent = `x${value}`;
+    // the brew heats up as the multiplier grows: warm, hot, inferno
+    const heat = value >= 50 ? 3 : value >= 15 ? 2 : value >= 5 ? 1 : 0;
+    for (let i = 1; i <= 3; i++) el.classList.toggle(`heat-${i}`, heat === i);
     if (bump) {
       el.classList.remove('bump');
       void el.offsetWidth;
       el.classList.add('bump');
     }
+  }
+
+  /** The Cauldron quakes before a big pour (a truthful tell: the pour is about to happen). */
+  rumbleCauldron(): void {
+    const el = $('#cauldron');
+    el.classList.remove('rumble');
+    void el.offsetWidth;
+    el.classList.add('rumble');
+  }
+
+  /** Tumble chain counter over the board ("TUMBLE x3"); null hides it. */
+  combo(n: number | null): void {
+    const el = $('#combo');
+    if (n === null || n < 2) {
+      el.classList.add('hidden');
+      return;
+    }
+    el.querySelector('.combo-n')!.textContent = `x${n}`;
+    el.dataset.level = String(Math.min(5, n));
+    el.classList.remove('hidden', 'pop');
+    void el.offsetWidth;
+    el.classList.add('pop');
+  }
+
+  /** The witch peeks in from the side of the board: something big is about to happen. */
+  async peek(ms: number): Promise<void> {
+    const src = panelSrc('witch');
+    if (!src || document.body.classList.contains('reduced')) return;
+    const el = $<HTMLImageElement>('#peek');
+    el.src = src;
+    el.style.setProperty('--peek-ms', `${ms}ms`);
+    el.classList.remove('hidden', 'go');
+    void el.offsetWidth;
+    el.classList.add('go');
+    await wait(ms);
+    el.classList.add('hidden');
   }
 
   cauldronPoint(): { x: number; y: number } {

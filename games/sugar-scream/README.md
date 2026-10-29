@@ -98,6 +98,18 @@ Build the upload zips with `npm run math:publish && npm run build && npm run rel
   | Free spins total screen | Sting: the track's ending | `sting_end.mp3` |
 
   The loop under a sting dips and comes back after it. The cuts are made with ffmpeg from `art/source/audio/halloween-music.mp3`. If the files can't load, the old procedural music-box loop plays instead. The music slider, music switch and mute all control it.
+- **Tension and payoff:**
+  - **Tumble chains:** every chain escalates. A "TUMBLE x2, x3, ..." counter pops over the board and changes colour as it grows, the win chime climbs in pitch, a rising bell and gust mark each step, and the bursts and screen shake grow.
+  - **Heavy clusters:** 12+ candies or 5x+ hit with a thump and a white blink first.
+  - **Truthful tells:** the result is decided by the server before anything is shown, so these only appear when the thing they hint at really happens.
+    - The witch peeks in from the side of the board before a spin that will run a 4+ tumble chain or win 15x+.
+    - The Cauldron quakes before a pour of x10 or more.
+  - **Free spins:**
+    - The Cauldron panel heats up with its value: warm at x5, hot at x15, inferno at x50.
+    - The last spin gets a "Final Spin" moment.
+    - Retriggers burst into confetti.
+  - **Vibration:** on phones that support it (Android), big moments vibrate: scatters, heavy clusters, chains, bonus triggers, big wins and jumpscares. Vibration can be switched off in the menu.
+  - **Honest small wins:** a win smaller than what the round cost is not celebrated (no Nice Win splash). It is a net loss, shown plainly on the win meter. In a bonus, a hit below 1x the bet gets no splash.
 - **Video clips** (`src/client/clips.ts`, made with Remotion in [videos/sugar-scream-clips](../../videos/sugar-scream-clips)):
   - **Intro:** the slot intro plays after Start.
   - **Bonus entrances:** the bonus entry clip (candy tunnel, hallway, the doors open, into the bonus world) replaces the CSS door transition. The scene switches while the camera dives through the doorway.

@@ -16,6 +16,8 @@ export interface PlayerOptions {
   reduced: () => boolean;
   /** Autoplay or replay: dialogs continue by themselves. */
   hands: () => boolean;
+  /** What the round cost, in centi-bet (100 for a spin, 125 with Ante Bet, 10000 for a 100x buy). */
+  cost: () => number;
 }
 
 /** Lighter splashes for every win below Big Win. */
@@ -94,6 +96,8 @@ export class Player {
     // bonus rounds celebrate every hit as it lands (each winning spin, Treat or Loot Box prize),
     // not the total at the end
     const perHit = events.some((ev) => ev.type === 'freeSpinsStart' || ev.type === 'trickOrTreat' || ev.type === 'lootBox');
+    // tumble chain of the current spin (1 = the first win on the board)
+    let chain = 0;
     for (let i = 0; i < events.length; i++) {
       const e = events[i];
       switch (e.type) {
@@ -103,12 +107,22 @@ export class Player {
           this.dropping = null;
           this.board = e.board;
           this.hud.setTumble(null);
+          this.hud.combo(null);
+          chain = 0;
           await this.scene.dropIn(e.board, e.mults, e.phase === 'base' && !this.o.turbo() && !this.skipping);
           this.audio.play('land');
           const sc = cellsOf(e.board, 'SC');
           if (sc.length >= 3) {
             this.audio.play('scatter');
+            this.audio.haptic([20, 40, 20]);
             await this.scene.pulseCells(sc, this.ms(500));
+          }
+          // a truthful tell: the witch peeks in only when this spin really is about to run a
+          // long tumble chain or a big win (the outcome is already decided by the server)
+          const ahead = spinAhead(events, i);
+          if (!fast() && (ahead.chain >= 4 || ahead.tumbleTotal >= 1500)) {
+            this.audio.play('spell');
+            await this.hud.peek(this.ms(1100));
           }
           break;
         }
@@ -120,7 +134,19 @@ export class Player {
           break;
         case 'tumbleWin': {
           lastWin = e.wins.map((w) => w.symbol);
-          this.audio.play('win');
+          chain++;
+          // a heavy cluster (12+ candies or 5x+) hits hard: a thump, a white blink, a buzz
+          if (e.wins.some((w) => w.count >= 12 || w.pay >= 500)) {
+            this.audio.play('hit');
+            this.audio.haptic(45);
+            await this.scene.flashBoard(this.ms(160));
+          }
+          this.audio.play('win', chain - 1);
+          if (chain >= 2) {
+            this.hud.combo(chain);
+            this.audio.play('combo', chain);
+            this.audio.haptic(12 + Math.min(5, chain) * 6);
+          }
           const jobs = e.wins.map((w) => {
             const cells = cellsOf(this.board, w.symbol);
             const c = this.scene.centroid(cells);
@@ -135,7 +161,7 @@ export class Player {
           const removed = winningCells(this.board, lastWin);
           this.scene.undim();
           this.audio.play('pop');
-          await this.scene.explode(removed);
+          await this.scene.explode(removed, chain);
           const next = applyTumble(this.board, lastWin, e.fill);
           if (!next) throw new Error('tumble does not match the board');
           this.board = next;
@@ -144,6 +170,14 @@ export class Player {
           break;
         }
         case 'multiplier':
+          // a big pour is coming: the Cauldron quakes first
+          if (e.mult >= 10) {
+            this.hud.rumbleCauldron();
+            this.audio.play('cauldron');
+            this.audio.haptic([30, 30, 60]);
+            void this.scene.shake(this.ms(500), 8);
+            await wait(this.ms(450));
+          }
           if (e.cells.length) {
             this.audio.play('mult');
             const p = this.hud.cauldronPoint();
@@ -157,7 +191,7 @@ export class Player {
           this.hud.message(`${freeKind ? 'Total win' : 'Win'} ${this.o.fmt(e.totalWin)}`);
           if (e.kind === 'scatter') await this.hud.banner('Lollipop Pay', this.o.fmt(e.amount), this.ms(1100));
           // one splash per spin once its tumble chain (and any multiplier) has finished
-          if (perHit && e.kind === 'spin') await this.winSplash(e.amount);
+          if (perHit && e.kind === 'spin') await this.winSplash(e.amount, 100);
           break;
         case 'trickOrTreat': {
           this.inFeature = true;
@@ -170,7 +204,7 @@ export class Player {
           await this.hud.trickOrTreat(knocks, this.o.fmt, this.o.hands(), autoMs() !== null, async (k) => {
             this.audio.play('knock');
             setTimeout(() => this.audio.play(k.prize === 'treat' ? 'treat' : k.prize === 'trick' ? 'boo' : 'lollipop'), 250);
-            if (k.prize === 'treat') await this.winSplash(k.amount);
+            if (k.prize === 'treat') await this.winSplash(k.amount, 100);
           });
           this.inFeature = false;
           break;
@@ -184,6 +218,7 @@ export class Player {
           freeKind = e.kind;
           const def = FREE_SPINS[e.kind];
           void this.scene.shake(600, 14);
+          this.audio.haptic([60, 40, 120]);
           await this.scene.pulseCells(e.cells, this.ms(900));
           this.audio.play('bonus');
           freeTotal = e.spins;
@@ -203,9 +238,17 @@ export class Player {
         case 'freeSpin':
           freeTotal = e.total;
           this.hud.showFree(FREE_SPINS[freeKind ?? 'cauldron'].name, e.index, e.total);
+          if (e.index === e.total && e.total > 1) {
+            this.audio.play('scatter');
+            this.audio.haptic([25, 40, 25]);
+            await this.hud.banner('Final Spin', '', this.ms(1000));
+          }
           break;
         case 'retrigger':
           this.audio.play('retrigger');
+          this.audio.play('lollipop');
+          this.audio.haptic([50, 40, 90]);
+          this.scene.celebrate();
           void this.scene.shake(400, 8);
           await this.scene.pulseCells(e.cells, this.ms(700));
           await this.hud.banner(`+${e.added} Free Spins`, '', this.ms(1300));
@@ -261,10 +304,11 @@ export class Player {
         }
         case 'finalWin':
           this.scene.undim();
+          this.hud.combo(null);
           if (e.amount > 0) {
             this.hud.message(`Win ${this.o.fmt(e.amount)}`);
             // bonus rounds already celebrated each hit (and showed the bonus total screen)
-            if (!perHit) await this.winSplash(e.amount);
+            if (!perHit) await this.winSplash(e.amount, this.o.cost());
           }
           break;
       }
@@ -278,11 +322,13 @@ export class Player {
    * win reached punch in one after another, then the amount appears at once. Wins below Big
    * Win get the lighter Nice / Sweet splash.
    */
-  private async winSplash(amount: number): Promise<void> {
+  private async winSplash(amount: number, minSmall: number): Promise<void> {
     const fast = this.o.turbo() || this.skipping || this.o.hands();
     const x = `${(amount / 100).toLocaleString('en-US')}x`;
     const big = WIN_TIERS.filter((tier) => amount >= tier.min);
     if (!big.length) {
+      // never celebrate a win smaller than what was staked: it is a loss, shown plainly on the meter
+      if (amount < minSmall) return;
       const small = [...SMALL_TIERS].reverse().find((tier) => amount >= tier.min) ?? SMALL_TIERS[0];
       this.audio.play('nice');
       await this.hud.winSplash([{ title: small.title }], this.o.fmt(amount), x, { tierMs: fast ? 250 : 450, holdMs: fast ? 550 : 1000, mini: true });
@@ -292,6 +338,7 @@ export class Player {
     // the win clip for the highest tier reached climbs through every tier below it: titles at
     // 0.75 s each from 0.25 s, and the amount lands when they are done (see the Remotion WinClip)
     const top = big[big.length - 1].art.replace('win_', '') as 'big' | 'mega' | 'monster' | 'sugar' | 'max';
+    this.audio.haptic([80, 50, 80, 50, 160]);
     await this.hud.winSplash(tiers, this.o.fmt(amount), x, {
       tierMs: fast ? 450 : 900,
       holdMs: fast ? 1100 : 2200,
@@ -304,4 +351,19 @@ export class Player {
       },
     });
   }
+}
+
+/** What the spin starting at events[at] (a reveal) will do: its tumble chain length and win before multipliers. */
+function spinAhead(events: GameEvent[], at: number): { chain: number; tumbleTotal: number } {
+  let chain = 0;
+  let tumbleTotal = 0;
+  for (let i = at + 1; i < events.length; i++) {
+    const e = events[i];
+    if (e.type === 'reveal' || e.type === 'freeSpin') break;
+    if (e.type === 'tumbleWin') {
+      chain++;
+      tumbleTotal = e.tumbleTotal;
+    }
+  }
+  return { chain, tumbleTotal };
 }

@@ -428,15 +428,17 @@ export class Scene {
     }
   }
 
-  /** Winning candies burst into sugar sparks. */
-  async explode(cells: Cell[]): Promise<void> {
+  /** Winning candies burst into sugar sparks; later steps of a tumble chain burst harder. */
+  async explode(cells: Cell[], chain = 1): Promise<void> {
     if (cells.length >= 12) void this.shake(320, 6 + Math.min(10, cells.length - 12));
+    else if (chain >= 3) void this.shake(260, 3 + Math.min(5, chain) * 1.5);
+    const sparks = 6 + 2 * Math.min(5, chain - 1);
     const jobs = cells.map((c) => {
       const v = this.views[c.reel][c.row];
       const color = SHARD_COLORS[v.symbol] ?? 0xffc040;
-      this.flash('p_fx_pop', v.root.x, v.root.y, 1.15);
+      this.flash('p_fx_pop', v.root.x, v.root.y, 1.15 + Math.min(4, chain - 1) * 0.08);
       this.shards(v.root.x, v.root.y, color);
-      this.burst(v.root.x, v.root.y, color, 6);
+      this.burst(v.root.x, v.root.y, color, sparks);
       return this.tween.run(170, (p) => { v.root.scale.set(1.16 + p * 0.3); v.root.alpha = 1 - p; }, ease.outQuad);
     });
     await Promise.all(jobs);
@@ -674,6 +676,27 @@ export class Scene {
         g.rotation = spin * t;
         g.alpha = p < 0.6 ? 1 : 1 - ease.inOutSine((p - 0.6) / 0.4);
       }, ease.linear).then(() => this.release(g));
+    }
+  }
+
+  /** Hit-stop flash: the board blinks white for a heavy cluster before it pops. */
+  async flashBoard(ms = 160, alpha = 0.55): Promise<void> {
+    if (this.reduced) return;
+    const g = new Graphics();
+    g.roundRect(-12, -10, BOARD_W + 24, BOARD_H + 20, 24).fill({ color: 0xffffff });
+    g.blendMode = 'add';
+    this.fx.addChild(g);
+    await this.tween.run(ms, (p) => { g.alpha = alpha * (1 - p); }, ease.outQuad);
+    g.destroy();
+  }
+
+  /** Confetti of sparks all over the board (retriggers, the final spin). */
+  celebrate(colors: number[] = [0xffd34d, 0xff4fb0, 0x9dff4a], n = 26): void {
+    if (this.reduced) return;
+    for (let i = 0; i < n; i++) {
+      const x = Math.random() * BOARD_W;
+      const y = Math.random() * BOARD_H;
+      this.burst(x, y, colors[i % colors.length], 5);
     }
   }
 

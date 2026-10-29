@@ -9,7 +9,9 @@ export type Sfx =
   | 'click' | 'drop' | 'land' | 'pop' | 'win' | 'nice' | 'bigWin' | 'spell' | 'scatter' | 'knock' | 'treat' | 'boo'
   | 'lollipop' | 'bonus' | 'mult' | 'cauldron' | 'retrigger' | 'end'
   // bonus door transition
-  | 'portal' | 'creak' | 'whoosh' | 'arrive';
+  | 'portal' | 'creak' | 'whoosh' | 'arrive'
+  // tumble chains and heavy hits
+  | 'combo' | 'hit';
 
 export type MusicArea = 'base' | 'feature' | 'free' | 'fullMoon';
 export type Sting = 'bigwin' | 'end';
@@ -357,7 +359,19 @@ export class Audio {
     }
   }
 
-  play(name: Sfx): void {
+  /** Phone vibration for big moments (Android; iOS has no vibration API). */
+  hapticsOn = true;
+  haptic(pattern: number | number[]): void {
+    if (!this.hapticsOn || this.muted) return;
+    try {
+      navigator.vibrate?.(pattern);
+    } catch {
+      /* not allowed in this frame */
+    }
+  }
+
+  /** `level` lifts a tumble chain: each step of the chain plays higher and fuller. */
+  play(name: Sfx, level = 0): void {
     if (!this.ctx || this.ctx.state !== 'running' || !this.sfx) return;
     const t = this.ctx.currentTime;
     const A = 220; // everything sits in A minor with the music
@@ -380,11 +394,23 @@ export class Audio {
         this.tone(f, t + 0.02, 0.1, 'triangle', 0.07, this.sfx, 0, f * 1.7);
         break;
       }
-      case 'win': { // a haunted music box: a minor arpeggio on a random chord of the key
-        const root = [0, 5, 7, -2][Math.floor(Math.random() * 4)];
-        [12, 15, 19, 24].forEach((s, i) => this.celesta(n(root + s), t + i * 0.09, 0.13));
+      case 'win': { // a haunted music box: a minor arpeggio, climbing with the tumble chain
+        const root = level > 0 ? [0, 3, 5, 7, 10, 12][Math.min(5, level)] : [0, 5, 7, -2][Math.floor(Math.random() * 4)];
+        [12, 15, 19, 24].forEach((s, i) => this.celesta(n(root + s), t + i * 0.09, 0.13 + Math.min(0.08, level * 0.015)));
+        if (level >= 2) this.bell(n(root + 24), t + 0.3, 0.05 + Math.min(0.08, level * 0.015), 1.2);
         break;
       }
+      case 'combo': { // a tumble chain grows: a rising gust and a bell, higher every step
+        const lift = Math.min(12, level * 2);
+        this.noise(t, 0.45, 0.5, 'bandpass', 400 * 2 ** (lift / 12), 2400 * 2 ** (lift / 12), 3, 0.12);
+        this.bell(n(lift), t + 0.12, 0.12, 1.6);
+        if (level >= 4) this.cackle(t + 0.25, 0.25, 3);
+        break;
+      }
+      case 'hit': // a heavy cluster lands: sub thump and a crack
+        this.tone(95, t, 0.32, 'sine', 0.5, this.sfx, 0, 38);
+        this.noise(t, 0.12, 0.45, 'bandpass', 1800, 600, 1.2);
+        break;
       case 'nice': // small win splash: a ghostly choir and a high bell
         [0, 3, 7].forEach((s) => this.ghost(t, 1.1, n(s + 12) * 0.98, n(s + 12), n(s + 12) * 0.97, 0.06));
         this.bell(n(24), t + 0.05, 0.08, 1.4);
