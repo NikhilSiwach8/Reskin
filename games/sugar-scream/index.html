@@ -83,6 +83,7 @@
       <label class="pop-row" title="Sound effects"><span class="pop-icon">🔈</span><input type="range" id="set-sfx" min="0" max="100" aria-label="Sound effects volume" /></label>
       <label class="pop-toggle"><span>Reduced motion</span><input type="checkbox" id="set-reduced" /><i></i></label>
       <label class="pop-toggle"><span>Intro screen</span><input type="checkbox" id="set-intro" /><i></i></label>
+      <label class="pop-toggle"><span>Jumpscares</span><input type="checkbox" id="set-scares" /><i></i></label>
       <button id="btn-rules" type="button"><span class="pop-i">i</span> Game info</button>
     </div>
 
@@ -112,6 +113,12 @@
         <div id="tot-doors"></div>
         <div id="tot-total">Treats: 0</div>
       </div>
+    </div>
+
+    <!-- full-screen video clips (intro, bonus entries, big wins, jumpscares); tap to skip -->
+    <div id="clip" class="hidden" aria-hidden="true">
+      <video playsinline webkit-playsinline preload="auto" disablepictureinpicture disableremoteplayback></video>
+      <div id="clip-amount" class="hidden"><div class="ca-value"></div><div class="ca-x"></div></div>
     </div>
 
     <div id="portal" class="hidden" aria-hidden="true">

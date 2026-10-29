@@ -288,9 +288,20 @@ export class Player {
       await this.hud.winSplash([{ title: small.title }], this.o.fmt(amount), x, { tierMs: fast ? 250 : 450, holdMs: fast ? 550 : 1000, mini: true });
       return;
     }
-    this.audio.play('bigWin');
-    this.audio.sting('bigwin');
     const tiers = big.map((tier) => ({ title: tier.title, art: panelSrc(tier.art) }));
-    await this.hud.winSplash(tiers, this.o.fmt(amount), x, { tierMs: fast ? 450 : 900, holdMs: fast ? 1100 : 2200, fountain: true });
+    // the win clip for the highest tier reached climbs through every tier below it: titles at
+    // 0.75 s each from 0.25 s, and the amount lands when they are done (see the Remotion WinClip)
+    const top = big[big.length - 1].art.replace('win_', '') as 'big' | 'mega' | 'monster' | 'sugar' | 'max';
+    await this.hud.winSplash(tiers, this.o.fmt(amount), x, {
+      tierMs: fast ? 450 : 900,
+      holdMs: fast ? 1100 : 2200,
+      fountain: true,
+      clip: { name: `win-${top}`, landAt: 0.25 + Math.max(1.6, big.length * 0.75), rate: fast ? 1.6 : 1 },
+      // the clip has its own sound; the CSS splash needs the game's
+      onCss: () => {
+        this.audio.play('bigWin');
+        this.audio.sting('bigwin');
+      },
+    });
   }
 }

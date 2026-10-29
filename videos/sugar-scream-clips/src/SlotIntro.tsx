@@ -64,7 +64,8 @@ const Feature: React.FC<{ readonly label: string; readonly icon: string; readonl
 
 export const SlotIntro: React.FC = () => {
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  const { fps, width, height } = useVideoConfig();
+  const portrait = height > width;
   return (
     <AbsoluteFill style={{ backgroundColor: "#0b0326", translate: shake(frame, 1.6 * fps, 12, 28, "intro") }}>
       <Backdrop src={art("bg_base")} zoomFrom={1.25} zoomTo={1.05} dim={0.25} />
@@ -94,12 +95,14 @@ export const SlotIntro: React.FC = () => {
       </Sequence>
 
       {/* logo */}
-      <AbsoluteFill style={{ justifyContent: "flex-start", alignItems: "center", paddingTop: 150 }}>
+      <AbsoluteFill style={{ justifyContent: "flex-start", alignItems: "center", paddingTop: portrait ? 260 : 150 }}>
         <Logo at={1.6 * fps} size={230} />
         <Interactive.Div
           name="Tagline"
           style={{
             marginTop: 30,
+            maxWidth: "90%",
+            textAlign: "center",
             fontFamily: "Fredoka",
             fontWeight: 700,
             fontSize: 76,
@@ -113,10 +116,14 @@ export const SlotIntro: React.FC = () => {
       </AbsoluteFill>
 
       {/* the five bonuses, one after another */}
-      <AbsoluteFill style={{ justifyContent: "flex-end", alignItems: "center", paddingBottom: 110 }}>
+      <AbsoluteFill style={{ justifyContent: "flex-end", alignItems: "center", paddingBottom: portrait ? 300 : 110 }}>
         <div
           style={{
             display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "center",
+            rowGap: 40,
+            maxWidth: portrait ? 1040 : 1800,
             gap: 24,
             opacity: interpolate(frame, [7.2 * fps, 7.6 * fps], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
           }}
@@ -141,13 +148,13 @@ export const SlotIntro: React.FC = () => {
 
       {/* max win */}
       <Sequence name="Max win" from={7.4 * fps} layout="none">
-        <AbsoluteFill style={{ justifyContent: "flex-end", alignItems: "center", paddingBottom: 170 }}>
+        <AbsoluteFill style={{ justifyContent: "flex-end", alignItems: "center", paddingBottom: portrait ? 420 : 170 }}>
           <Interactive.Div
             name="Max win line"
             style={{
               fontFamily: "Fredoka",
               fontWeight: 700,
-              fontSize: 120,
+              fontSize: portrait ? 104 : 120,
               color: "#ffd34d",
               textShadow: outline(8, "#5a1300"),
               scale: interpolate(frame, [7.4 * fps, 7.8 * fps], [0.4, 1], {

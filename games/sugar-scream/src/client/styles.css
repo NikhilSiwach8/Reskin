@@ -562,3 +562,16 @@ body.replay .hud-left, body.replay .hud-right .tile, body.replay #btn-auto, body
 }
 #rules-body ul { margin: 6px 0; padding-left: 20px; }
 #rules-body li { margin: 4px 0; }
+
+/* ------------------------------------------------------------------ video clips */
+#clip { position: fixed; inset: 0; z-index: 13; background: #000; opacity: 0; transition: opacity 0.12s; cursor: pointer; }
+#clip.on { opacity: 1; }
+#clip video { display: block; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+/* the real win, over a win clip (the clips carry no amount): under the painted tier title */
+#clip-amount { position: absolute; left: 0; right: 0; bottom: 8%; text-align: center; pointer-events: none; }
+#clip-amount.show { animation: tier-punch 0.5s cubic-bezier(0.2, 1.6, 0.4, 1); }
+#clip-amount .ca-value { font-family: var(--fd); font-weight: 700; font-size: clamp(44px, 10vmin, 140px); line-height: 1; color: #ffd34d; -webkit-text-stroke: 2px #5a1300; text-shadow: 0 6px 0 #5a1300, 0 0 30px rgba(0, 0, 0, 0.8); font-variant-numeric: tabular-nums; }
+#clip-amount .ca-x { margin-top: 0.3em; font-family: var(--fd); font-weight: 700; font-size: clamp(22px, 5vmin, 70px); color: var(--lime); text-shadow: 0 4px 0 #1e5200, 0 0 20px rgba(0, 0, 0, 0.8); }
+@media (orientation: portrait) {
+  #clip-amount { bottom: 26%; }
+}

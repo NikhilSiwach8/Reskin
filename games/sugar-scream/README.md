@@ -98,6 +98,13 @@ Build the upload zips with `npm run math:publish && npm run build && npm run rel
   | Free spins total screen | Sting: the track's ending | `sting_end.mp3` |
 
   The loop under a sting dips and comes back after it. The cuts are made with ffmpeg from `art/source/audio/halloween-music.mp3`. If the files can't load, the old procedural music-box loop plays instead. The music slider, music switch and mute all control it.
+- **Video clips** (`src/client/clips.ts`, made with Remotion in [videos/sugar-scream-clips](../../videos/sugar-scream-clips)):
+  - **Intro:** the slot intro plays after Start.
+  - **Bonus entrances:** the bonus entry clip (candy tunnel, hallway, the doors open, into the bonus world) replaces the CSS door transition. The scene switches while the camera dives through the doorway.
+  - **Big wins:** the win clip for the highest tier reached plays for Big Win and above. It climbs through the tiers, and the real amount lands on it.
+  - **Jumpscares:** a jumpscare can follow a losing spin, never in the first rounds, autoplay or turbo, and at most every two minutes. It can be switched off in the menu.
+
+  Each clip comes as a landscape (1280x720) and a portrait (540x960) cut, and the one matching the screen plays full screen. Turbo, slam stop and autoplay play the clips faster, and a tap skips them. The game's music steps aside while a clip plays its own sound, which follows mute and the volume sliders. Reduced motion turns the clips off. If a clip cannot play (codec, network, autoplay policy), the CSS animation plays instead. The jumpscare's flashes stay under three a second (photosensitivity).
 - **Animated interface:** floating logo, breathing spin button, light sweep and hop on Buy, glowing Ante when on, pulsing info button, bubbling Cauldron panel and breathing Trick-or-Treat doors. Everything stops with reduced motion.
 
 ## Verified

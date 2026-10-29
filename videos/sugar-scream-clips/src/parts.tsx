@@ -208,12 +208,15 @@ export const Logo: React.FC<{ readonly at?: number; readonly size?: number; read
   style,
 }) => {
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  const { fps, width, height } = useVideoConfig();
+  const portrait = height > width;
   return (
     <div
       style={{
         display: "flex",
-        gap: size * 0.28,
+        flexDirection: portrait ? "column" : "row",
+        alignItems: "center",
+        gap: portrait ? size * 0.05 : size * 0.28,
         fontFamily: "Creepster",
         fontSize: size,
         lineHeight: 1,
@@ -232,6 +235,12 @@ export const Logo: React.FC<{ readonly at?: number; readonly size?: number; read
       <span style={{ color: "#9dff4a", textShadow: "0 0 34px #5fd400, 0 10px 0 #1e5200" }}>Scream</span>
     </div>
   );
+};
+
+/** Where a fraction of a cover-fitted image lands on screen (for features painted into the art). */
+export const coverPoint = (imgW: number, imgH: number, W: number, H: number, fx: number, fy: number) => {
+  const sc = Math.max(W / imgW, H / imgH);
+  return { x: (W - imgW * sc) / 2 + fx * imgW * sc, y: (H - imgH * sc) / 2 + fy * imgH * sc };
 };
 
 /** Big outlined Fredoka text for amounts and captions. */

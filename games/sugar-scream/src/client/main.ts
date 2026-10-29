@@ -10,6 +10,7 @@ import type { Board, GameEvent } from '../engine/types.ts';
 import { validateBook } from '../engine/validate.ts';
 import { loadAssets, panelSrc, symbolSrc } from './assets.ts';
 import { Audio } from './audio.ts';
+import { Clips, type ClipName } from './clips.ts';
 import { Player } from './game/player.ts';
 import { Scene } from './game/scene.ts';
 import { Hud, wait, type Settings as UiSettings } from './hud.ts';
@@ -59,7 +60,7 @@ interface Settings extends UiSettings {
 
 function loadSettings(): Settings {
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const defaults: Settings = { turbo: false, reduced, muted: false, music: true, sfx: true, musicVol: 0.7, sfxVol: 0.8, intro: true, ante: false };
+  const defaults: Settings = { turbo: false, reduced, muted: false, music: true, sfx: true, musicVol: 0.7, sfxVol: 0.8, intro: true, scares: true, ante: false };
   try {
     return { ...defaults, ...JSON.parse(localStorage.getItem('ss-settings') ?? '{}') };
   } catch {
@@ -91,6 +92,10 @@ class Game {
   private roundBet = 0;
   private autoplay: { left: number; stopOnFeature: boolean } | null = null;
   private math?: MathSummary;
+  private clips = new Clips();
+  /** Jumpscares: never in the first few rounds, then rarely and at most every two minutes. */
+  private roundsPlayed = 0;
+  private lastScare = 0;
 
   constructor() {
     this.hud = new Hud({
@@ -168,7 +173,14 @@ class Game {
     this.hud.showSettings(this.settings);
     this.hud.setMuted(this.settings.muted);
     this.audio.muted = this.settings.muted;
-    window.addEventListener('pointerdown', () => this.audio.unlock());
+    this.clips.enabled = () => !this.settings.reduced;
+    this.clips.volume = () => this.audio.clipVolume();
+    this.clips.onPlaying = (on) => this.audio.setClipPlaying(on);
+    this.hud.clips = this.clips;
+    window.addEventListener('pointerdown', () => {
+      this.audio.unlock();
+      this.clips.unlock();
+    });
     window.addEventListener('keydown', (e) => this.onKey(e));
     if (failures.length) this.hud.toast(`Some artwork could not be loaded (${failures.length}). The game remains playable.`);
 
@@ -203,7 +215,11 @@ class Game {
         this.audio.unlock();
         if (skipNextTime) this.applySettings({ ...this.settings, intro: false });
         this.hud.showSettings(this.settings);
+        // the slot intro clip (tap to skip)
+        await this.clips.play('intro');
       }
+      // warm the cache for the clips a session is likely to need, after the game has settled
+      window.setTimeout(() => void this.clips.prefetch(['entry-tot', 'win-big', 'entry-cauldron', 'scare-ghost', 'scare-witch', 'scare-pumpkin', 'scare-skull', 'win-mega', 'entry-loot', 'entry-fullmoon']), 5000);
       if (auth.round && (auth.round.active ?? true) && auth.round.payoutMultiplier !== undefined) await this.resume(auth.round);
     } catch (e) {
       this.hud.setLoading(1, errorMessage(e));
@@ -257,7 +273,7 @@ class Game {
 
   private onKey(e: KeyboardEvent): void {
     if (e.code !== 'Space' || e.repeat) return;
-    if (this.hud.anyModalOpen() || this.hud.splashOpen || launch.replay || this.jurisdiction?.disabledSpacebar) return;
+    if (this.hud.anyModalOpen() || this.hud.splashOpen || this.clips.playing || launch.replay || this.jurisdiction?.disabledSpacebar) return;
     // also stops a focused button from being activated by the same key press
     e.preventDefault();
     this.onSpinButton();
@@ -293,12 +309,27 @@ class Game {
       return;
     }
     const feature = await this.presentRound(round);
+    this.roundsPlayed++;
+    if (round.payoutMultiplier === 0) await this.maybeScare();
     const minMs = this.jurisdiction?.minimumRoundDuration ?? 0;
     const elapsed = performance.now() - started;
     if (minMs > elapsed) await wait(minMs - elapsed);
     this.busy = false;
     this.refresh();
     this.continueAutoplay(feature);
+  }
+
+  /**
+   * A random jumpscare after a losing spin. Cosmetic only: it plays after the round has settled,
+   * never in autoplay or turbo, never in the first rounds, at most every two minutes, and can be
+   * switched off in the menu (reduced motion turns it off too).
+   */
+  private async maybeScare(): Promise<void> {
+    const now = Date.now();
+    if (!this.settings.scares || this.autoplay || this.settings.turbo || launch.replay) return;
+    if (this.roundsPlayed < 4 || now - this.lastScare < 120_000 || Math.random() >= 1 / 18) return;
+    const pick: ClipName[] = ['scare-ghost', 'scare-witch', 'scare-pumpkin', 'scare-skull'];
+    if (await this.clips.play(pick[Math.floor(Math.random() * pick.length)])) this.lastScare = now;
   }
 
   /** Validates and plays a round, then settles it with end-round. Returns whether a feature triggered. */

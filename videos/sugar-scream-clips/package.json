@@ -29,7 +29,8 @@
     "build": "remotion bundle",
     "upgrade": "remotion upgrade",
     "lint": "eslint src && tsc",
-    "render:all": "node render-all.mjs"
+    "render:all": "node render-all.mjs",
+    "render:game": "node render-game.mjs"
   },
   "allowScripts": {
     "esbuild": false

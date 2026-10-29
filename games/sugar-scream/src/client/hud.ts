@@ -1,6 +1,7 @@
 // DOM user interface: meters, buttons, dialogs, banners, win screens and the Trick or Treat doors.
 import type { KnockPrize } from '../engine/types.ts';
 import type { Sfx } from './audio.ts';
+import type { ClipName, Clips } from './clips.ts';
 import { bgSrc, buttonSrc, panelSrc, portalHole, symbolSrc } from './assets.ts';
 import { localizeTree, t } from './text.ts';
 
@@ -23,6 +24,8 @@ export interface Settings {
   musicVol: number;
   sfxVol: number;
   intro: boolean;
+  /** Occasional jumpscare clips between rounds. */
+  scares: boolean;
 }
 
 export interface BuyOption {
@@ -63,6 +66,8 @@ export class Hud {
   private autoCount = 0;
   private skipOverlay: (() => void) | null = null;
   splashOpen = false;
+  /** Video clips, set by the game; the bonus door and the big win screens use them when they can play. */
+  clips?: Clips;
   private settings!: Settings;
   private readonly h: HudHandlers;
 
@@ -98,7 +103,7 @@ export class Hud {
         this.toggleMenu(false);
       }
     });
-    for (const id of ['reduced', 'intro'] as const) {
+    for (const id of ['reduced', 'intro', 'scares'] as const) {
       $<HTMLInputElement>(`#set-${id}`).addEventListener('change', (e) => {
         this.settings = { ...this.settings, [id]: (e.target as HTMLInputElement).checked };
         h.settings(this.settings);
@@ -305,7 +310,7 @@ export class Hud {
 
   showSettings(s: Settings): void {
     this.settings = { ...s };
-    for (const id of ['reduced', 'intro'] as const) $<HTMLInputElement>(`#set-${id}`).checked = s[id];
+    for (const id of ['reduced', 'intro', 'scares'] as const) $<HTMLInputElement>(`#set-${id}`).checked = s[id];
     $<HTMLInputElement>('#set-music').value = String(Math.round((s.music ? s.musicVol : 0) * 100));
     $<HTMLInputElement>('#set-sfx').value = String(Math.round((s.sfx ? s.sfxVol : 0) * 100));
     document.body.classList.toggle('reduced', s.reduced);
@@ -505,7 +510,33 @@ export class Hud {
    * once (no count-up) and holds. `mini` is the lighter splash for wins below Big Win.
    * A tap skips straight to the total; a second tap closes.
    */
-  winSplash(tiers: { title: string; art?: string | null }[], total: string, x: string, opts: { tierMs: number; holdMs: number; mini?: boolean; fountain?: boolean }): Promise<void> {
+  async winSplash(
+    tiers: { title: string; art?: string | null }[],
+    total: string,
+    x: string,
+    opts: { tierMs: number; holdMs: number; mini?: boolean; fountain?: boolean; clip?: { name: ClipName; landAt: number; rate: number }; onCss?: () => void },
+  ): Promise<void> {
+    // Big Win and above: the win clip climbs through the tiers and the real amount lands on it
+    if (opts.clip && this.clips) {
+      const amount = $('#clip-amount');
+      amount.querySelector('.ca-value')!.textContent = total;
+      amount.querySelector('.ca-x')!.textContent = x;
+      amount.classList.add('hidden');
+      amount.classList.remove('show');
+      const land = () => {
+        amount.classList.remove('hidden');
+        void amount.offsetWidth;
+        amount.classList.add('show');
+      };
+      const ok = await this.clips.play(opts.clip.name, { rate: opts.clip.rate, cues: [[opts.clip.landAt, land]], skipTo: opts.clip.landAt });
+      amount.classList.add('hidden');
+      if (ok) return;
+    }
+    opts.onCss?.();
+    return this.cssWinSplash(tiers, total, x, opts);
+  }
+
+  private cssWinSplash(tiers: { title: string; art?: string | null }[], total: string, x: string, opts: { tierMs: number; holdMs: number; mini?: boolean; fountain?: boolean }): Promise<void> {
     const el = $('#winscreen');
     $('#win-title').textContent = t(tiers[0].title);
     el.classList.remove('hidden', 'show-total', 'punch');
@@ -565,6 +596,13 @@ export class Hud {
    * Without the painted art (or with reduced motion) it just calls `onClosed`.
    */
   async enterDoor(dest: string, fast: boolean, onClosed: () => void): Promise<void> {
+    // the bonus entry clip: tunnel, hallway, the doors open, through into the bonus world
+    const clip = ({ cauldron: 'entry-cauldron', fullmoon: 'entry-fullmoon', tot: 'entry-tot', loot: 'entry-loot' } as Record<string, ClipName>)[dest];
+    if (clip && this.clips) {
+      // the scene switches while the camera dives through the doorway (3.1 s to 3.9 s in the clip)
+      const ok = await this.clips.play(clip, { rate: fast ? 1.6 : 1, cues: [[3.7, onClosed]], skipTo: 3.85 });
+      if (ok) return;
+    }
     const wall = panelSrc('portal_wall');
     const doors = panelSrc('portal_doors');
     const world = bgSrc(`portal_${dest}`);

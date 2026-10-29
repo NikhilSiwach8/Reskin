@@ -35,6 +35,8 @@ export class Audio {
   private area: MusicArea = 'base';
   private loop?: { area: MusicArea; src: AudioBufferSourceNode; gain: GainNode };
   private duckTimer = 0;
+  /** A video clip with its own soundtrack is playing: the game's music steps aside. */
+  private clipPlaying = false;
   muted = false;
   musicOn = true;
   sfxOn = true;
@@ -108,6 +110,19 @@ export class Audio {
     this.loop = { area, src, gain };
   }
 
+  /** Mutes the game's music while a video clip plays its own soundtrack. */
+  setClipPlaying(on: boolean): void {
+    this.clipPlaying = on;
+    this.apply();
+  }
+
+  /** Volume for a clip's soundtrack (mostly effects): follows mute and the volume sliders. */
+  clipVolume(): number {
+    if (this.muted) return 0;
+    if (this.sfxOn) return 0.9 * this.sfxVol;
+    return this.musicOn ? 0.6 * this.musicVol : 0;
+  }
+
   /** A one-shot music sting; the loop dips under it and comes back after. */
   sting(name: Sting): void {
     const ctx = this.ctx;
@@ -133,7 +148,7 @@ export class Audio {
     if (!this.ctx || !this.master || !this.music || !this.sfx) return;
     const t = this.ctx.currentTime;
     this.master.gain.setTargetAtTime(this.muted ? 0 : 0.8, t, 0.05);
-    this.music.gain.setTargetAtTime(this.musicOn ? 0.5 * this.musicVol : 0, t, 0.2);
+    this.music.gain.setTargetAtTime(this.musicOn && !this.clipPlaying ? 0.5 * this.musicVol : 0, t, 0.2);
     this.sfx.gain.setTargetAtTime(this.sfxOn ? 0.75 * this.sfxVol : 0, t, 0.05);
   }
 

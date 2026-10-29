@@ -12,7 +12,7 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { art, Backdrop, Embers, Flash, music, outline, sfx, shake, Vignette } from "./parts";
+import { art, Backdrop, coverPoint, Embers, Flash, music, outline, sfx, shake, Vignette } from "./parts";
 
 export type BonusEntryProps = {
   readonly world: string;
@@ -22,13 +22,14 @@ export type BonusEntryProps = {
   readonly track: string;
 };
 
-// The arch in the painted hallway (fractions of the image), as measured for the game.
+// The arch in the painted hallway (fractions of the 1672x941 image), as measured for the game.
 const HOLE = { x0: 0.3738, y0: 0.1807, x1: 0.6232, y1: 0.7981 };
+const WALL = { w: 1672, h: 941 };
 
 /** The candy tunnel spinning towards the camera, with the BONUS! banner. */
 const Tunnel: React.FC = () => {
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  const { fps, width } = useVideoConfig();
   return (
     <AbsoluteFill style={{ backgroundColor: "#08000f", overflow: "hidden", justifyContent: "center", alignItems: "center" }}>
       <Img
@@ -46,7 +47,7 @@ const Tunnel: React.FC = () => {
         name="Bonus banner"
         src={art("panel_bonus_banner")}
         style={{
-          width: 1100,
+          width: Math.min(1100, width * 0.9),
           scale: interpolate(frame, [0, 0.4 * fps, 1.1 * fps, 1.3 * fps], [0.2, 1, 1.05, 2.2], {
             extrapolateLeft: "clamp",
             extrapolateRight: "clamp",
@@ -65,7 +66,10 @@ const Tunnel: React.FC = () => {
 const Hallway: React.FC<{ readonly world: string }> = ({ world }) => {
   const frame = useCurrentFrame();
   const { fps, width, height } = useVideoConfig();
-  const hole = { left: HOLE.x0 * width, top: HOLE.y0 * height, w: (HOLE.x1 - HOLE.x0) * width, h: (HOLE.y1 - HOLE.y0) * height };
+  // the wall is cover-fitted, so map the arch through the same crop at any aspect ratio
+  const a = coverPoint(WALL.w, WALL.h, width, height, HOLE.x0, HOLE.y0);
+  const b = coverPoint(WALL.w, WALL.h, width, height, HOLE.x1, HOLE.y1);
+  const hole = { left: a.x, top: a.y, w: b.x - a.x, h: b.y - a.y };
   const cx = hole.left + hole.w / 2;
   const cy = hole.top + hole.h / 2;
   const open = interpolate(frame, [1.1 * fps, 1.9 * fps], [0, 105], {
@@ -148,6 +152,7 @@ const Arrival: React.FC<{ readonly world: string; readonly title: string; readon
         <Interactive.Div
           name="Bonus title"
           style={{
+            maxWidth: "92%",
             fontFamily: "Creepster",
             fontSize: 190,
             lineHeight: 1,
@@ -169,6 +174,8 @@ const Arrival: React.FC<{ readonly world: string; readonly title: string; readon
         <Interactive.Div
           name="Bonus subtitle"
           style={{
+            maxWidth: "88%",
+            textAlign: "center",
             fontFamily: "Fredoka",
             fontWeight: 700,
             fontSize: 72,

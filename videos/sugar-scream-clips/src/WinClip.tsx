@@ -22,6 +22,8 @@ export type WinClipProps = {
   readonly multiplier: number;
   readonly currency: string;
   readonly rayColor: string;
+  /** Show the counting amount (promo clips). The game overlays the real win instead. */
+  readonly showAmount?: boolean;
 };
 
 const TIER_SECONDS = 0.75;
@@ -32,13 +34,13 @@ const TIER_MIN: Record<string, number> = { panel_win_big: 15, panel_win_mega: 40
 /** One painted tier title: punches in, wobbles, holds. */
 const TierTitle: React.FC<{ readonly src: string }> = ({ src }) => {
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  const { fps, width } = useVideoConfig();
   return (
     <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", paddingBottom: 300 }}>
       <Img
         src={art(src)}
         style={{
-          width: 1040,
+          width: Math.min(1040, width * 0.92),
           scale: interpolate(frame, [0, 0.35 * fps], [0.25, 1], {
             extrapolateLeft: "clamp",
             extrapolateRight: "clamp",
@@ -106,7 +108,7 @@ const Amount: React.FC<{ readonly amount: number; readonly multiplier: number; r
   );
 };
 
-export const WinClip: React.FC<WinClipProps> = ({ background, tiers, amount, multiplier, currency, rayColor }) => {
+export const WinClip: React.FC<WinClipProps> = ({ background, tiers, amount, multiplier, currency, rayColor, showAmount = true }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
   const tierFrames = Math.round(TIER_SECONDS * fps);
@@ -132,9 +134,11 @@ export const WinClip: React.FC<WinClipProps> = ({ background, tiers, amount, mul
           <TierTitle src={tier} />
         </Sequence>
       ))}
-      <Sequence name="Amount" from={start} layout="none">
-        <Amount amount={amount} multiplier={multiplier} currency={currency} countFrames={countFrames} tiers={tiers} tierFrames={tierFrames} />
-      </Sequence>
+      {showAmount ? (
+        <Sequence name="Amount" from={start} layout="none">
+          <Amount amount={amount} multiplier={multiplier} currency={currency} countFrames={countFrames} tiers={tiers} tierFrames={tierFrames} />
+        </Sequence>
+      ) : null}
       <Vignette strength={0.55} />
       {tiers.map((tier, i) => (
         <Flash key={tier} at={start + i * tierFrames} frames={8} peak={0.55} />

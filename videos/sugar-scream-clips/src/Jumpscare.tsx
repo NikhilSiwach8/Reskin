@@ -19,8 +19,10 @@ export type JumpscareProps = {
   readonly monster: string;
   readonly tease: string;
   readonly tagline: string;
-  /** Seconds of calm before the scare. */
+  /** Seconds of calm before the scare (0: the clip opens on the scare, as in the game). */
   readonly calm: number;
+  /** End on the logo and tagline (promo clips) instead of cutting back to the game. */
+  readonly sting?: boolean;
 };
 
 /** The calm before: a darkened, flickering scene that slowly pushes in. */
@@ -49,6 +51,8 @@ const Calm: React.FC<{ readonly background: string; readonly monster: string; re
         <Interactive.Div
           name="Tease"
           style={{
+            maxWidth: "88%",
+            textAlign: "center",
             fontFamily: "Creepster",
             fontSize: 96,
             letterSpacing: 4,
@@ -75,13 +79,14 @@ const Scare: React.FC<{ readonly background: string; readonly monster: string }>
     easing: [Easing.out(Easing.cubic), Easing.linear],
   });
   const split = interpolate(frame, [0, 0.6 * fps], [38, 6], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const strobe = frame < 10 ? (frame % 4 < 2 ? "rgba(255, 30, 30, 0.55)" : "rgba(255, 255, 255, 0.35)") : "transparent";
-  // the friendly candy art turns nasty: a white-hot flash, a two-frame blackout before it lunges
-  // again, and a glitchy skew
-  // inverted, the candy art becomes a black thing with glowing eyes; it flickers to a harsh silhouette
+  // one red flash only: no strobing, so it stays under three flashes a second (photosensitivity)
+  const flash = interpolate(frame, [0, 1, 8], [0, 0.55, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  // the friendly candy art turns nasty: a white-hot first frame, then inverted into a black thing
+  // with glowing eyes, a two-frame blackout before it lunges again, one harsh silhouette frame
+  // and a glitchy skew
   const look = frame < 2
     ? "brightness(3) grayscale(1)"
-    : frame % 9 === 4
+    : frame === 13
       ? "grayscale(1) brightness(0.25) contrast(3) drop-shadow(0 0 80px rgba(255,0,0,0.9))"
       : "invert(1) grayscale(0.85) contrast(1.7) drop-shadow(0 0 60px rgba(255,0,0,0.85)) drop-shadow(0 0 140px rgba(160,0,0,0.6))";
   const blackout = frame === 6 || frame === 7;
@@ -110,7 +115,7 @@ const Scare: React.FC<{ readonly background: string; readonly monster: string }>
           <Img name="Monster" src={art(monster)} style={{ position: "absolute", height: 900, scale: size * (frame > 7 ? 1.12 : 1), filter: look }} />
         </div>
       </AbsoluteFill>
-      <AbsoluteFill style={{ backgroundColor: strobe }} />
+      <AbsoluteFill style={{ backgroundColor: "rgb(255, 30, 30)", opacity: flash }} />
       <Vignette strength={0.85} />
     </AbsoluteFill>
   );
@@ -140,37 +145,42 @@ const Sting: React.FC<{ readonly tagline: string }> = ({ tagline }) => {
   );
 };
 
-export const Jumpscare: React.FC<JumpscareProps> = ({ background, monster, tease, tagline, calm }) => {
+export const Jumpscare: React.FC<JumpscareProps> = ({ background, monster, tease, tagline, calm, sting = true }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
   const scareAt = Math.round(calm * fps);
   const stingAt = scareAt + Math.round(1.0 * fps);
+  const fadeIn = scareAt > 0 ? 0.4 * fps : 1;
   return (
     <AbsoluteFill style={{ backgroundColor: "black" }}>
-      <Sequence name="Calm" durationInFrames={scareAt}>
-        <Calm background={background} monster={monster} tease={tease} />
-      </Sequence>
-      <Sequence name="Scare" from={scareAt} durationInFrames={stingAt - scareAt}>
+      {scareAt > 0 ? (
+        <Sequence name="Calm" durationInFrames={scareAt}>
+          <Calm background={background} monster={monster} tease={tease} />
+        </Sequence>
+      ) : null}
+      <Sequence name="Scare" from={scareAt} durationInFrames={sting ? stingAt - scareAt : undefined}>
         <Scare background={background} monster={monster} />
       </Sequence>
-      <Sequence name="Logo" from={stingAt}>
-        <Sting tagline={tagline} />
-      </Sequence>
+      {sting ? (
+        <Sequence name="Logo" from={stingAt}>
+          <Sting tagline={tagline} />
+        </Sequence>
+      ) : null}
       <AbsoluteFill
         style={{
           backgroundColor: "black",
-          opacity: interpolate(frame, [0, 0.4 * fps, durationInFrames - 0.4 * fps, durationInFrames], [1, 0, 0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
+          opacity: interpolate(frame, [0, fadeIn, durationInFrames - 0.4 * fps, durationInFrames], [scareAt > 0 ? 1 : 0, 0, 0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
         }}
       />
 
-      <Audio name="Heartbeat" src={sfx("heartbeat")} volume={0.9} />
-      <Audio name="Wind" src={sfx("portal")} from={0.3 * fps} volume={0.35} />
-      <Audio name="Riser" src={sfx("riser")} from={scareAt - Math.round(2.55 * fps)} volume={0.55} />
+      {scareAt > 0 ? <Audio name="Heartbeat" src={sfx("heartbeat")} volume={0.9} /> : null}
+      {scareAt > 0 ? <Audio name="Wind" src={sfx("portal")} from={0.3 * fps} volume={0.35} /> : null}
+      {scareAt >= 2.55 * fps ? <Audio name="Riser" src={sfx("riser")} from={scareAt - Math.round(2.55 * fps)} volume={0.55} /> : null}
       <Audio name="Screech" src={sfx("screech")} from={scareAt} volume={1} />
       <Audio name="Impact" src={sfx("impact")} from={scareAt} volume={1} />
       <Audio name="Ghost" src={sfx("boo")} from={scareAt + 2} volume={0.8} />
-      <Audio name="Logo bell" src={sfx("scatter")} from={stingAt + Math.round(0.25 * fps)} volume={0.7} />
-      <Audio name="Cackle" src={sfx("spell")} from={stingAt + Math.round(0.6 * fps)} volume={0.6} />
+      {sting ? <Audio name="Logo bell" src={sfx("scatter")} from={stingAt + Math.round(0.25 * fps)} volume={0.7} /> : null}
+      {sting ? <Audio name="Cackle" src={sfx("spell")} from={stingAt + Math.round(0.6 * fps)} volume={0.6} /> : null}
     </AbsoluteFill>
   );
 };
