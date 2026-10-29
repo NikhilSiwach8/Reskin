@@ -11,34 +11,34 @@
     {
       "mode": "base",
       "cost": 1,
-      "rtp": 0.9599999999906098,
+      "rtp": 0.9600000000486429,
       "maxWin": 5000,
-      "maxWinProbability": 6.878427120030552e-7,
-      "hitRate": 0.44526243875615584
+      "maxWinProbability": 7.778052870338063e-7,
+      "hitRate": 0.44500856964551644
     },
     {
       "mode": "ante",
       "cost": 1.25,
-      "rtp": 0.960000000002309,
+      "rtp": 0.960000000025706,
       "maxWin": 5000,
-      "maxWinProbability": 4.761688230138291e-7,
-      "hitRate": 0.4408632655732145
+      "maxWinProbability": 5.431388069930669e-7,
+      "hitRate": 0.4436592402693275
     },
     {
       "mode": "bonus",
       "cost": 100,
-      "rtp": 0.959999999998568,
+      "rtp": 0.9599999999978454,
       "maxWin": 5000,
-      "maxWinProbability": 0.000005000000001005075,
-      "hitRate": 0.9999999999999782
+      "maxWinProbability": 0.000006666666668026567,
+      "hitRate": 1.000000000000412
     },
     {
       "mode": "fullmoon",
       "cost": 300,
-      "rtp": 0.9600000000075518,
+      "rtp": 0.9599999999996934,
       "maxWin": 5000,
-      "maxWinProbability": 0.000054503873034072284,
-      "hitRate": 1.0000000000005
+      "maxWinProbability": 0.0001999999999923214,
+      "hitRate": 1.0000000000003784
     },
     {
       "mode": "lootbox",
