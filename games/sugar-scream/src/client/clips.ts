@@ -47,10 +47,13 @@ export class Clips {
 
   /** Must run in a user gesture once, so later clips may play with sound (iOS). */
   unlock(): void {
-    if (this.video.dataset.unlocked || !this.supported) return;
+    if (this.video.dataset.unlocked || !this.supported || this.playing) return;
     this.video.dataset.unlocked = '1';
-    this.video.muted = true;
-    this.video.play().then(() => this.video.pause()).catch(() => {}).finally(() => (this.video.muted = false));
+    const v = this.video;
+    v.muted = true;
+    // the promise can settle after a clip has started on this same element (the first tap is
+    // often the one that starts a clip): then it must not pause or mute that clip
+    v.play().then(() => { if (!this.playing) v.pause(); }).catch(() => {}).finally(() => { if (!this.playing) v.muted = false; });
   }
 
   /** Warms the HTTP cache for clips that are about to be needed, one at a time. */
@@ -83,6 +86,7 @@ export class Clips {
       let cueRan = false;
       let lastTime = -1;
       let lastMove = performance.now();
+      let resumed = false;
       const runCues = (upTo: number) => {
         while (cues.length && cues[0][0] <= upTo) {
           cueRan = true;
@@ -124,8 +128,14 @@ export class Clips {
         runCues(v.currentTime);
         // stalled (the stream stopped arriving): give up rather than leave the player on black;
         // if nothing has been cued yet the caller falls back to its own animation
+        // paused by something else (the browser, another script): resume it once, then treat it
+        // like a stall
         const now = performance.now();
-        if (v.currentTime !== lastTime || v.paused) {
+        if (v.paused && !v.ended && !resumed) {
+          resumed = true;
+          void v.play().catch(() => {});
+        }
+        if (v.currentTime !== lastTime) {
           lastTime = v.currentTime;
           lastMove = now;
         } else if (now - lastMove > STALL_TIMEOUT / (v.playbackRate || 1)) {
