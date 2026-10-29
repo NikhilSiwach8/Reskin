@@ -779,9 +779,16 @@ export class Hud {
     }
     this.splashOpen = true;
     overlay.classList.remove('hidden');
+    // the player picks (no time limit); only autoplay and replays pick by themselves
     const chosen = await new Promise<number>((resolve) => {
-      const timer = window.setTimeout(() => resolve(Math.floor(Math.random() * count)), auto ? 700 : 15000);
-      boxes.forEach((b, i) => (b.onclick = () => { clearTimeout(timer); resolve(i); }));
+      const timer = auto ? window.setTimeout(() => resolve(Math.floor(Math.random() * count)), 700) : 0;
+      const nudge = auto ? 0 : window.setTimeout(() => row.classList.add('nudge'), 5000);
+      boxes.forEach((b, i) => (b.onclick = () => {
+        clearTimeout(timer);
+        clearTimeout(nudge);
+        row.classList.remove('nudge');
+        resolve(i);
+      }));
     });
     boxes.forEach((b, i) => {
       b.onclick = null;
@@ -897,12 +904,16 @@ export class Hud {
     overlay.classList.remove('hidden');
     $('#tot-sub').textContent = t('Knock on 3 doors');
     for (const k of knocks) {
+      // the player knocks (no time limit); only autoplay and replays knock by themselves
       const chosen = await new Promise<number>((resolve) => {
         const open = buttons.map((b, i) => [b, i] as const).filter(([b]) => !b.disabled);
-        const timer = window.setTimeout(() => resolve(open.some(([, i]) => i === k.index) ? k.index : open[0][1]), auto ? 450 : 12000);
+        const timer = auto ? window.setTimeout(() => resolve(open.some(([, i]) => i === k.index) ? k.index : open[0][1]), 450) : 0;
+        const nudge = auto ? 0 : window.setTimeout(() => doors.classList.add('nudge'), 5000);
         for (const [b, i] of open) {
           b.onclick = () => {
             clearTimeout(timer);
+            clearTimeout(nudge);
+            doors.classList.remove('nudge');
             resolve(i);
           };
         }

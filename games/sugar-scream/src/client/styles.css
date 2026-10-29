@@ -605,3 +605,8 @@ body.reduced #combo, body.reduced #peek { animation: none !important; }
 /* loading screen: the looping clip behind the bar (its poster is the painted loading art) */
 #loading-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; z-index: 0; }
 #loading > :not(video) { position: relative; z-index: 1; }
+
+/* Trick or Treat / Loot Box: after 5 s without a pick, the closed doors and boxes wiggle for attention */
+#tot-doors.nudge .door:not(:disabled), #loot-boxes.nudge .loot-box:not(:disabled) { animation: nudge 1.6s ease-in-out infinite; }
+#tot-doors.nudge .door:not(:disabled):nth-child(2n), #loot-boxes.nudge .loot-box:not(:disabled):nth-child(2n) { animation-delay: -0.8s; }
+@keyframes nudge { 0%, 70%, 100% { rotate: 0deg; } 76% { rotate: -5deg; } 82% { rotate: 5deg; } 88% { rotate: -3deg; } 94% { rotate: 2deg; } }
