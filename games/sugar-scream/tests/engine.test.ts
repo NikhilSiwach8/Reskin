@@ -171,6 +171,61 @@ describe('features', () => {
   });
 });
 
+describe('Pumpkin Patch', () => {
+  /** Full Moon buys until one has a Pumpkin Patch split. */
+  const splitBook = (seed: number) => {
+    const rng = new Rng(seed);
+    for (let i = 0; i < 400; i++) {
+      const book = playRound(i, 'fullmoon', rng);
+      if (book.tags.includes('pumpkinPatch')) return book;
+    }
+    throw new Error('no Pumpkin Patch in 400 Full Moon buys');
+  };
+
+  it('splits only in Full Moon, after a win, copying the value onto a candy, and the multiplier counts the copies', () => {
+    const book = splitBook(11);
+    expect(validateBook(book).ok).toBe(true);
+    const i = book.events.findIndex((e) => e.type === 'pumpkinSplit');
+    const split = book.events[i] as Extract<GameEvent, { type: 'pumpkinSplit' }>;
+    // the next multiplier lists every split copy with its source's value
+    const mult = book.events.slice(i).find((e) => e.type === 'multiplier') as Extract<GameEvent, { type: 'multiplier' }>;
+    for (const sp of split.splits) expect(mult.cells).toContainEqual({ ...sp.to, value: sp.value });
+    expect(mult.landed).toBe(mult.cells.reduce((sum, c) => sum + c.value, 0));
+  });
+
+  it('never splits in Haunted Cauldron free spins', () => {
+    // a Haunted Cauldron buy can still become Full Moon if tumbles bring a 5th Lollipop
+    const rng = new Rng(12);
+    let cauldronRounds = 0;
+    for (let i = 0; i < 300; i++) {
+      const book = playRound(i, 'bonus', rng);
+      if (ofType(book.events, 'freeSpinsStart')[0]?.kind !== 'cauldron') continue;
+      cauldronRounds++;
+      expect(ofType(book.events, 'pumpkinSplit')).toHaveLength(0);
+    }
+    expect(cauldronRounds).toBeGreaterThan(200);
+  });
+
+  it('the validator rejects a forged split', () => {
+    const book = splitBook(13);
+    const forged = structuredClone(book);
+    const sp = forged.events.find((e) => e.type === 'pumpkinSplit') as Extract<GameEvent, { type: 'pumpkinSplit' }>;
+    sp.splits[0].value += 1; // a copy worth more than its source
+    expect(validateBook(forged).ok).toBe(false);
+    const onScatter = structuredClone(book);
+    const sp2 = onScatter.events.find((e) => e.type === 'pumpkinSplit') as Extract<GameEvent, { type: 'pumpkinSplit' }>;
+    sp2.splits[0].to = sp2.splits[0].from; // onto a Jack-o'-Lantern
+    expect(validateBook(onScatter).ok).toBe(false);
+  });
+
+  it('validating a book does not change its boards (the client plays them afterwards)', () => {
+    const book = splitBook(14);
+    const before = JSON.stringify(book.events);
+    validateBook(book);
+    expect(JSON.stringify(book.events)).toBe(before);
+  });
+});
+
 describe('Loot Box', () => {
   it('a bought Loot Box pays its tier multiplier (capped at the max win)', () => {
     const rng = new Rng(31);

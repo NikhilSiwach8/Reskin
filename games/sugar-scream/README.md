@@ -8,6 +8,7 @@ A Halloween reskin of the **pay-anywhere tumbling slot** format made famous by P
 | **Trick or Treat** | Exactly 3 Skull Lollipops (one short of free spins) start a doorstep pick bonus: knock on up to 3 of 9 doors for Treats (1x to 50x), Tricks, or the Golden Lollipop, which awards free spins. |
 | **Haunted Cauldron** | In free spins, the Jack-o'-Lanterns on each winning spin are poured into a Cauldron that keeps multiplying every later win, instead of only the spin they land on. |
 | **Full Moon** (super free spins) | 5+ Lollipops: 12 spins, the Cauldron starts at x5 and every Jack-o'-Lantern counts double. |
+| **Pumpkin Patch** (in Full Moon) | When a Full Moon spin wins, each Jack-o'-Lantern has a 20% chance to split: a copy with the same value sprouts on a candy, counts in that spin's multiplier and is poured into the Cauldron too, so splits snowball. |
 | **Loot Box** | Drops on 1 in 1,500 base spins, or buy it for 92x: open one of 6 boxes for a Big (15x+), Mega (40x+), Monster (100x+) or Sugar Scream (500x+) win, or the 5,000x Max Win (1 in 1,000 boxes). |
 
 Theme, art, names and code are original; only the game format is borrowed. See [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md) for the full rules, the reskin mapping, the round flow and the book event contract.
@@ -34,7 +35,7 @@ npm run dev
 
 Open <http://localhost:5173/?sessionID=dev&rgs_url=localhost:5173/rgs&lang=en&currency=USD>.
 
-Every new `sessionID` starts with 1,000.00 USD. In development a **DEV** panel (top right) plays a real book of a chosen type (loss, win, long tumble chain, big win, Witch's Spell, Trick or Treat, Golden Lollipop, Haunted Cauldron, Full Moon, retrigger, each buy, max win) through the normal play, validate, present and end-round path.
+Every new `sessionID` starts with 1,000.00 USD. In development a **DEV** panel (top right) plays a real book of a chosen type (loss, win, long tumble chain, big win, Witch's Spell, Trick or Treat, Golden Lollipop, Haunted Cauldron, Full Moon, Pumpkin Patch, retrigger, each buy, max win) through the normal play, validate, present and end-round path.
 
 Launch parameters: `social=true` (stake.us wording), `currency=EUR`, `lang=de` (falls back to English), and `replay=true&game=x&version=1&mode=base&event=<book id>`.
 

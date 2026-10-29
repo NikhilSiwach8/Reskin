@@ -61,7 +61,7 @@ export const DRAWS: Record<DrawTable, Weighted<SymbolId>> = {
   // Ante Bet: more Skull Lollipops (free spins about 1.7x, Trick or Treat about 1.5x as often).
   ante: [...PAY_WEIGHTS.map(([s, w]) => [s, w * 2] as [SymbolId, number]), ['SC', 28]],
   free: [...FREE_PAY_WEIGHTS, ['SC', 10], ['JK', 18]],
-  fullMoon: [...FREE_PAY_WEIGHTS, ['SC', 10], ['JK', 26]],
+  fullMoon: [...FREE_PAY_WEIGHTS, ['SC', 10], ['JK', 20]],
 };
 
 /** Jack-o'-Lantern multiplier values. */
@@ -106,6 +106,13 @@ export const LOOT_TIERS: Record<LootTier, { name: string; min: number; max: numb
 export const LOOT_TABLE: Weighted<LootTier> = [['big', 700], ['mega', 200], ['monster', 80], ['sugar', 19], ['max', 1]];
 
 // ------------------------------------------------------------------ free spins
+/**
+ * Pumpkin Patch (Full Moon only): when a free spin's tumbles end with a win, each Jack-o'-Lantern
+ * on the board may split, sprouting a copy with the same value on a candy cell. Splits count in
+ * that spin's multiplier and are poured into the Cauldron like any other Jack-o'-Lantern.
+ */
+export const PUMPKIN_SPLIT = 0.2;
+
 export interface FreeSpinDef {
   name: string;
   spins: number;
@@ -114,11 +121,13 @@ export interface FreeSpinDef {
   /** Each Jack-o'-Lantern adds its value times this to the Cauldron. */
   pour: number;
   draw: DrawTable;
+  /** Pumpkin Patch: chance that each Jack-o'-Lantern on a winning spin splits into two (0: never). */
+  split: number;
 }
 
 export const FREE_SPINS: Record<'cauldron' | 'fullMoon', FreeSpinDef> = {
-  cauldron: { name: 'Haunted Cauldron', spins: 10, cauldron: 0, pour: 1, draw: 'free' },
-  fullMoon: { name: 'Full Moon', spins: 12, cauldron: 5, pour: 2, draw: 'fullMoon' },
+  cauldron: { name: 'Haunted Cauldron', spins: 10, cauldron: 0, pour: 1, draw: 'free', split: 0 },
+  fullMoon: { name: 'Full Moon', spins: 12, cauldron: 5, pour: 2, draw: 'fullMoon', split: PUMPKIN_SPLIT },
 };
 /** Scatters on the final board of a base spin: 4 = Haunted Cauldron, 5+ = Full Moon. */
 export const CAULDRON_SCATTERS = 4;

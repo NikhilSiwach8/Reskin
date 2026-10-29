@@ -247,6 +247,8 @@ function scenarioMatches(b: StoredBook, want: string): boolean {
       return has('freeSpinsStart', 'cauldron') && !has('trickOrTreat');
     case 'fullMoon':
       return has('freeSpinsStart', 'fullMoon');
+    case 'pumpkinPatch':
+      return has('pumpkinSplit');
     case 'retrigger':
       return has('retrigger');
     case 'lootBox':

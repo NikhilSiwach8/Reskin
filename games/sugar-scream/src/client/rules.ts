@@ -51,7 +51,8 @@ export function buildRules(root: HTMLElement, o: { math?: MathSummary; fmt: (cen
     <p><img src="${symbolSrc('JK')}" alt=""> During free spins Jack-o'-Lanterns can land, each carrying a multiplier (${mults}). They stay through the tumbles. When a free spin's tumbles end with a win, the spin's total win is multiplied by the sum of its Jack-o'-Lanterns <b>plus the Cauldron</b>. Then those Jack-o'-Lanterns are poured into the Cauldron, which keeps growing until the feature ends. Jack-o'-Lanterns on a spin without a win are lost.</p>
     <p>${RETRIGGER_SCATTERS} or more Skull Lollipops during free spins award ${RETRIGGER_SPINS} more free spins.</p>
     <h3>Full Moon free spins</h3>
-    <p>${FULL_MOON_SCATTERS} or more Skull Lollipops award ${FREE_SPINS.fullMoon.spins} Full Moon free spins. They play like Haunted Cauldron, but the Cauldron starts at x${FREE_SPINS.fullMoon.cauldron}, Jack-o'-Lanterns land more often and each one adds <b>${FREE_SPINS.fullMoon.pour}x</b> its value to the Cauldron.</p>
+    <p>${FULL_MOON_SCATTERS} or more Skull Lollipops award ${FREE_SPINS.fullMoon.spins} Full Moon free spins. They play like Haunted Cauldron, but the Cauldron starts at x${FREE_SPINS.fullMoon.cauldron} and each Jack-o'-Lantern adds <b>${FREE_SPINS.fullMoon.pour}x</b> its value to the Cauldron.</p>
+    <p><b>Pumpkin Patch:</b> in Full Moon, when a free spin's tumbles end with a win, each Jack-o'-Lantern on the board has a ${Math.round(FREE_SPINS.fullMoon.split * 100)}% chance to split: a copy with the same value sprouts on a candy. The copies count in that spin's multiplier and are poured into the Cauldron like any other Jack-o'-Lantern. Pumpkin Patch never happens in Haunted Cauldron free spins.</p>
     ${o.disabledBuy ? '' : '<h3>Ante Bet and Buy Feature</h3>'}
     ${modes.filter((m) => m.name !== 'base').map((m) => `<p><b>${esc(m.label)} (${m.cost}x bet):</b> ${esc(m.description)}</p>`).join('')}
     <h3>Return to player</h3>

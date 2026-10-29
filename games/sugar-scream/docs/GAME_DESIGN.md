@@ -2,7 +2,7 @@
 
 Sugar Scream is a Halloween reskin of the **pay-anywhere tumbling slot** format made famous by Pragmatic Play's *Sweet Bonanza*: a 6x5 board, 8 or more matching symbols anywhere win, winners burst and new symbols tumble in, a lollipop scatter triggers free spins and multiplier symbols land only during free spins.
 
-The theme, art, names and code are original. The format is the reference; nothing is copied from the original game. Three bonuses are new to this format: **Witch's Spell**, **Trick or Treat** and the **Haunted Cauldron** persistent multiplier. There is also a **Full Moon** super version of the free spins.
+The theme, art, names and code are original. The format is the reference; nothing is copied from the original game. Three bonuses are new to this format: **Witch's Spell**, **Trick or Treat** and the **Haunted Cauldron** persistent multiplier. There is also a **Full Moon** super version of the free spins, where the **Pumpkin Patch** splits Jack-o'-Lanterns.
 
 All numbers below come from `src/engine/config.ts`, which also generates the in-game rules.
 
@@ -72,6 +72,8 @@ In the original format, a multiplier only multiplies the spin it lands on. Here 
 
 Full Moon starts the Cauldron at x5 and pours each Jack-o'-Lantern in twice. This is the game's high-volatility path, and the usual way to reach the 5,000x cap.
 
+**Pumpkin Patch** (Full Moon only): when a free spin's tumbles end with a win, each Jack-o'-Lantern on the board splits with probability 20% (`PUMPKIN_SPLIT`). Its copy, with the same value, replaces a random candy (never a Jack-o'-Lantern or a Skull Lollipop), so it cannot change the spin's wins or the scatter count. The copies count in the spin's multiplier and are poured into the Cauldron like any other Jack-o'-Lantern. To keep Full Moon's raw return where it was (about 106% at 300x before weighting), the Full Moon draw table lands Jack-o'-Lanterns at weight 20 (was 26).
+
 ## Win cap
 
 Every round is capped at 5,000x (`WINCAP`). When a win would cross it, that win is reduced to reach the cap exactly, a `wincap` event is written and the round ends.
@@ -118,7 +120,8 @@ Amounts are integer centi-bet (100 = 1x). Boards are `board[reel][row]` with row
 | `witchSpell` | `symbol`, `cells`, `board` | Cells turned into `symbol`; `board` is the result. |
 | `tumbleWin` | `wins[{symbol,count,pay}]`, `tumbleTotal` | Paying symbols on the current board (all of their cells win). `tumbleTotal` is the spin's running tumble win. |
 | `tumble` | `fill[reel][]`, `mults` | The winning cells burst. Survivors fall and `fill[reel]` drops in on top (top to bottom). The new board is `applyTumble(board, winSymbols, fill)` (`src/engine/board.ts`). |
-| `multiplier` | `cells`, `landed`, `cauldronBefore`, `mult`, `base` | End of a winning free spin: `mult = max(1, landed + cauldronBefore)`. |
+| `pumpkinSplit` | `splits: [{ from, to, value }]` | Full Moon, after a winning spin's tumbles and before its `multiplier`: each `from` Jack-o'-Lantern sprouts a copy of `value` on the candy at `to`. The validator replays it and checks the copies against the next `multiplier`. |
+| `multiplier` | `cells`, `landed`, `cauldronBefore`, `mult`, `base` | End of a winning free spin: `mult = max(1, landed + cauldronBefore)`. `cells` is every Jack-o'-Lantern on the board, Pumpkin Patch copies included. |
 | `win` | `kind` (`spin`/`scatter`/`treat`), `amount`, `totalWin` | Adds `amount` to the round total. A spin win is `base x mult`, except when clamped at the cap. |
 | `trickOrTreat` | `cells`, `knocks` | Doorstep bonus starts. |
 | `knock` | `index`, `prize` (`treat` + `amount` / `trick` / `lollipop`) | One door. `index` is the auto-pick door. |

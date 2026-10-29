@@ -175,6 +175,15 @@ export class Player {
           this.audio.play('land');
           break;
         }
+        case 'pumpkinSplit':
+          // Pumpkin Patch: Jack-o'-Lanterns split before the spin's multiplier
+          this.audio.play('mult');
+          this.audio.haptic([25, 30, 25]);
+          void this.hud.banner('Pumpkin Patch!', e.splits.length > 1 ? `${e.splits.length} Jack-o'-Lanterns split` : "A Jack-o'-Lantern splits", this.ms(1100));
+          await this.scene.sprout(e.splits);
+          for (const sp of e.splits) this.board[sp.to.reel][sp.to.row] = 'JK';
+          await wait(this.ms(250));
+          break;
         case 'multiplier':
           // a big pour is coming: the Cauldron quakes first
           if (e.mult >= 10) {

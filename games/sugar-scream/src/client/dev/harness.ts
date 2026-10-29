@@ -20,6 +20,7 @@ const SCENARIOS: [string, ModeName, string][] = [
   ['Buy Cauldron', 'bonus', 'cauldron'],
   ['Buy Full Moon', 'fullmoon', 'fullMoon'],
   ['Max win', 'fullmoon', 'wincap'],
+  ['Pumpkin Patch', 'fullmoon', 'pumpkinPatch'],
   ['Loot Box (base)', 'base', 'lootBox'],
   ['Buy Loot Box', 'lootbox', 'lootBox'],
   ['Loot Box max', 'lootbox', 'lootMax'],

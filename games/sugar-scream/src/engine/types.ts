@@ -72,6 +72,8 @@ export type GameEvent =
   | { type: 'freeSpin'; index: number; total: number }
   | { type: 'retrigger'; added: number; total: number; cells: Cell[] }
   | { type: 'cauldron'; value: number }
+  /** Pumpkin Patch: Jack-o'-Lanterns split; each copy (same value) lands on a candy cell. Before the spin's multiplier. */
+  | { type: 'pumpkinSplit'; splits: { from: Cell; to: Cell; value: number }[] }
   | { type: 'freeSpinsEnd'; kind: FreeSpinKind; featureWin: number; totalWin: number }
   | { type: 'wincap'; totalWin: number }
   | { type: 'finalWin'; amount: number };

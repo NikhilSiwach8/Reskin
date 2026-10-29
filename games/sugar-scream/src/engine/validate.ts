@@ -1,7 +1,7 @@
 // Book validation. Used by the tests, the math pipeline and the client: the client
 // refuses to play a round whose events are not internally consistent.
 import { applyTumble, cellsOf } from './board.ts';
-import { LOOT_TIERS, PAYING, REELS, ROWS, SYMBOLS, WINCAP, clusterPay } from './config.ts';
+import { FREE_SPINS, LOOT_TIERS, PAYING, REELS, ROWS, SYMBOLS, WINCAP, clusterPay } from './config.ts';
 import type { Board, Cell, GameEvent, MultCell, SymbolId } from './types.ts';
 
 export interface ValidationResult {
@@ -49,6 +49,9 @@ export function validateBook(book: { payoutMultiplier: unknown; events: unknown 
   let spinMult = 1;
   let lastWin: SymbolId[] = [];
   let lootMult = 0;
+  // the Jack-o'-Lanterns on the board (free spins), and the free-spin kind being played
+  let mults: MultCell[] = [];
+  let freeKind: keyof typeof FREE_SPINS | null = null;
 
   events.forEach((e, i) => {
     const where = `event ${i} (${e?.type})`;
@@ -62,6 +65,7 @@ export function validateBook(book: { payoutMultiplier: unknown; events: unknown 
         if (checkBoard(e.board, where, errors)) {
           board = e.board;
           if (e.phase === 'free') checkMults(e.mults, board, where, errors);
+          mults = Array.isArray(e.mults) ? [...e.mults] : [];
         }
         break;
       case 'witchSpell':
@@ -96,12 +100,47 @@ export function validateBook(book: { payoutMultiplier: unknown; events: unknown 
         else {
           board = next;
           if (e.mults.length || cellsOf(next, 'JK').length) checkMults(e.mults, next, where, errors);
+          mults = Array.isArray(e.mults) ? [...e.mults] : [];
         }
         lastWin = [];
         break;
       }
+      case 'freeSpinsStart':
+        freeKind = e.kind in FREE_SPINS ? e.kind : null;
+        break;
+      case 'pumpkinSplit': {
+        // Full Moon only, after a winning spin's tumbles: each copy keeps its source's value and
+        // lands on a candy (not a Jack-o'-Lantern or a Skull Lollipop)
+        if (!freeKind || FREE_SPINS[freeKind].split <= 0) errors.push(`${where}: Pumpkin Patch outside Full Moon`);
+        if (spinBase <= 0) errors.push(`${where}: Pumpkin Patch without a win`);
+        if (!board || !Array.isArray(e.splits) || e.splits.length === 0) {
+          errors.push(`${where}: no splits`);
+          break;
+        }
+        const used = new Set<string>();
+        // work on a copy: the boards in the book are the client's playback data
+        board = board.map((col) => [...col]);
+        for (const sp of e.splits) {
+          if (!inGrid(sp?.from) || !inGrid(sp?.to)) {
+            errors.push(`${where}: split cell out of range`);
+            continue;
+          }
+          const src = mults.find((m) => m.reel === sp.from.reel && m.row === sp.from.row);
+          if (board[sp.from.reel][sp.from.row] !== 'JK' || !src || src.value !== sp.value) errors.push(`${where}: split source is not a Jack-o'-Lantern of value ${sp.value}`);
+          const key = `${sp.from.reel},${sp.from.row}`;
+          if (used.has(key)) errors.push(`${where}: a Jack-o'-Lantern split twice`);
+          used.add(key);
+          const target = board[sp.to.reel][sp.to.row];
+          if (target === 'JK' || target === 'SC') errors.push(`${where}: split onto ${target}`);
+          board[sp.to.reel][sp.to.row] = 'JK';
+          mults.push({ reel: sp.to.reel, row: sp.to.row, value: sp.value });
+        }
+        break;
+      }
       case 'multiplier':
         if (e.base !== spinBase) errors.push(`${where}: base ${e.base} != tumble total ${spinBase}`);
+        // the multiplier counts exactly the Jack-o'-Lanterns now on the board (splits included)
+        if (freeKind && (e.cells.length !== mults.length || e.cells.some((c) => !mults.some((m) => m.reel === c.reel && m.row === c.row && m.value === c.value)))) errors.push(`${where}: multiplier cells do not match the board`);
         if (e.landed !== e.cells.reduce((s, c) => s + c.value, 0)) errors.push(`${where}: landed total mismatch`);
         if (e.mult !== Math.max(1, e.landed + e.cauldronBefore)) errors.push(`${where}: multiplier mismatch`);
         spinMult = e.mult;

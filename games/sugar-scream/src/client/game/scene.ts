@@ -704,6 +704,38 @@ export class Scene {
     g.destroy();
   }
 
+  /**
+   * Pumpkin Patch: a glowing seed arcs from each splitting Jack-o'-Lantern to a candy, which
+   * bursts into a Jack-o'-Lantern of the same value.
+   */
+  async sprout(splits: { from: Cell; to: Cell; value: number }[]): Promise<void> {
+    const jobs = splits.map(async (sp, i) => {
+      await this.tween.wait(i * 160);
+      const src = this.views[sp.from.reel]?.[sp.from.row];
+      const dst = this.views[sp.to.reel]?.[sp.to.row];
+      if (!src || !dst) return;
+      // the source swells as it splits
+      void this.tween.run(320, (p) => { src.root.scale.set(1 + Math.sin(p * Math.PI) * 0.22); }, ease.linear).then(() => { if (!src.root.destroyed) src.root.scale.set(1); });
+      const a = this.pos(sp.from.reel, sp.from.row);
+      const b = this.pos(sp.to.reel, sp.to.row);
+      if (!this.reduced) {
+        const seed = this.particle('dot', 0xffa000, 46);
+        seed.blendMode = 'add';
+        const lift = 120 + Math.abs(b.x - a.x) * 0.2;
+        await this.tween.run(460, (p) => {
+          seed.position.set(a.x + (b.x - a.x) * p, a.y + (b.y - a.y) * p - Math.sin(p * Math.PI) * lift);
+          seed.scale.set(0.6 + Math.sin(p * Math.PI) * 0.5);
+        }, ease.inOutSine);
+        this.release(seed);
+      }
+      dst.set('JK', sp.value);
+      this.flash('p_fx_pop', b.x, b.y, 1.3);
+      this.burst(b.x, b.y, 0xffa000, 12);
+      await this.squash(dst);
+    });
+    await Promise.all(jobs);
+  }
+
   /** Confetti of sparks all over the board (retriggers, the final spin). */
   celebrate(colors: number[] = [0xffd34d, 0xff4fb0, 0x9dff4a], n = 26): void {
     if (this.reduced) return;

@@ -203,7 +203,8 @@ function freeSpins(rb: RoundBuilder, kind: FreeSpinKind, cells: Cell[], rng: Rng
     rb.events.push({ type: 'reveal', board: clone(g.board), mults: multCells(g), phase: 'free' });
     const res = tumbleSequence(rb, g, rng, def.draw);
     if (res.tumbleTotal > 0) {
-      const cellsM = multCells(res.grid);
+      const grid = def.split > 0 ? pumpkinPatch(rb, res.grid, rng, def.split) : res.grid;
+      const cellsM = multCells(grid);
       const landed = cellsM.reduce((s, c) => s + c.value, 0);
       const mult = Math.max(1, landed + cauldron);
       if (landed > 0 || cauldron > 0) rb.events.push({ type: 'multiplier', cells: cellsM, landed, cauldronBefore: cauldron, mult, base: res.tumbleTotal });
@@ -221,6 +222,28 @@ function freeSpins(rb: RoundBuilder, kind: FreeSpinKind, cells: Cell[], rng: Rng
     }
   }
   rb.events.push({ type: 'freeSpinsEnd', kind, featureWin: rb.total - startWin, totalWin: rb.total });
+}
+
+/** Pumpkin Patch: each Jack-o'-Lantern may split; its copy (same value) replaces a random candy. */
+function pumpkinPatch(rb: RoundBuilder, g: Grid, rng: Rng, chance: number): Grid {
+  const jacks = multCells(g);
+  if (!jacks.length) return g;
+  const free: Cell[] = [];
+  for (let reel = 0; reel < REELS; reel++) for (let row = 0; row < ROWS; row++) if (g.board[reel][row] !== 'JK' && g.board[reel][row] !== 'SC') free.push({ reel, row });
+  const out = cloneGrid(g);
+  const splits: { from: Cell; to: Cell; value: number }[] = [];
+  for (const j of jacks) {
+    if (!free.length || !rng.chance(chance)) continue;
+    const to = free.splice(rng.int(free.length), 1)[0];
+    out.board[to.reel][to.row] = 'JK';
+    out.mult[to.reel][to.row] = j.value;
+    splits.push({ from: { reel: j.reel, row: j.row }, to, value: j.value });
+  }
+  if (splits.length) {
+    rb.events.push({ type: 'pumpkinSplit', splits });
+    rb.tags.add('pumpkinPatch');
+  }
+  return out;
 }
 
 function lootBox(rb: RoundBuilder, rng: Rng): void {
