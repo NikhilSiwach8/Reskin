@@ -67,7 +67,7 @@ export function buildRules(root: HTMLElement, o: { math?: MathSummary; fmt: (cen
       <li><b>Turbo</b> (lightning): plays rounds faster. Loot Box and Trick-or-Treat picks still wait for you.</li>
       <li><b>Sound</b> (speaker): mutes or unmutes everything. Music and effects volumes are in the menu.</li>
       <li><b>Bonus</b> (bottom left): opens Bonus Games, where you can switch Ante Bet on or off and buy a feature. Every buy asks for confirmation.</li>
-      <li><b>Menu</b> (☰): Session (time played, total bet and won, net result, biggest win), How to play (the guide again), music and effects volume, reduced motion, the intro screen, jumpscares (an occasional fright after a losing spin, purely for show), vibration and these rules.</li>
+      <li><b>Menu</b> (the button at the bottom left): Session (time played, total bet and won, net result, biggest win), How to play (the guide again), music and effects volume, reduced motion, the intro screen, jumpscares (an occasional fright after a losing spin, purely for show), vibration and these rules.</li>
       <li><b>Win screens and bonus entrances:</b> tap to skip to the amount or into the bonus, tap again to close.</li>
     </ul>
     <p>Malfunction voids all pays and plays. All results are decided by the server when the round starts; animations do not affect them. If the display ever differs from the server's result, the server's result is the one that counts and is paid. Unfinished rounds are resumed when the game is reloaded.</p>

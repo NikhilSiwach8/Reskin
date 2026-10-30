@@ -67,7 +67,7 @@ class CellView {
     if (symbol === 'JK' && mult > 0) {
       this.label = new Text({
         text: `x${mult}`,
-        style: { fontFamily: 'Creepster, Fredoka, sans-serif', fontSize: 56, fill: '#fff6c2', stroke: { color: '#5a1300', width: 8 }, dropShadow: { color: '#000', blur: 6, distance: 3, alpha: 0.7 } },
+        style: { fontFamily: 'Fredoka, sans-serif', fontWeight: '700', fontSize: 56, fill: '#fff6c2', stroke: { color: '#5a1300', width: 8 }, dropShadow: { color: '#000', blur: 6, distance: 3, alpha: 0.7 } },
       });
       this.label.anchor.set(0.5);
       // painted lantern: the value sits in its open mouth
@@ -546,7 +546,7 @@ export class Scene {
       if (!v) return;
       await this.tween.wait(i * 160);
       await this.blast(v);
-      const orb = new Text({ text: `x${c.value}`, style: { fontFamily: 'Creepster, sans-serif', fontSize: 64, fill: '#ffe066', stroke: { color: '#5a1300', width: 8 } } });
+      const orb = new Text({ text: `x${c.value}`, style: { fontFamily: 'Fredoka, sans-serif', fontWeight: '700', fontSize: 64, fill: '#ffe066', stroke: { color: '#5a1300', width: 8 } } });
       orb.anchor.set(0.5);
       orb.position.set(v.root.x, v.root.y);
       this.fx.addChild(orb);

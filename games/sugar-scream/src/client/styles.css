@@ -12,7 +12,7 @@
   --board-h: 600px;
   --board-pad: 30px;
   --fd: 'Fredoka', system-ui, sans-serif;
-  --fh: 'Creepster', 'Fredoka', cursive;
+  --fh: 'Fredoka', system-ui, sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -221,11 +221,8 @@ body.reduced * { animation: none !important; }
 
 /* ------------------------------------------------------------------ interface animation */
 #logo { animation: logo-float 4.5s ease-in-out infinite; }
-#logo .l1, #logo .l2 { display: inline-block; animation: logo-glow 2.6s ease-in-out infinite; }
-#logo .l2 { animation-delay: -1.3s; }
 @keyframes logo-float { 50% { transform: translateX(-50%) translateY(5px) rotate(-1deg); } }
 @keyframes logo-float-corner { 50% { transform: translateY(4px) rotate(-1deg); } }
-@keyframes logo-glow { 50% { transform: scale(1.04); } }
 
 /* spin button: breathes while idle, spins while a round plays */
 #btn-spin:not(.spinning):not(:disabled) { animation: spin-breathe 2.2s ease-in-out infinite; }
@@ -541,7 +538,7 @@ body.in-free #msg-bar { border-color: rgba(157, 255, 74, 0.6); }
 }
 
 /* ------------------------------------------------------------------ smooth animation: keep moving layers on the GPU */
-#logo, #logo .l1, #logo .l2, #btn-spin, #btn-buy, #ante.on, #ante-badge, #meter-win, .door, .loot-box, .loot-box img, #winscreen .rays,
+#logo, #btn-spin, #btn-buy, #ante.on, #ante-badge, #meter-win, .door, .loot-box, .loot-box img, #winscreen .rays,
 #win-art, #win-title, #win-amount, .candy-rain > *, #banner, #banner-title, #banner-art, .portal-stage, .portal-dest, .portal-door, .portal-flash,
 .portal-banner, #cauldron.painted-panel, #fs-count, .buy-card, #menu-pop, #splash .splash-card { will-change: transform, opacity; backface-visibility: hidden; }
 /* glows that used to pulse now stay on and only the element breathes */
@@ -639,3 +636,173 @@ body.reduced #combo, body.reduced #peek { animation: none !important; }
 #set-skin button[data-skin='bloodmoon'] { background: linear-gradient(180deg, #ffd0c8, #ff8a7a); }
 #set-skin button[data-skin='ghost'] { background: linear-gradient(180deg, #e4f6ff, #9cc8ff); }
 #set-skin button.on { outline: 3px solid #ff2e9a; outline-offset: 1px; }
+
+/* ------------------------------------------------------------------ painted interface
+   Every dialog, label, button, toggle and bar is drawn with the game's own painted art (frame, crest,
+   cane strip and logo derived by tools/derive-ui.py; pill, candy button and knob from the HUD art),
+   in place of drawn gradients, outlines and emoji. The art arrives as --ui-* variables (hud.ts). */
+.logo-art { display: block; height: 100%; width: auto; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.55)); }
+#logo { height: clamp(48px, 9.5vh, 96px); font-size: 0; }
+.intro-logo { height: clamp(90px, 20vh, 190px); font-size: 0; margin: 0 auto 6px; display: block; width: fit-content; }
+.intro .intro-logo { height: clamp(80px, 18vh, 170px); }
+@media (orientation: portrait) { #logo { height: clamp(56px, 10vh, 120px); } }
+@media (max-height: 500px) and (orientation: landscape) { #logo { height: clamp(40px, 13vh, 60px); } }
+
+/* headings: the game's rounded candy lettering (bold, outlined, dropped shadow) */
+.modal-card h2, .buy-sheet h2, .buy-card h3, #rules-body h3, #splash-title, .tot-title, #banner-title, #win-title,
+.loot-title-main, #loot-title, #loot-mult, #combo, .side-btn .big, .panel-value, #btn-spin {
+  font-weight: 700; letter-spacing: 0.5px; paint-order: stroke fill; -webkit-text-stroke: 0.07em #3a0030;
+}
+.modal-card h2, .buy-sheet h2, #splash-title, .tot-title { text-transform: uppercase; }
+
+/* the candy-cane frame: dialogs, cards and panels; the window is the frame's own plum glass */
+.modal-card, .splash-card, #menu-pop, #guide .guide-tip, #replay-info, .buy-card {
+  --fk: 0.22;
+  border-style: solid; border-color: transparent; border-radius: 0;
+  border-width: calc(270px * var(--fk)) calc(220px * var(--fk)) calc(385px * var(--fk));
+  border-image: var(--ui-frame) 270 220 385 220 fill / 1 / 0 round;
+  background: none; box-shadow: none; color: var(--ink); backdrop-filter: none;
+  filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.55));
+}
+.modal-card { padding: 4px 10px 6px; overflow: visible; display: flex; flex-direction: column; }
+.splash-card { padding: 4px 12px 6px; overflow: visible; max-height: none; }
+#intro.painted-bg .splash-card, #splash.painted-bg .splash-card { background: none; backdrop-filter: none; }
+#rules-body { overflow: auto; min-height: 0; max-height: calc(92vh - 180px); padding-right: 4px; }
+.intro-list { max-height: 38vh; overflow: auto; }
+#menu-pop { --fk: 0.17; padding: 2px 8px 4px; width: min(340px, 90vw); }
+#guide .guide-tip { --fk: 0.15; padding: 0 6px 2px; }
+#guide .guide-step { color: var(--gold); opacity: 1; }
+#replay-info { --fk: 0.13; padding: 0 4px; }
+.buy-card { --fk: 0.13; overflow: visible; padding: 0 2px 2px; }
+@media (max-width: 560px), (max-height: 500px) { .modal-card, .splash-card { --fk: 0.16; } }
+/* the pumpkin crest over the top rim of the bigger dialogs */
+.modal-card::after, .splash-card::after {
+  content: ''; position: absolute; left: 50%; top: calc(-270px * var(--fk)); translate: -50% 0; z-index: 1;
+  width: calc(520px * var(--fk)); height: calc(270px * var(--fk)); background: var(--ui-crest) center / contain no-repeat; pointer-events: none;
+}
+/* close: the painted plus, turned into a cross, sitting on the frame's corner sweet */
+.modal-close, .buy-sheet .modal-close {
+  z-index: 2; width: 46px; height: 46px; border: none; border-radius: 50%; font-size: 0; rotate: 45deg;
+  background: var(--ui-plus) center / contain no-repeat; filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.5));
+}
+.modal-card .modal-close { top: calc(-270px * var(--fk) + 2px); right: calc(-220px * var(--fk) + 2px); }
+.modal-close:active { scale: 0.92; }
+
+/* the chocolate pill: labels, messages, secondary buttons, tracks */
+#msg-bar, #toast, #session-bar, #btn-share, #combo, .tile-tag, #meter-balance .meter-label, #meter-bet .meter-label, #ante-badge, .bc-preview,
+.row button:not(.cta), #auto-counts button, .pop-btn, #btn-rules, #set-skin button, #guide .guide-skip, .bar, .buy-betpanel, .panel:not(.painted-panel) {
+  --pk: 0.2;
+  border-style: solid; border-color: transparent; border-radius: 0;
+  border-width: calc(60px * var(--pk)) calc(110px * var(--pk));
+  border-image: var(--ui-pill) 60 110 fill / 1 / 0 stretch;
+  background: none; box-shadow: none; color: var(--ink); outline-offset: 0;
+}
+.tile-tag, #meter-balance .meter-label, #meter-bet .meter-label, #ante-badge, .bc-preview { --pk: 0.13; padding: 0 2px; color: #fff; }
+#ante-badge { color: var(--lime); animation: none; }
+#msg-bar { --pk: 0.22; padding: 0 6px; }
+#toast { --pk: 0.26; padding: 2px 8px; }
+#session-bar { --pk: 0.16; padding: 0 4px; }
+#btn-share { --pk: 0.24; padding: 0 8px; color: var(--gold); }
+#combo { --pk: 0.26; padding: 0 0.3em; }
+#combo[data-level] { background: none; box-shadow: none; }
+#combo[data-level='3'] .combo-n { color: var(--orange); }
+#combo[data-level='4'] .combo-n { color: var(--lime); }
+#combo[data-level='5'] .combo-n { color: #e7b8ff; }
+.row button:not(.cta), #auto-counts button, .pop-btn, #btn-rules { --pk: 0.24; padding: 2px 8px; }
+#auto-counts button.on, #set-skin button.on { border-image-source: var(--ui-cta); border-image-slice: 100 100 60 120 fill; outline: none; }
+#set-skin button { --pk: 0.17; padding: 0 2px; }
+#set-skin button[data-skin] { background: none; }
+#guide .guide-skip { --pk: 0.2; padding: 0 6px; color: var(--ink); }
+.panel:not(.painted-panel) { --pk: 0.3; padding: 2px 6px; }
+#side-left .panel:not(.painted-panel) { border-width: calc(60px * var(--pk)) calc(110px * var(--pk)); border-radius: 0; }
+@media (max-height: 500px) and (orientation: landscape), (orientation: portrait) {
+  #side-left #cauldron.painted-panel { --pk: 0.26; background: none; border-style: solid; border-color: transparent; border-radius: 0; border-width: calc(60px * var(--pk)) calc(110px * var(--pk)); border-image: var(--ui-pill) 60 110 fill / 1 / 0 stretch; padding: 2px 6px; }
+}
+.buy-betpanel { --pk: 0.3; padding: 0 8px 2px; }
+
+/* the candy button: every call to action */
+.cta, .row .cta, .bc-buy, #btn-replay {
+  --ck: 0.2;
+  border-style: solid; border-color: transparent; border-radius: 0;
+  border-width: calc(100px * var(--ck)) calc(100px * var(--ck)) calc(60px * var(--ck)) calc(120px * var(--ck));
+  border-image: var(--ui-cta) 100 100 60 120 fill / 1 / 0 stretch;
+  background: none; box-shadow: none; color: #fff; text-shadow: 0 2px 0 #6a0040; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
+}
+.cta { padding: 0 12px; }
+.bc-buy { padding: 0 6px; border-radius: 0; }
+.bc-buy:disabled, .cta:disabled { background: none; filter: grayscale(0.9) brightness(0.75); }
+.cta:active:not(:disabled), .bc-buy:active:not(:disabled) { translate: 0 2px; }
+#btn-replay { --ck: 0.26; padding: 0 22px; }
+
+/* toggles: a chocolate track and the swirl sweet as the knob (grey while off) */
+.pop-toggle i, .ante-switch {
+  border: 6px solid transparent; border-image: var(--ui-pill) 60 110 fill / 8px 14px / 0 stretch; background: none; box-shadow: none; border-radius: 0;
+}
+.pop-toggle i { width: 58px; height: 30px; }
+.pop-toggle i::after { top: 50%; left: 0; translate: 0 -50%; width: 24px; height: 24px; border: none; background: var(--ui-knob) center / contain no-repeat; filter: grayscale(1) brightness(0.8); transition: left 0.22s cubic-bezier(0.3, 1.5, 0.5, 1), filter 0.22s; }
+.pop-toggle input:checked + i { background: none; }
+.pop-toggle input:checked + i::after { left: 22px; filter: none; }
+#ante.on .ante-switch { box-shadow: none; filter: drop-shadow(0 0 6px rgba(157, 255, 74, 0.8)); }
+.pop-toggle, .pop-skin { color: var(--ink); }
+.pop-icon { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; width: 62px; text-align: left; }
+
+/* sliders: the candy-cane strip as the track, the swirl sweet as the thumb */
+#menu-pop input[type=range], #bp-slider { appearance: none; -webkit-appearance: none; height: 14px; border-radius: 7px; accent-color: auto;
+  background: linear-gradient(90deg, transparent var(--fill, 100%), rgba(20, 4, 34, 0.85) 0), var(--ui-cane) left center / auto 100% repeat-x; }
+#menu-pop input[type=range]::-webkit-slider-thumb, #bp-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 28px; height: 28px; border: none; border-radius: 50%; background: var(--ui-knob) center / contain no-repeat; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6)); }
+#menu-pop input[type=range]::-moz-range-thumb, #bp-slider::-moz-range-thumb { width: 28px; height: 28px; border: none; border-radius: 50%; background: var(--ui-knob) center / contain no-repeat; }
+
+/* bars: the loading bar and the volatility meter fill with candy cane */
+.bar { --pk: 0.15; height: 30px; padding: 0; overflow: hidden; }
+#loading-bar { border-radius: 6px; background: var(--ui-cane) left center / auto 100% repeat-x; }
+.bc-vol i { height: 9px; background: linear-gradient(90deg, transparent calc(var(--v) * 20%), rgba(20, 4, 34, 0.85) 0), var(--ui-cane) left center / auto 100% repeat-x; }
+
+/* bet panel arrows: the painted minus and plus */
+.bp-arrow { font-size: 0; width: 46px; height: 46px; background: center / contain no-repeat; filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.5)); }
+#bp-minus { background-image: var(--ui-minus); }
+#bp-plus { background-image: var(--ui-plus); }
+
+/* Bonus Games cards: the bonus world behind its symbol, light text in the plum glass */
+.buy-card h3 { margin: 0; padding: 2px 4px 4px; background: none; color: var(--gold); text-shadow: 0 3px 0 #2a0040; }
+.buy-card .bc-art { margin: 0; padding: 6px; aspect-ratio: 4 / 3; border-radius: 12px; overflow: hidden; background: #12001f center / cover no-repeat; box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.7); }
+.ante-card .bc-art { background-image: var(--ui-window); }
+.bc-desc, .bc-vol { color: #ecd8f7; }
+.bc-vol { font-family: var(--fd); font-weight: 700; letter-spacing: 1px; }
+.bc-price { color: #fff; }
+.buy-sheet h2::after { display: none; }
+.buy-sheet h2 { color: var(--gold); }
+@media (max-height: 500px) and (orientation: landscape) {
+  .buy-card { border-width: calc(270px * var(--fk)) calc(220px * var(--fk)) calc(385px * var(--fk)); --fk: 0.11; }
+  .buy-card .bc-art { margin-top: 0; padding: 4px; }
+  .bp-arrow { width: 36px; height: 36px; }
+}
+
+/* dim behind overlays: plain darkening, no drawn glow */
+.overlay { background: rgba(6, 0, 16, 0.82); }
+#rules-body td, #rules-body th { border-bottom-color: rgba(255, 211, 77, 0.22); }
+.paycell { background: rgba(8, 0, 18, 0.55); }
+.check input { accent-color: #ff2e9a; }
+.bc-buy:disabled, .cta:disabled { filter: saturate(0.35) brightness(0.8); opacity: 0.7; }
+#guide .guide-skip { padding: 0 16px; }
+/* checkboxes: the swirl sweet, grey until ticked */
+.check input { appearance: none; -webkit-appearance: none; flex: none; width: 26px; height: 26px; margin: 0; border: none; border-radius: 50%; background: var(--ui-knob) center / contain no-repeat; filter: grayscale(1) brightness(0.7); transition: filter 0.2s; cursor: pointer; }
+.check input:checked { filter: drop-shadow(0 0 6px rgba(157, 255, 74, 0.8)); }
+/* focus on painted controls: a glow around the art rather than a box */
+.cta:focus-visible, .bc-buy:focus-visible, .modal-close:focus-visible, .pop-btn:focus-visible, #btn-rules:focus-visible, .row button:focus-visible,
+#auto-counts button:focus-visible, #set-skin button:focus-visible, #btn-share:focus-visible, .bp-arrow:focus-visible, .check input:focus-visible {
+  outline: none; filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 8px var(--gold));
+}
+/* short landscape screens: slimmer frames so every dialog fits the height */
+@media (max-height: 500px) and (orientation: landscape) {
+  .modal-card, .splash-card, #menu-pop, #guide .guide-tip { --fk: 0.1; }
+  .modal-card h2 { font-size: 26px; margin-bottom: 6px; }
+  .modal-close, .buy-sheet .modal-close { width: 34px; height: 34px; }
+  .intro .intro-logo { height: 56px; margin-bottom: 2px; }
+  .intro-list { max-height: 34vh; margin-bottom: 4px; }
+  .check { margin: 4px 0; }
+  #menu-pop { top: max(6px, env(safe-area-inset-top)); bottom: auto; max-height: calc(100vh - 12px); overflow: auto; gap: 5px; }
+  .row button:not(.cta), #auto-counts button, .pop-btn, #btn-rules { --pk: 0.18; }
+  #guide .guide-text { font-size: 14px; margin-bottom: 6px; }
+  #rules-body { max-height: calc(100vh - 110px); }
+}
+.door .prize.over-art { --pk: 0.13; background: none; border-style: solid; border-color: transparent; border-radius: 0; border-width: calc(60px * var(--pk)) calc(110px * var(--pk)); border-image: var(--ui-pill) 60 110 fill / 1 / 0 stretch; padding: 0 2px; }

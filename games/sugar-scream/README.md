@@ -19,7 +19,7 @@ Theme, art, names and code are original; only the game format is borrowed. See [
 | Math pipeline | Simulates rounds, writes Stake RGS files (`index.json`, `books_*.jsonl.zst`, `lookUpTable_*_0.csv`) and a math report | `src/math/` |
 | Game client | PixiJS 8 + DOM UI static web app that replays RGS outcomes | `src/client/`, `index.html` |
 | Local RGS | Vite dev-server mock of the Stake RGS API, serving the generated books | `src/rgs/mockRgs.ts` |
-| Art | Painted art in `art/source/`, imported to WebP by `tools/import-painted.py` (symbols, buttons, panels, backgrounds, screens, effects). Vector SVG fallbacks come from `tools/render-art.mjs` | `art/source/`, `tools/import-painted.py`, `tools/render-art.mjs`, `public/assets/` |
+| Art | Painted art in `art/source/`, imported to WebP by `tools/import-painted.py` (symbols, buttons, panels, backgrounds, screens, effects). Vector SVG fallbacks come from `tools/render-art.mjs`. The interface kit (dialog frame, crest, candy-cane strip, logo) is cut from the same painting by `tools/derive-ui.py`, so every dialog, label, toggle and button is painted, with no emoji or drawn gradients | `art/source/`, `tools/import-painted.py`, `tools/derive-ui.py`, `tools/render-art.mjs`, `public/assets/` |
 | Tests | 21 unit tests (vitest) and a 12-scenario browser smoke test (Playwright) | `tests/`, `tools/smoke.mjs` |
 
 ## Quick start

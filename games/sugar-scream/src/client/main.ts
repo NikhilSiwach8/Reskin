@@ -1,5 +1,4 @@
 // Sugar Scream client entry point and round controller.
-import '@fontsource/creepster/400.css';
 import '@fontsource/fredoka/500.css';
 import '@fontsource/fredoka/700.css';
 import './styles.css';
@@ -181,7 +180,7 @@ class Game {
     const app = new Application();
     await app.init({ resizeTo: window, backgroundAlpha: 0, antialias: true, autoDensity: true, resolution: Math.min(window.devicePixelRatio || 1, 2), powerPreference: 'high-performance' });
     document.getElementById('app')!.appendChild(app.canvas);
-    await document.fonts.load('40px Creepster').catch(() => {});
+    await document.fonts.load('700 40px Fredoka').catch(() => {});
     const failures = await loadAssets((p) => this.hud.setLoading(p * 0.8));
     if (failures.length) console.warn(`Missing assets: ${failures.join(', ')}`);
     try {
@@ -401,7 +400,7 @@ class Game {
   private updateSessionBar(): void {
     const j = this.jurisdiction;
     const parts: string[] = [];
-    if (j?.displaySessionTimer) parts.push(`⏱ ${clock(Date.now() - this.session.start)}`);
+    if (j?.displaySessionTimer) parts.push(`Time ${clock(Date.now() - this.session.start)}`);
     if (j?.displayNetPosition) {
       const net = this.session.won - this.session.bet;
       parts.push(`Net ${net >= 0 ? '+' : '−'}${this.fmtMoney(Math.abs(net))}`);

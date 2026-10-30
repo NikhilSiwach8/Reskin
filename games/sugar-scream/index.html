@@ -8,7 +8,7 @@
   <body>
     <div id="app"></div>
 
-    <header id="logo" aria-label="Sugar Scream"><span class="l1">Sugar</span><span class="l2">Scream</span></header>
+    <header id="logo" aria-label="Sugar Scream"><img class="logo-art" alt="Sugar Scream" /></header>
 
     <aside id="side-left">
       <div id="fs-panel" class="panel hidden" aria-live="polite">
@@ -36,7 +36,7 @@
       <!-- bottom left: menu, bonus games, balance -->
       <div class="hud-left">
         <div class="hud-cluster">
-          <button id="btn-menu" class="round-btn" type="button" aria-label="Menu" aria-expanded="false">☰</button>
+          <button id="btn-menu" class="round-btn" type="button" aria-label="Menu" aria-expanded="false"></button>
           <div class="tile">
             <span class="tile-tag">Bonus</span>
             <button id="btn-buy" class="side-btn" type="button"><span class="big">Buy</span><span>Feature</span></button>
@@ -57,9 +57,9 @@
             <button id="btn-spin" type="button" aria-label="Spin"><span id="spin-label">SPIN</span></button>
           </div>
           <div class="hud-col">
-            <button id="btn-auto" class="round-btn" type="button" aria-label="Autoplay">⟳</button>
-            <button id="btn-turbo" class="round-btn" type="button" aria-label="Turbo">⚡</button>
-            <button id="btn-sound" class="round-btn" type="button" aria-label="Mute">🔊</button>
+            <button id="btn-auto" class="round-btn" type="button" aria-label="Autoplay"></button>
+            <button id="btn-turbo" class="round-btn" type="button" aria-label="Turbo"></button>
+            <button id="btn-sound" class="round-btn" type="button" aria-label="Mute"></button>
           </div>
         </div>
         <div class="meter bet" id="meter-bet">
@@ -83,22 +83,22 @@
 
     <!-- menu popover (opens above the menu button) -->
     <div id="menu-pop" class="hidden" role="dialog" aria-label="Settings">
-      <label class="pop-row" title="Music"><span class="pop-icon">♫</span><input type="range" id="set-music" min="0" max="100" aria-label="Music volume" /></label>
-      <label class="pop-row" title="Sound effects"><span class="pop-icon">🔈</span><input type="range" id="set-sfx" min="0" max="100" aria-label="Sound effects volume" /></label>
+      <label class="pop-row" title="Music"><span class="pop-icon">Music</span><input type="range" id="set-music" min="0" max="100" aria-label="Music volume" /></label>
+      <label class="pop-row" title="Sound effects"><span class="pop-icon">Effects</span><input type="range" id="set-sfx" min="0" max="100" aria-label="Sound effects volume" /></label>
       <label class="pop-toggle"><span>Reduced motion</span><input type="checkbox" id="set-reduced" /><i></i></label>
       <label class="pop-toggle"><span>Intro screen</span><input type="checkbox" id="set-intro" /><i></i></label>
       <label class="pop-toggle"><span>Jumpscares</span><input type="checkbox" id="set-scares" /><i></i></label>
       <label class="pop-toggle"><span>Vibration</span><input type="checkbox" id="set-haptics" /><i></i></label>
       <div class="pop-skin"><span>Board</span><div id="set-skin" role="group" aria-label="Board skin"><button type="button" data-skin="classic">Classic</button><button type="button" data-skin="bloodmoon">Blood Moon</button><button type="button" data-skin="ghost">Ghost Light</button></div></div>
-      <button id="btn-session" class="pop-btn" type="button"><span class="pop-i">⏱</span> Session</button>
-      <button id="btn-guide" class="pop-btn" type="button"><span class="pop-i">?</span> How to play</button>
-      <button id="btn-rules" type="button"><span class="pop-i">i</span> Game info</button>
+      <button id="btn-session" class="pop-btn" type="button">Session</button>
+      <button id="btn-guide" class="pop-btn" type="button">How to play</button>
+      <button id="btn-rules" type="button">Game info</button>
     </div>
 
     <!-- jurisdiction display (session timer, net position, RTP) when the RGS asks for it -->
     <div id="session-bar" class="hidden" aria-live="off"></div>
     <!-- after a big win: share it as a replay -->
-    <button id="btn-share" class="hidden" type="button">🔗 <span>Share this win</span></button>
+    <button id="btn-share" class="hidden" type="button"><span>Share this win</span></button>
 
     <!-- first-session guide: a spotlight on each control in turn -->
     <div id="guide" class="hidden" role="dialog" aria-modal="true" aria-label="How to play">
@@ -175,7 +175,7 @@
 
     <div id="intro" class="overlay hidden">
       <div class="splash-card intro">
-        <div class="intro-logo"><span class="l1">Sugar</span><span class="l2">Scream</span></div>
+        <div class="intro-logo"><img class="logo-art" alt="Sugar Scream" /></div>
         <ul class="intro-list">
           <li><b>Tumbling candies</b> pay anywhere: 8 or more of a kind wins, then winners burst and new candies fall in.</li>
           <li><b>Witch's Spell</b> can strike any base spin and conjure a guaranteed win.</li>
@@ -191,7 +191,7 @@
 
     <div id="modal-buy" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="buy-title">
       <div class="buy-sheet">
-        <button class="modal-close" type="button" aria-label="Close">✕</button>
+        <button class="modal-close" type="button" aria-label="Close"></button>
         <h2 id="buy-title">Bonus Games</h2>
         <div id="buy-cards">
           <div class="buy-card ante-card">
@@ -211,9 +211,9 @@
         </div>
         <div class="buy-betpanel">
           <div><span class="tile-tag">Balance</span><span class="bp-value" id="bp-balance">–</span></div>
-          <button id="bp-minus" class="bp-arrow" type="button" aria-label="Decrease bet">‹</button>
+          <button id="bp-minus" class="bp-arrow" type="button" aria-label="Decrease bet"></button>
           <div><span class="tile-tag">Bet</span><span class="bp-value" id="bp-bet">–</span></div>
-          <button id="bp-plus" class="bp-arrow" type="button" aria-label="Increase bet">›</button>
+          <button id="bp-plus" class="bp-arrow" type="button" aria-label="Increase bet"></button>
           <input type="range" id="bp-slider" min="0" max="0" value="0" aria-label="Bet level" />
         </div>
       </div>
@@ -228,7 +228,7 @@
 
     <div id="modal-auto" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="auto-title">
       <div class="modal-card small">
-        <button class="modal-close" type="button" aria-label="Close">✕</button>
+        <button class="modal-close" type="button" aria-label="Close"></button>
         <h2 id="auto-title">Autoplay</h2>
         <div id="auto-counts" class="row wrap"></div>
         <label class="check"><input type="checkbox" id="auto-stop-feature" checked /> Stop when a feature triggers</label>
@@ -239,7 +239,7 @@
 
     <div id="modal-session" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="session-title">
       <div class="modal-card small">
-        <button class="modal-close" type="button" aria-label="Close">✕</button>
+        <button class="modal-close" type="button" aria-label="Close"></button>
         <h2 id="session-title">Session</h2>
         <dl id="session-stats"></dl>
       </div>
@@ -247,7 +247,7 @@
 
     <div id="modal-rules" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="rules-title">
       <div class="modal-card wide">
-        <button class="modal-close" type="button" aria-label="Close">✕</button>
+        <button class="modal-close" type="button" aria-label="Close"></button>
         <h2 id="rules-title">Game Rules</h2>
         <div id="rules-body"></div>
       </div>
@@ -255,7 +255,6 @@
 
     <div id="loading" class="overlay">
       <video id="loading-video" muted loop playsinline preload="auto" poster="assets/bg_loading.webp" disablepictureinpicture disableremoteplayback aria-hidden="true"></video>
-      <div class="intro-logo"><span class="l1">Sugar</span><span class="l2">Scream</span></div>
       <div class="bar"><div id="loading-bar"></div></div>
       <div id="loading-text">Brewing candy…</div>
     </div>

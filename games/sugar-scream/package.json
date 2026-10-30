@@ -25,7 +25,6 @@
     "release": "npm run verify:math && npm run check:build && python3 tools/package-release.py"
   },
   "dependencies": {
-    "@fontsource/creepster": "^5.2.5",
     "@fontsource/fredoka": "^5.2.8",
     "pixi.js": "8.22.0"
   },

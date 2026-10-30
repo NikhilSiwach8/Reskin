@@ -157,6 +157,15 @@ export class Hud {
 
   /** Swaps CSS-drawn buttons for painted art where it has been imported. */
   private applyButtonArt(): void {
+    // the painted interface kit: the candy-cane frame for dialogs, the chocolate pill for labels and
+    // bars, the candy pill for calls to action, the swirl knob for toggles and sliders, the logo
+    const kit: [string, string | null][] = [
+      ['--ui-frame', 'assets/ui_frame.webp'], ['--ui-crest', 'assets/ui_frame_crest.webp'], ['--ui-window', 'assets/ui_window.webp'],
+      ['--ui-cane', 'assets/ui_cane.webp'], ['--ui-pill', panelSrc('meter')], ['--ui-cta', buttonSrc('buy')],
+      ['--ui-knob', buttonSrc('ante_knob')], ['--ui-plus', buttonSrc('plus')], ['--ui-minus', buttonSrc('minus')],
+    ];
+    for (const [v, src] of kit) if (src) document.documentElement.style.setProperty(v, cssUrl(src));
+    for (const img of document.querySelectorAll<HTMLImageElement>('img.logo-art')) img.src = 'assets/ui_logo.webp';
     const map: [string, string, string?][] = [
       ['#btn-spin', 'spin', 'spin_active'], ['#btn-auto', 'auto'], ['#btn-turbo', 'turbo'], ['#btn-menu', 'menu'],
       ['#btn-sound', 'sound', 'mute'], ['#bet-minus', 'minus'], ['#bet-plus', 'plus'], ['#btn-buy', 'buy'], ['#ante', 'ante'],
@@ -324,7 +333,6 @@ export class Hud {
   }
 
   setMuted(m: boolean): void {
-    $('#btn-sound').textContent = m ? '🔇' : '🔊';
     $('#btn-sound').classList.toggle('muted', m);
     $('#btn-sound').setAttribute('aria-label', m ? t('Unmute') : t('Mute'));
   }
@@ -1106,6 +1114,9 @@ export class Hud {
       card.innerHTML = '<h3></h3><div class="bc-art"><img alt=""></div><p class="bc-desc"></p><div class="bc-vol"><span></span><i></i></div><div class="bc-price"></div><button type="button" class="bc-buy"></button>';
       card.querySelector('h3')!.textContent = t(o.label);
       card.querySelector('img')!.src = o.art;
+      // the bonus world behind its symbol
+      const world = bgSrc(({ bonus: 'fs_cauldron', fullmoon: 'fs_fullmoon', lootbox: 'loot' } as Record<string, string>)[o.mode] ?? 'tot');
+      if (world) card.querySelector<HTMLElement>('.bc-art')!.style.backgroundImage = cssUrl(world);
       card.querySelector('.bc-desc')!.textContent = t(o.desc);
       card.querySelector('.bc-vol span')!.textContent = t('Volatility');
       card.querySelector<HTMLElement>('.bc-vol i')!.style.setProperty('--v', String(o.vol));
@@ -1115,7 +1126,7 @@ export class Hud {
         const p = document.createElement('button');
         p.type = 'button';
         p.className = 'bc-preview';
-        p.textContent = `▶ ${t('Preview')}`;
+        p.textContent = t('Preview');
         p.addEventListener('click', () => void this.clips?.play(o.preview!));
         p.hidden = !this.clips?.available();
         card.querySelector('.bc-art')!.appendChild(p);
