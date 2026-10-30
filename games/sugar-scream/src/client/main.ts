@@ -38,12 +38,15 @@ const launch = {
 };
 setSocial(launch.social || SOCIAL_CURRENCIES.has(launch.currency));
 
-// The loading screen's looping clip (silent, made with Remotion): start it before anything else
-// loads, in the cut that fits the screen. Reduced motion keeps the still painting (its poster).
+// The loading screen's clip (silent, made with Remotion): the intro's witch fly-by landing on the
+// logo, played once and held on its last frame. It starts before anything else loads, in the cut
+// that fits the screen, over its own first frame. Reduced motion keeps the still painting.
 {
   const v = document.getElementById('loading-video') as HTMLVideoElement | null;
   if (v && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    v.src = `assets/clips/loading-${innerHeight > innerWidth ? 'p' : 'l'}.mp4`;
+    const cut = innerHeight > innerWidth ? 'p' : 'l';
+    v.poster = `assets/clips/loading-${cut}.webp`;
+    v.src = `assets/clips/loading-${cut}.mp4`;
     v.muted = true;
     v.play().catch(() => {});
   }
@@ -234,6 +237,7 @@ class Game {
         .sort((a, b) => a - b);
       this.betIndex = Math.max(0, this.levels.indexOf(auth.config.defaultBetLevel));
       if (auth.config.jurisdiction?.disabledBuyFeature) this.settings.ante = false;
+      await this.hud.loadingClipShown();
       this.hud.hideLoading();
       this.refresh();
       this.scene.layout(); // the HUD is now filled in: fit the board around it
@@ -553,6 +557,7 @@ class Game {
         win: this.fmtMoney(Math.round(this.roundBet * this.replayRound.payoutMultiplier)),
       });
       this.hud.setWin(this.fmtMoney(0));
+      await this.hud.loadingClipShown();
       this.hud.hideLoading();
       this.hud.setReplayButton('Play', true);
     } catch (e) {

@@ -224,6 +224,27 @@ export class Hud {
     if (msg) $('#loading-text').textContent = t(msg);
   }
 
+  /** Resolves once the loading clip has landed on the logo (2.8 s in), has ended or stalled, or
+   *  after 4 s at most, so a fast load still shows the witch's fly-by without holding anyone up. */
+  loadingClipShown(): Promise<void> {
+    const v = document.getElementById('loading-video') as HTMLVideoElement | null;
+    if (!v || !v.currentSrc || v.error || v.ended || v.currentTime >= 2.8) return Promise.resolve();
+    return new Promise((done) => {
+      const finish = () => {
+        window.clearTimeout(cap);
+        v.removeEventListener('timeupdate', check);
+        v.removeEventListener('ended', finish);
+        v.removeEventListener('error', finish);
+        done();
+      };
+      const check = () => v.currentTime >= 2.8 && finish();
+      const cap = window.setTimeout(finish, 4000);
+      v.addEventListener('timeupdate', check);
+      v.addEventListener('ended', finish);
+      v.addEventListener('error', finish);
+    });
+  }
+
   hideLoading(): void {
     $('#loading').classList.add('hidden');
     // the loading loop is done: free its decoder

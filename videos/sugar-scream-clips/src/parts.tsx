@@ -208,19 +208,15 @@ export const Logo: React.FC<{ readonly at?: number; readonly size?: number; read
   style,
 }) => {
   const frame = useCurrentFrame();
-  const { fps, width, height } = useVideoConfig();
-  const portrait = height > width;
+  const { fps } = useVideoConfig();
+  // the painted wordmark (the game's ui_logo, lifted off its loading art), slammed in at `at`
   return (
-    <div
+    <Img
+      name="Logo"
+      src={art("ui_logo")}
       style={{
-        display: "flex",
-        flexDirection: portrait ? "column" : "row",
-        alignItems: "center",
-        gap: portrait ? size * 0.05 : size * 0.28,
-        fontFamily: "Creepster",
-        fontSize: size,
-        lineHeight: 1,
-        letterSpacing: 4,
+        height: size * 1.6,
+        filter: "drop-shadow(0 14px 22px rgba(0, 0, 0, 0.6))",
         scale: interpolate(frame, [at, at + 0.45 * fps], [2.4, 1], {
           extrapolateLeft: "clamp",
           extrapolateRight: "clamp",
@@ -230,10 +226,7 @@ export const Logo: React.FC<{ readonly at?: number; readonly size?: number; read
         opacity: interpolate(frame, [at, at + 4], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
         ...style,
       }}
-    >
-      <span style={{ color: "#ffd1ec", textShadow: "0 0 30px #ff4fb0, 0 10px 0 #8a0050" }}>Sugar</span>
-      <span style={{ color: "#9dff4a", textShadow: "0 0 34px #5fd400, 0 10px 0 #1e5200" }}>Scream</span>
-    </div>
+    />
   );
 };
 

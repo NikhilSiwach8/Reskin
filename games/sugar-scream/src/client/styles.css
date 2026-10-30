@@ -599,7 +599,7 @@ body.reduced #combo, body.reduced #peek { animation: none !important; }
   body.in-free #tumble-win { display: none !important; }
 }
 
-/* loading screen: the looping clip behind the bar (its poster is the painted loading art) */
+/* loading screen: the witch fly-by clip behind the bar (held on its last frame) */
 #loading-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; z-index: 0; }
 #loading > :not(video) { position: relative; z-index: 1; }
 
