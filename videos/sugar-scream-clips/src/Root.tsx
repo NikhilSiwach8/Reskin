@@ -2,6 +2,7 @@ import { Composition, Folder } from "remotion";
 import { BonusEntry } from "./BonusEntry";
 import { Jumpscare } from "./Jumpscare";
 import { LoadingLoop } from "./LoadingLoop";
+import { PumpkinPatchPromo } from "./PumpkinPatchPromo";
 import { FreeSpinsTotal, LollipopReveal, Retrigger, SpellCut } from "./Moments";
 import { SlotIntro } from "./SlotIntro";
 import { WinClip } from "./WinClip";
@@ -140,6 +141,11 @@ export const RemotionRoot: React.FC = () => {
           height={1080}
           defaultProps={{ background: "bg_feature_end", tiers: ["panel_win_big", "panel_win_mega", "panel_win_monster", "panel_win_sugar", "panel_win_max"], amount: 5000, multiplier: 5000, currency: "$", rayColor: "rgba(255, 211, 77, 0.28)" }}
         />
+      </Folder>
+
+      <Folder name="Features">
+        <Composition id="Pumpkin-Patch" component={PumpkinPatchPromo} durationInFrames={360} fps={30} width={1920} height={1080} />
+        <Composition id="Pumpkin-Patch-Vertical" component={PumpkinPatchPromo} durationInFrames={360} fps={30} width={1080} height={1920} />
       </Folder>
 
       <Folder name="Jumpscares">
