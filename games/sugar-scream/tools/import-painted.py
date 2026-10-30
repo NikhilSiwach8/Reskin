@@ -83,7 +83,9 @@ for path in sources("panel"):
         continue
     im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 8 else 0).getbbox())
     big = name.startswith(("win_", "bonus_", "loot_title", "loot_trigger", "loot_pedestal", "portal_doors"))
-    width = 1600 if big else 384 if name.startswith("fx_") else 1100 if im.width > im.height else 640
+    # screens the clips normally cover (win tiers, the bonus banner, the doors) stay at 1200 px
+    fallback = name.startswith(("win_", "bonus_", "portal_doors"))
+    width = 1200 if fallback else 1600 if big else 384 if name.startswith("fx_") else 1100 if im.width > im.height else 640
     width = min(width, im.width)  # never upscale past the painting
     im = im.resize((width, round(im.height * width / im.width)), Image.LANCZOS)
     # the big full-screen panels are large already; a slightly lower quality keeps the bundle in budget
