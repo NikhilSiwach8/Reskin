@@ -55,7 +55,7 @@ setSocial(launch.social || SOCIAL_CURRENCIES.has(launch.currency));
 // mobile: no pinch or double-tap zoom (iOS ignores user-scalable=no; CSS touch-action covers double tap)
 for (const ev of ['gesturestart', 'gesturechange', 'dblclick']) document.addEventListener(ev, (e) => e.preventDefault(), { passive: false });
 
-const BUY_ART: Record<string, string> = { bonus: panelSrc('cauldron_icon') ?? 'assets/cauldron.svg', fullmoon: symbolSrc('JK'), lootbox: panelSrc('loot_icon') ?? 'assets/loot_box.svg' };
+const BUY_ART: Record<string, string> = { bonus: panelSrc('cauldron_icon') ?? 'assets/cauldron.svg', fullmoon: symbolSrc('JK'), lootbox: panelSrc('loot_icon') ?? 'assets/loot_box.svg', graveyard: panelSrc('orb_soul') ?? symbolSrc('GM') };
 
 const IDLE_BOARD: Board = [
   ['CC', 'PU', 'BH', 'EY', 'BT'],
@@ -150,8 +150,8 @@ class Game {
         price: this.fmtMoney(this.bet * m.cost),
         art: BUY_ART[m.name],
         affordable: this.bet * m.cost <= this.balance,
-        vol: ({ bonus: 3, fullmoon: 5, lootbox: 4 } as Record<string, number>)[m.name] ?? 3,
-        preview: ({ bonus: 'entry-cauldron', fullmoon: 'entry-fullmoon', lootbox: 'entry-loot' } as Record<string, ClipName>)[m.name],
+        vol: ({ bonus: 3, fullmoon: 5, lootbox: 4, graveyard: 2 } as Record<string, number>)[m.name] ?? 3,
+        preview: ({ bonus: 'entry-cauldron', fullmoon: 'entry-fullmoon', lootbox: 'entry-loot', graveyard: 'entry-graveyard' } as Record<string, ClipName>)[m.name],
       })),
       buyText: (mode) => {
         const m = BUY_MODES.find((b) => b.name === mode)!;
@@ -265,7 +265,7 @@ class Game {
         writeFlag('ss-guide-done');
       }
       // warm the cache for the clips a session is likely to need, after the game has settled
-      window.setTimeout(() => void this.clips.prefetch(['entry-tot', 'win-big', 'entry-cauldron', 'scare-ghost', 'scare-witch', 'scare-pumpkin', 'scare-skull', 'spell', 'win-mega', 'retrigger', 'fs-total', 'entry-loot', 'lollipop', 'entry-fullmoon', 'scare-eyeball', 'scare-bat', 'scare-apple']), 5000);
+      window.setTimeout(() => void this.clips.prefetch(['entry-tot', 'win-big', 'entry-cauldron', 'scare-ghost', 'scare-witch', 'scare-pumpkin', 'scare-skull', 'spell', 'win-mega', 'retrigger', 'fs-total', 'entry-loot', 'lollipop', 'entry-fullmoon', 'entry-graveyard', 'scare-eyeball', 'scare-bat', 'scare-apple']), 5000);
       if (auth.round && (auth.round.active ?? true) && auth.round.payoutMultiplier !== undefined) await this.resume(auth.round);
     } catch (e) {
       this.hud.setLoading(1, errorMessage(e));

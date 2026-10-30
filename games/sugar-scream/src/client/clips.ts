@@ -6,7 +6,7 @@
 
 export type ClipName =
   | 'intro'
-  | 'entry-cauldron' | 'entry-fullmoon' | 'entry-tot' | 'entry-loot'
+  | 'entry-cauldron' | 'entry-fullmoon' | 'entry-tot' | 'entry-loot' | 'entry-graveyard'
   | 'win-big' | 'win-mega' | 'win-monster' | 'win-sugar' | 'win-max'
   | 'scare-ghost' | 'scare-witch' | 'scare-pumpkin' | 'scare-skull' | 'scare-eyeball' | 'scare-bat' | 'scare-apple'
   | 'spell' | 'retrigger' | 'lollipop' | 'fs-total';

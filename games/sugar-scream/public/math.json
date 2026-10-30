@@ -3,7 +3,8 @@
     "books": 100000,
     "modeBooks": {
       "bonus": 35000,
-      "fullmoon": 30000
+      "fullmoon": 30000,
+      "graveyard": 60000
     },
     "seed": 1313
   },
@@ -47,6 +48,14 @@
       "maxWin": 5000,
       "maxWinProbability": 0.0010000000000089009,
       "hitRate": 1.0000000000013323
+    },
+    {
+      "mode": "graveyard",
+      "cost": 77,
+      "rtp": 0.9600000000007327,
+      "maxWin": 5000,
+      "maxWinProbability": 0.00005610072997149012,
+      "hitRate": 1.0000000000001767
     }
   ]
 }

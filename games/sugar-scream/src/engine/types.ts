@@ -39,6 +39,12 @@ export interface ClusterWin {
   pay: number; // centi-bet
 }
 
+/** A Soul Orb locked on the Graveyard Lock board; `value` is centi-bet. */
+export interface Orb extends Cell {
+  kind: 'soul' | 'mini' | 'major' | 'lantern';
+  value: number;
+}
+
 export type FreeSpinKind = 'cauldron' | 'fullMoon';
 
 export type KnockPrize =
@@ -62,7 +68,17 @@ export type GameEvent =
   /** End of a winning free spin: Jack-o'-Lanterns are added to the Cauldron and multiply the spin. */
   | { type: 'multiplier'; cells: MultCell[]; landed: number; cauldronBefore: number; mult: number; base: number }
   /** The only event that adds money. `totalWin` is the running round total. */
-  | { type: 'win'; kind: 'spin' | 'scatter' | 'treat' | 'loot'; amount: number; totalWin: number }
+  | { type: 'win'; kind: 'spin' | 'scatter' | 'treat' | 'loot' | 'hold'; amount: number; totalWin: number }
+  /** Graveyard Lock begins: the board empties and `orbs` lock in place with `respins` respins. */
+  | { type: 'holdStart'; respins: number; orbs: Orb[] }
+  /**
+   * One respin: `landed` orbs lock (empty cells only). Then each Lantern Orb among them doubles
+   * every other orb locked in its reel (`boosts`, in order, with the new values; left out when none). `respins` is
+   * what is left afterwards (back to 3 if anything landed) and `filled` the orbs on the board.
+   */
+  | { type: 'holdRespin'; index: number; landed: Orb[]; boosts?: { lantern: Cell; cells: MultCell[] }[]; respins: number; filled: number }
+  /** Graveyard Lock ends: the orbs are counted up (`total`), or the full board pays the Grand. */
+  | { type: 'holdEnd'; filled: number; total: number; grand: boolean }
   /** Loot Box: the player opens one of `boxes`; it holds `tier` at `multiplier` x the bet. */
   | { type: 'lootBox'; boxes: number; tier: 'big' | 'mega' | 'monster' | 'sugar' | 'max'; multiplier: number }
   | { type: 'trickOrTreat'; cells: Cell[]; knocks: number }

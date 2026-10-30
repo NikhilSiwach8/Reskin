@@ -3,12 +3,13 @@ import {
   BET_MODES, CAULDRON_SCATTERS, DOORS, DRAWS, FREE_SPINS, FULL_MOON_SCATTERS, KNOCKS, KNOCK_TABLE, MIN_CLUSTER,
   MULT_VALUES, PAYING, REELS, RETRIGGER_SCATTERS, RETRIGGER_SPINS, ROWS, SPELL_CELLS, SPELL_CHANCE, SPELL_SYMBOLS,
   TRICK_OR_TREAT_SCATTERS, WINCAP, LOOT_BOXES, LOOT_CHANCE, LOOT_TABLE, LOOT_TIERS, clusterPay, scatterPay, type DrawTable,
+  GRAVE_LAND, GRAVE_RESPINS, GRAVE_START_ORBS, JACKPOTS, ORB_KINDS, ORB_VALUES,
 } from './config.ts';
 import { cellsOf } from './board.ts';
 import { Rng } from './rng.ts';
-import type { Board, Book, Cell, ClusterWin, FreeSpinKind, GameEvent, MultCell, SymbolId } from './types.ts';
+import type { Board, Book, Cell, ClusterWin, FreeSpinKind, GameEvent, MultCell, Orb, SymbolId } from './types.ts';
 
-export type ModeName = 'base' | 'ante' | 'bonus' | 'fullmoon' | 'lootbox';
+export type ModeName = 'base' | 'ante' | 'bonus' | 'fullmoon' | 'lootbox' | 'graveyard';
 
 /** The board plus the multiplier carried by each Jack-o'-Lantern (0 elsewhere). */
 export interface Grid {
@@ -112,7 +113,7 @@ class RoundBuilder {
   tags = new Set<string>();
 
   /** Adds money, clamping to the win cap. */
-  pay(kind: 'spin' | 'scatter' | 'treat' | 'loot', amount: number): void {
+  pay(kind: 'spin' | 'scatter' | 'treat' | 'loot' | 'hold', amount: number): void {
     if (this.capped || amount <= 0) return;
     const add = Math.min(amount, WINCAP - this.total);
     this.total += add;
@@ -256,10 +257,57 @@ function lootBox(rb: RoundBuilder, rng: Rng): void {
   rb.pay('loot', multiplier * 100);
 }
 
+/** Graveyard Lock: Soul Orbs lock on an empty board; respins reset whenever a new orb lands. */
+function graveyardLock(rb: RoundBuilder, rng: Rng): void {
+  rb.tags.add('graveyard');
+  const board: (Orb | null)[][] = Array.from({ length: REELS }, () => new Array<Orb | null>(ROWS).fill(null));
+  const all: Cell[] = [];
+  for (let reel = 0; reel < REELS; reel++) for (let row = 0; row < ROWS; row++) all.push({ reel, row });
+  const start: Orb[] = rng.sample(all, GRAVE_START_ORBS).map((c) => ({ ...c, kind: 'soul', value: rng.weighted(ORB_VALUES) }));
+  for (const o of start) board[o.reel][o.row] = o;
+  let filled = start.length;
+  let respins = GRAVE_RESPINS;
+  rb.events.push({ type: 'holdStart', respins, orbs: start.map((o) => ({ ...o })) });
+  for (let index = 1; respins > 0 && filled < REELS * ROWS; index++) {
+    const landed: Orb[] = [];
+    for (let reel = 0; reel < REELS; reel++) {
+      for (let row = 0; row < ROWS; row++) {
+        if (board[reel][row] || !rng.chance(GRAVE_LAND)) continue;
+        const kind = rng.weighted(ORB_KINDS);
+        const value = kind === 'mini' || kind === 'major' ? JACKPOTS[kind] : rng.weighted(ORB_VALUES);
+        const orb: Orb = { reel, row, kind, value };
+        board[reel][row] = orb;
+        landed.push(orb);
+        rb.tags.add(`orb_${kind}`);
+      }
+    }
+    // as they land: a Lantern landing in the same respin then doubles them too
+    const landedAs = landed.map((o) => ({ ...o }));
+    const boosts: { lantern: Cell; cells: MultCell[] }[] = [];
+    for (const l of landed.filter((o) => o.kind === 'lantern')) {
+      const cells: MultCell[] = [];
+      for (const o of board[l.reel]) {
+        if (!o || o === l) continue;
+        o.value *= 2;
+        cells.push({ reel: o.reel, row: o.row, value: o.value });
+      }
+      if (cells.length) boosts.push({ lantern: { reel: l.reel, row: l.row }, cells });
+    }
+    filled += landed.length;
+    respins = landed.length ? GRAVE_RESPINS : respins - 1;
+    rb.events.push({ type: 'holdRespin', index, landed: landedAs, ...(boosts.length ? { boosts } : {}), respins, filled });
+  }
+  const grand = filled === REELS * ROWS;
+  const total = grand ? WINCAP : board.flat().reduce((s, o) => s + (o?.value ?? 0), 0);
+  if (grand) rb.tags.add('grand');
+  rb.events.push({ type: 'holdEnd', filled, total, grand });
+  rb.pay('hold', total);
+}
+
 function finish(id: number, rb: RoundBuilder): Book {
   rb.events.push({ type: 'finalWin', amount: rb.total });
   if (rb.capped) rb.tags.add('wincap');
-  const criteria = rb.capped ? 'wincap' : rb.total === 0 ? '0' : rb.tags.has('cauldron') || rb.tags.has('fullMoon') ? 'freegame' : rb.tags.has('lootBox') ? 'lootbox' : 'basegame';
+  const criteria = rb.capped ? 'wincap' : rb.total === 0 ? '0' : rb.tags.has('cauldron') || rb.tags.has('fullMoon') ? 'freegame' : rb.tags.has('lootBox') ? 'lootbox' : rb.tags.has('graveyard') ? 'holdwin' : 'basegame';
   return { id, payoutMultiplier: rb.total, events: rb.events, criteria, tags: [...rb.tags] };
 }
 
@@ -269,6 +317,10 @@ export function playRound(id: number, mode: ModeName, rng: Rng, opts: RoundOptio
   const rb = new RoundBuilder();
   if (def.lootBox) {
     lootBox(rb, rng);
+    return finish(id, rb);
+  }
+  if (def.holdWin) {
+    graveyardLock(rb, rng);
     return finish(id, rb);
   }
   let g = opts.grid ? cloneGrid(opts.grid) : def.forcedScatters ? forcedScatterGrid(rng, def.forcedScatters) : drawGrid(rng, def.draw);

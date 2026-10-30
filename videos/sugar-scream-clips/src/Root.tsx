@@ -18,6 +18,7 @@ const GAME_CLIPS = [
   { id: "entry-fullmoon", component: BonusEntry, frames: 165, props: { world: "bg_portal_fullmoon", title: "Full Moon", subtitle: "12 FREE SPINS · CAULDRON STARTS AT x5", accent: "#ff5a2a", track: "music_fullmoon" } },
   { id: "entry-tot", component: BonusEntry, frames: 165, props: { world: "bg_portal_tot", title: "Trick or Treat", subtitle: "KNOCK ON 3 DOORS", accent: "#ff8a00", track: "music_feature" } },
   { id: "entry-loot", component: BonusEntry, frames: 165, props: { world: "bg_portal_loot", title: "Loot Box", subtitle: "PICK A BOX · UP TO 5,000x", accent: "#ffd34d", track: "music_feature" } },
+  { id: "entry-graveyard", component: BonusEntry, frames: 165, props: { world: "bg_graveyard", title: "Graveyard Lock", subtitle: "HOLD AND WIN · FILL 30 GRAVES FOR 5,000x", accent: "#c9b8ff", track: "music_feature" } },
   ...(["big", "mega", "monster", "sugar", "max"] as const).map((tier, i) => ({
     id: `win-${tier}`,
     component: WinClip,
@@ -92,6 +93,15 @@ export const RemotionRoot: React.FC = () => {
           width={1920}
           height={1080}
           defaultProps={{ world: "bg_portal_loot", title: "Loot Box", subtitle: "PICK A BOX · UP TO 5,000x", accent: "#ffd34d", track: "music_feature" }}
+        />
+        <Composition
+          id="Entry-Graveyard-Lock"
+          component={BonusEntry}
+          durationInFrames={210}
+          fps={30}
+          width={1920}
+          height={1080}
+          defaultProps={{ world: "bg_graveyard", title: "Graveyard Lock", subtitle: "HOLD AND WIN · FILL 30 GRAVES FOR 5,000x", accent: "#c9b8ff", track: "music_feature" }}
         />
       </Folder>
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BET_MODES, FREE_SPINS, LOOT_TIERS, MIN_CLUSTER, REELS, ROWS, WINCAP, clusterPay, scatterPay } from '../src/engine/config.ts';
+import { BET_MODES, FREE_SPINS, GRAVE_RESPINS, GRAVE_START_ORBS, LOOT_TIERS, MIN_CLUSTER, REELS, ROWS, WINCAP, clusterPay, scatterPay } from '../src/engine/config.ts';
 import { applyTumble } from '../src/engine/board.ts';
 import { cellsOf, drawGrid, evaluate, forcedScatterGrid, playRound, tumble, type Grid, type ModeName } from '../src/engine/round.ts';
 import { Rng } from '../src/engine/rng.ts';
@@ -268,6 +268,77 @@ describe('Loot Box', () => {
     }
     const book = playRound(1, 'base', rng, { grid: forcedScatterGrid(rng, 4), noSpell: true, forceLoot: true });
     expect(ofType(book.events, 'lootBox')).toHaveLength(0);
+  });
+});
+
+describe('Graveyard Lock', () => {
+  it('orbs lock, respins reset on every landing, and the round pays the sum of the orbs', () => {
+    const rng = new Rng(41);
+    const kinds = new Set<string>();
+    for (let i = 0; i < 3000; i++) {
+      const book = playRound(i, 'graveyard', rng);
+      const res = validateBook(book);
+      if (!res.ok) throw new Error(`graveyard book ${i}: ${res.errors.join('; ')}`);
+      const start = ofType(book.events, 'holdStart')[0];
+      expect(start.orbs).toHaveLength(GRAVE_START_ORBS);
+      const respins = ofType(book.events, 'holdRespin');
+      let left = GRAVE_RESPINS;
+      for (const r of respins) {
+        left = r.landed.length ? GRAVE_RESPINS : left - 1;
+        expect(r.respins).toBe(left);
+        for (const o of r.landed) kinds.add(o.kind);
+      }
+      const end = ofType(book.events, 'holdEnd')[0];
+      expect(end.grand || left === 0).toBe(true);
+      expect(book.payoutMultiplier).toBe(Math.min(WINCAP, end.total));
+      expect(book.criteria).toBe(end.grand ? 'wincap' : 'holdwin');
+    }
+    expect([...kinds].sort()).toEqual(['lantern', 'major', 'mini', 'soul']);
+  });
+
+  it('a Lantern Orb doubles every other orb in its reel', () => {
+    const rng = new Rng(7);
+    let checked = 0;
+    for (let i = 0; i < 4000 && checked < 20; i++) {
+      const book = playRound(i, 'graveyard', rng);
+      const values = new Map<string, number>();
+      for (const o of ofType(book.events, 'holdStart')[0].orbs) values.set(`${o.reel},${o.row}`, o.value);
+      for (const r of ofType(book.events, 'holdRespin')) {
+        for (const o of r.landed) values.set(`${o.reel},${o.row}`, o.value);
+        for (const b of r.boosts ?? []) {
+          for (const c of b.cells) {
+            expect(c.reel).toBe(b.lantern.reel);
+            expect(c.value).toBe(values.get(`${c.reel},${c.row}`)! * 2);
+            values.set(`${c.reel},${c.row}`, c.value);
+          }
+          checked++;
+        }
+      }
+    }
+    expect(checked).toBeGreaterThan(0);
+  });
+
+  it('filling the board pays the Grand: the 5,000x max win', () => {
+    const rng = new Rng(3);
+    let found = false;
+    for (let i = 0; i < 200000 && !found; i++) {
+      const book = playRound(i, 'graveyard', rng);
+      if (!book.tags.includes('grand')) continue;
+      found = true;
+      const end = ofType(book.events, 'holdEnd')[0];
+      expect(end.filled).toBe(30);
+      expect(book.payoutMultiplier).toBe(WINCAP);
+      expect(validateBook(book).ok).toBe(true);
+    }
+    expect(found).toBe(true);
+  });
+
+  it('the validator rejects a forged orb total', () => {
+    const rng = new Rng(12);
+    const book = playRound(1, 'graveyard', rng);
+    const end = ofType(book.events, 'holdEnd')[0];
+    end.total += 100;
+    expect(validateBook(book).ok).toBe(false);
   });
 });
 

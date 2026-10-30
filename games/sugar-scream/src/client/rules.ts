@@ -1,9 +1,9 @@
 // Game rules and paytable, generated from the engine config so they always match the math.
 import {
-  BET_MODES, CAULDRON_SCATTERS, LOOT_BOXES, LOOT_CHANCE, LOOT_TABLE, LOOT_TIERS, DOORS, FREE_SPINS, FULL_MOON_SCATTERS, KNOCKS, KNOCK_TABLE, MIN_CLUSTER, MULT_VALUES,
+  BET_MODES, CAULDRON_SCATTERS, GRAVE_LAND, GRAVE_RESPINS, GRAVE_START_ORBS, JACKPOTS, ORB_KINDS, ORB_VALUES, REELS, ROWS, LOOT_BOXES, LOOT_CHANCE, LOOT_TABLE, LOOT_TIERS, DOORS, FREE_SPINS, FULL_MOON_SCATTERS, KNOCKS, KNOCK_TABLE, MIN_CLUSTER, MULT_VALUES,
   PAYING, RETRIGGER_SCATTERS, RETRIGGER_SPINS, SCATTER_PAYS, SYMBOLS, TRICK_OR_TREAT_SCATTERS, WINCAP,
 } from '../engine/config.ts';
-import { symbolSrc } from './assets.ts';
+import { panelSrc, symbolSrc } from './assets.ts';
 import { localizeTree } from './text.ts';
 
 export interface MathSummary {
@@ -53,6 +53,7 @@ export function buildRules(root: HTMLElement, o: { math?: MathSummary; fmt: (cen
     <h3>Full Moon free spins</h3>
     <p>${FULL_MOON_SCATTERS} or more Skull Lollipops award ${FREE_SPINS.fullMoon.spins} Full Moon free spins. They play like Haunted Cauldron, but the Cauldron starts at x${FREE_SPINS.fullMoon.cauldron} and each Jack-o'-Lantern adds <b>${FREE_SPINS.fullMoon.pour}x</b> its value to the Cauldron.</p>
     <p><b>Pumpkin Patch:</b> in Full Moon, when a free spin's tumbles end with a win, each Jack-o'-Lantern on the board has a ${Math.round(FREE_SPINS.fullMoon.split * 100)}% chance to split: a copy with the same value sprouts on a candy. The copies count in that spin's multiplier and are poured into the Cauldron like any other Jack-o'-Lantern. Pumpkin Patch never happens in Haunted Cauldron free spins.</p>
+    ${o.disabledBuy ? '' : graveyard(o.fmt)}
     ${o.disabledBuy ? '' : '<h3>Ante Bet and Buy Feature</h3>'}
     ${modes.filter((m) => m.name !== 'base').map((m) => `<p><b>${esc(m.label)} (${m.cost}x bet):</b> ${esc(m.description)}</p>`).join('')}
     <h3>Return to player</h3>
@@ -73,4 +74,21 @@ export function buildRules(root: HTMLElement, o: { math?: MathSummary; fmt: (cen
     <p>Malfunction voids all pays and plays. All results are decided by the server when the round starts; animations do not affect them. If the display ever differs from the server's result, the server's result is the one that counts and is paid. Unfinished rounds are resumed when the game is reloaded.</p>
   `;
   localizeTree(root);
+}
+
+/** Graveyard Lock (bought only): hold and win. */
+function graveyard(fmt: (centi: number) => string): string {
+  const orb = (name: string) => {
+    const src = panelSrc(name);
+    return src ? `<img src="${src}" alt="">` : '';
+  };
+  const kinds = ORB_KINDS.reduce((sum, [, w]) => sum + w, 0);
+  const pct = (kind: string) => (((ORB_KINDS.find(([k]) => k === kind)?.[1] ?? 0) / kinds) * 100).toFixed(1);
+  const cells = REELS * ROWS;
+  return `
+    <h3>Graveyard Lock</h3>
+    <p>${orb('orb_soul')} A hold-and-win bonus, available as a Buy Feature. The board empties and ${GRAVE_START_ORBS} <b>Soul Orbs</b> lock in place, each carrying a cash value (${ORB_VALUES.map(([v]) => fmt(v)).join(', ')}). You get ${GRAVE_RESPINS} respins.</p>
+    <p>On each respin every empty grave has a ${Math.round(GRAVE_LAND * 100)}% chance to catch a new orb. Every orb that lands locks in place and resets the respins to ${GRAVE_RESPINS}. The bonus ends when the respins run out or all ${cells} graves are filled, and pays the sum of every orb on the board.</p>
+    <p>A new orb is a Soul Orb (${pct('soul')}%), a <b>Mini</b> jackpot orb worth ${fmt(JACKPOTS.mini)} (${pct('mini')}%) ${orb('orb_mini')}, a <b>Major</b> jackpot orb worth ${fmt(JACKPOTS.major)} (${pct('major')}%) ${orb('orb_major')}, or a <b>Lantern Orb</b> (${pct('lantern')}%) <img src="${symbolSrc('JK')}" alt="">. A Lantern Orb carries a cash value like a Soul Orb and doubles the value of every other orb locked in its reel when it lands.</p>
+    <p><b>Grand:</b> filling all ${cells} graves pays the ${(WINCAP / 100).toLocaleString('en-US')}x maximum win instead of the sum of the orbs.</p>`;
 }

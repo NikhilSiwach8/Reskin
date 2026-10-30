@@ -255,6 +255,14 @@ function scenarioMatches(b: StoredBook, want: string): boolean {
       return has('lootBox');
     case 'lootMax':
       return events.some((e) => e.type === 'lootBox' && (e as { tier?: string }).tier === 'max');
+    case 'graveyard':
+      return has('holdStart') && b.criteria !== 'wincap';
+    case 'lantern':
+      return events.some((e) => e.type === 'holdRespin' && ((e as { boosts?: unknown[] }).boosts?.length ?? 0) > 0);
+    case 'jackpot':
+      return events.some((e) => e.type === 'holdRespin' && ((e as { landed?: { kind: string }[] }).landed ?? []).some((o) => o.kind === 'mini' || o.kind === 'major'));
+    case 'grand':
+      return events.some((e) => e.type === 'holdEnd' && (e as { grand?: boolean }).grand);
     default:
       return false;
   }

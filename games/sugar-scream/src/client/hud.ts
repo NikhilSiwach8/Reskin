@@ -1,5 +1,5 @@
 // DOM user interface: meters, buttons, dialogs, banners, win screens and the Trick or Treat doors.
-import type { KnockPrize } from '../engine/types.ts';
+import type { Cell, KnockPrize, MultCell, Orb } from '../engine/types.ts';
 import type { Sfx } from './audio.ts';
 import type { ClipName, Clips } from './clips.ts';
 import { bgSrc, buttonSrc, panelSrc, portalHole, symbolSrc } from './assets.ts';
@@ -193,8 +193,8 @@ export class Hud {
       'assets/loot_box.svg',
       panelSrc('door'),
       ...['loot_box_1', 'loot_box_2', 'loot_box_3', 'loot_box_4', 'loot_box_5', 'loot_box_6', 'loot_open', 'loot_pedestal', 'loot_title', 'loot_trigger',
-        'portal_wall', 'portal_doors', 'portal_flash', 'bonus_banner'].map(panelSrc),
-      ...['loot', 'portal_tunnel', 'portal_cauldron', 'portal_fullmoon', 'portal_tot', 'portal_loot', 'portal_exit'].map(bgSrc),
+        'portal_wall', 'portal_doors', 'portal_flash', 'bonus_banner', 'orb_soul', 'orb_mini', 'orb_major'].map(panelSrc),
+      ...['loot', 'graveyard', 'portal_tunnel', 'portal_cauldron', 'portal_fullmoon', 'portal_tot', 'portal_loot', 'portal_exit'].map(bgSrc),
       ...['fs_cauldron', 'fs_fullmoon', 'feature_end', 'tot'].map(bgSrc),
     ];
     for (const src of later) if (src) new Image().src = src;
@@ -782,7 +782,7 @@ export class Hud {
    */
   async enterDoor(dest: string, fast: boolean, onClosed: () => void): Promise<void> {
     // the bonus entry clip: tunnel, hallway, the doors open, through into the bonus world
-    const clip = ({ cauldron: 'entry-cauldron', fullmoon: 'entry-fullmoon', tot: 'entry-tot', loot: 'entry-loot' } as Record<string, ClipName>)[dest];
+    const clip = ({ cauldron: 'entry-cauldron', fullmoon: 'entry-fullmoon', tot: 'entry-tot', loot: 'entry-loot', graveyard: 'entry-graveyard' } as Record<string, ClipName>)[dest];
     if (clip && this.clips) {
       // the scene switches while the camera dives through the doorway (3.1 s to 3.9 s in the clip)
       const ok = await this.clips.play(clip, { rate: fast ? 1.6 : 1, cues: [[3.7, onClosed]], skipTo: 3.85 });
@@ -790,7 +790,7 @@ export class Hud {
     }
     const wall = panelSrc('portal_wall');
     const doors = panelSrc('portal_doors');
-    const world = bgSrc(`portal_${dest}`);
+    const world = bgSrc(`portal_${dest}`) ?? bgSrc(dest);
     if (document.body.classList.contains('reduced') || !wall || !doors || !world || !portalHole) {
       onClosed();
       return;
@@ -886,6 +886,143 @@ export class Hud {
     });
     // fly through the middle of the doorway
     stage.style.transformOrigin = `${((x0 + x1) / 2) * 100}% ${((y0 + y1) / 2) * 100}%`;
+  }
+
+  // ---------------------------------------------------------------- Graveyard Lock
+  private holdValues = new Map<string, number>();
+
+  /** Opens the Graveyard Lock board with its first orbs (no animation for them beyond a pop). */
+  holdOpen(orbs: Orb[], respins: number, jackpots: { mini: string; major: string; grand: string }, fmt: (c: number) => string): void {
+    const grid = $('#hold-grid');
+    grid.innerHTML = '';
+    for (let row = 0; row < 5; row++) {
+      for (let reel = 0; reel < 6; reel++) {
+        const cell = document.createElement('div');
+        cell.className = 'hold-cell';
+        cell.dataset.cell = `${reel},${row}`;
+        grid.appendChild(cell);
+      }
+    }
+    $('#jp-mini').textContent = jackpots.mini;
+    $('#jp-major').textContent = jackpots.major;
+    $('#jp-grand').textContent = jackpots.grand;
+    this.holdValues.clear();
+    for (const o of orbs) this.placeOrb(o, fmt);
+    this.setRespins(respins);
+    this.holdSum(fmt);
+    const bg = bgSrc('graveyard');
+    if (bg) $('#hold').style.setProperty('--bg', cssUrl(bg));
+    $('#hold').classList.toggle('painted-bg', !!bg);
+    $('#hold').classList.remove('hidden', 'grand');
+  }
+
+  private holdCell(c: Cell): HTMLElement {
+    return $(`#hold-grid .hold-cell[data-cell="${c.reel},${c.row}"]`);
+  }
+
+  private placeOrb(o: Orb, fmt: (c: number) => string): void {
+    const cell = this.holdCell(o);
+    const art = o.kind === 'lantern' ? symbolSrc('JK') : panelSrc(`orb_${o.kind}`) ?? panelSrc('orb_soul');
+    cell.innerHTML = '';
+    const orb = document.createElement('div');
+    orb.className = `orb ${o.kind}`;
+    if (art) {
+      const img = document.createElement('img');
+      img.src = art;
+      img.alt = '';
+      orb.appendChild(img);
+    }
+    if (o.kind === 'mini' || o.kind === 'major') {
+      const tag = document.createElement('span');
+      tag.className = 'orb-tag';
+      tag.textContent = t(o.kind === 'mini' ? 'Mini' : 'Major');
+      orb.appendChild(tag);
+    }
+    const v = document.createElement('span');
+    v.className = 'orb-v';
+    v.textContent = fmt(o.value);
+    orb.appendChild(v);
+    cell.appendChild(orb);
+    cell.classList.add('locked');
+    this.holdValues.set(`${o.reel},${o.row}`, o.value);
+  }
+
+  private setRespins(n: number): void {
+    $('#hold .hold-respins').querySelectorAll('i').forEach((pip, i) => pip.classList.toggle('on', i < n));
+  }
+
+  private holdSum(fmt: (c: number) => string): void {
+    $('#hold-total').textContent = fmt([...this.holdValues.values()].reduce((a, v) => a + v, 0));
+  }
+
+  /**
+   * One respin: the empty graves shimmer, the new orbs lock in, each Lantern Orb doubles its
+   * reel, then the respin lamps show what is left (all three again after a landing).
+   */
+  async holdRespin(landed: Orb[], boosts: { lantern: Cell; cells: MultCell[] }[], respins: number, fmt: (c: number) => string, ms: (v: number) => number): Promise<void> {
+    const grid = $('#hold-grid');
+    grid.classList.add('spinning');
+    this.h.sound('drop');
+    await wait(ms(650));
+    grid.classList.remove('spinning');
+    for (const o of landed) {
+      this.placeOrb(o, fmt);
+      const cell = this.holdCell(o);
+      cell.classList.remove('land');
+      void cell.offsetWidth;
+      cell.classList.add('land');
+      this.h.sound(o.kind === 'mini' || o.kind === 'major' ? 'lollipop' : o.kind === 'lantern' ? 'mult' : 'scatter');
+      await wait(ms(o.kind === 'soul' ? 260 : 600));
+    }
+    for (const b of boosts) {
+      const lantern = this.holdCell(b.lantern);
+      lantern.classList.add('boosting');
+      grid.querySelectorAll<HTMLElement>(`.hold-cell[data-cell^="${b.lantern.reel},"]`).forEach((c) => c.classList.add('reel-glow'));
+      this.h.sound('cauldron');
+      await wait(ms(450));
+      for (const c of b.cells) {
+        const cell = this.holdCell(c);
+        const v = cell.querySelector('.orb-v');
+        if (v) v.textContent = fmt(c.value);
+        this.holdValues.set(`${c.reel},${c.row}`, c.value);
+        cell.classList.remove('doubled');
+        void cell.offsetWidth;
+        cell.classList.add('doubled');
+      }
+      this.h.sound('hit');
+      await wait(ms(650));
+      grid.querySelectorAll('.reel-glow').forEach((c) => c.classList.remove('reel-glow'));
+      lantern.classList.remove('boosting');
+    }
+    this.holdSum(fmt);
+    if (!landed.length) this.h.sound('knock');
+    this.setRespins(respins);
+    await wait(ms(landed.length ? 350 : 250));
+  }
+
+  /** The end: every orb is counted into the total in turn (or the full board pays the Grand). */
+  async holdEnd(total: string, grand: boolean, ms: (v: number) => number): Promise<void> {
+    const cells = [...document.querySelectorAll<HTMLElement>('#hold-grid .hold-cell.locked')];
+    const step = Math.min(ms(110), ms(1600) / Math.max(1, cells.length));
+    for (const c of cells) {
+      c.classList.add('counted');
+      this.h.sound('pop');
+      await wait(step);
+    }
+    $('#hold-total').textContent = total;
+    $('#hold .hold-total').classList.remove('bump');
+    void $('#hold .hold-total').offsetWidth;
+    $('#hold .hold-total').classList.add('bump');
+    if (grand) {
+      $('#hold').classList.add('grand');
+      this.h.sound('bigWin');
+    }
+    await wait(ms(grand ? 1800 : 900));
+  }
+
+  holdClose(): void {
+    $('#hold').classList.add('hidden');
+    $('#hold').classList.remove('grand');
   }
 
   /**
@@ -1136,7 +1273,7 @@ export class Hud {
       card.querySelector('h3')!.textContent = t(o.label);
       card.querySelector('img')!.src = o.art;
       // the bonus world behind its symbol
-      const world = bgSrc(({ bonus: 'fs_cauldron', fullmoon: 'fs_fullmoon', lootbox: 'loot' } as Record<string, string>)[o.mode] ?? 'tot');
+      const world = bgSrc(({ bonus: 'fs_cauldron', fullmoon: 'fs_fullmoon', lootbox: 'loot', graveyard: 'graveyard' } as Record<string, string>)[o.mode] ?? 'tot');
       if (world) card.querySelector<HTMLElement>('.bc-art')!.style.backgroundImage = cssUrl(world);
       card.querySelector('.bc-desc')!.textContent = t(o.desc);
       card.querySelector('.bc-vol span')!.textContent = t('Volatility');

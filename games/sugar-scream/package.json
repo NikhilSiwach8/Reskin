@@ -15,7 +15,7 @@
     "test": "vitest run --config vitest.config.ts",
     "math": "node --experimental-strip-types src/math/cli.ts",
     "math:dev": "node --experimental-strip-types src/math/cli.ts --books 20000 --out math-output/dev --wincaps 4 --wincap-attempts 60000 --level 3",
-    "math:publish": "node --experimental-strip-types src/math/cli.ts --books 100000 --mode-books bonus=35000,fullmoon=30000 --out math-output/publish --client-summary",
+    "math:publish": "node --experimental-strip-types src/math/cli.ts --books 100000 --mode-books bonus=35000,fullmoon=30000,graveyard=60000 --out math-output/publish --client-summary",
     "art": "node tools/render-art.mjs",
     "art:painted": "python3 tools/import-painted.py",
     "test:e2e": "node tools/smoke.mjs",

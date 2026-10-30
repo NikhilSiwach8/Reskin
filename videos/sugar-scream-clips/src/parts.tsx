@@ -201,7 +201,7 @@ export const Embers: React.FC<{ readonly color?: string; readonly count?: number
   );
 };
 
-/** The game's two-colour Creepster logo, punching in at `at`. */
+/** The game's painted logo, punching in at `at`. */
 export const Logo: React.FC<{ readonly at?: number; readonly size?: number; readonly style?: React.CSSProperties }> = ({
   at = 0,
   size = 200,

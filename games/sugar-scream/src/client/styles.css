@@ -460,7 +460,7 @@ body.in-free #msg-bar { border-color: rgba(157, 255, 74, 0.6); }
 .buy-sheet h2 { margin: 0 0 14px; font-family: var(--fh); font-weight: 400; font-size: clamp(30px, 4.4vw, 54px); color: #fff; letter-spacing: 2px; text-shadow: 0 4px 0 #5a0040; }
 .buy-sheet h2::after { content: ''; display: block; width: 70px; height: 5px; border-radius: 3px; background: var(--pink); margin-top: 4px; }
 .buy-sheet .modal-close { top: 4px; right: 4px; width: 46px; height: 46px; font-size: 20px; background: #1a0430; border: 3px solid #fff; }
-#buy-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(8px, 1.4vw, 20px); }
+#buy-cards { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(8px, 1.4vw, 20px); }
 #buy-options { display: contents; }
 .buy-card { display: flex; flex-direction: column; border-radius: 22px; background: #fff7fc; border: 4px solid #fff; box-shadow: 0 8px 0 rgba(0, 0, 0, 0.35); overflow: hidden; color: #1a0430; transform: rotate(var(--tilt, 0deg)); animation: loot-in 0.4s cubic-bezier(0.2, 1.5, 0.4, 1) backwards; }
 .buy-card:nth-child(2n) { --tilt: 0.6deg; }
@@ -819,4 +819,67 @@ body.reduced #combo, body.reduced #peek { animation: none !important; }
   #splash-title { font-size: 24px; }
   #splash-sub { font-size: 11px; margin: 4px 0 6px; }
   .splash-card .cta { --ck: 0.12; font-size: 14px; }
+}
+
+/* ------------------------------------------------------------------ Graveyard Lock (hold and win) */
+#hold { z-index: 10; }
+#hold.painted-bg { background: linear-gradient(rgba(6, 0, 20, 0.25), rgba(6, 0, 20, 0.55)), var(--bg) center / cover no-repeat, #0b0326; }
+/* sized so title, jackpots, board (its frame included) and status fit the height */
+.hold-card { display: flex; flex-direction: column; align-items: center; gap: clamp(4px, 1.2vh, 12px); width: min(96vw, calc((100vh - 300px) * 1.2 + 56px)); }
+.hold-title { font-family: var(--fh); font-weight: 700; font-size: clamp(26px, 5vh, 56px); color: #c9b8ff; text-transform: uppercase; letter-spacing: 1px; paint-order: stroke fill; -webkit-text-stroke: 0.07em #1a0040; text-shadow: 0 4px 0 #1a0040, 0 0 24px rgba(160, 120, 255, 0.7); line-height: 1; }
+.hold-jackpots { display: flex; gap: clamp(4px, 1vw, 12px); }
+.hold-jackpots .jp, .hold-status > div {
+  --pk: 0.2; display: flex; flex-direction: column; align-items: center; line-height: 1.05;
+  border-style: solid; border-color: transparent; border-width: calc(60px * var(--pk)) calc(110px * var(--pk));
+  border-image: var(--ui-pill) 60 110 fill / 1 / 0 stretch; padding: 0 6px; min-width: clamp(80px, 12vw, 150px);
+}
+.hold-jackpots span, .hold-status span { font-size: clamp(10px, 1.6vh, 14px); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #e9d6f5; }
+.hold-jackpots b, .hold-status b { font-size: clamp(14px, 2.6vh, 24px); font-variant-numeric: tabular-nums; }
+.jp.mini b { color: var(--lime); }
+.jp.major b { color: var(--gold); }
+.jp.grand b { color: #ff7ad1; }
+/* the board: the candy-cane frame around a 6 x 5 grid of graves */
+.hold-board {
+  --fk: 0.12; width: 100%;
+  border-style: solid; border-color: transparent; border-width: calc(270px * var(--fk)) calc(220px * var(--fk)) calc(385px * var(--fk));
+  border-image: var(--ui-frame) 270 220 385 220 fill / 1 / 0 round; filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.55));
+}
+#hold-grid { display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(5, 1fr); gap: clamp(2px, 0.6vw, 8px); aspect-ratio: 6 / 5; padding: 2px; }
+.hold-cell { position: relative; border-radius: 22%; background: rgba(10, 0, 24, 0.45) var(--ui-window) center / cover; box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.85), inset 0 0 0 1px rgba(200, 170, 255, 0.14); display: grid; place-items: center; }
+#hold-grid.spinning .hold-cell:not(.locked) { animation: grave-shimmer 0.32s linear infinite; }
+#hold-grid.spinning .hold-cell:not(.locked):nth-child(3n) { animation-delay: -0.1s; }
+#hold-grid.spinning .hold-cell:not(.locked):nth-child(3n + 1) { animation-delay: -0.2s; }
+@keyframes grave-shimmer { 50% { background-color: rgba(190, 150, 255, 0.22); } }
+.orb { position: relative; width: 100%; height: 100%; display: grid; place-items: center; }
+.orb img { position: absolute; inset: 3%; width: 94%; height: 94%; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55)); }
+.orb.lantern img { inset: 6%; width: 88%; height: 88%; }
+.orb-v { position: absolute; left: 0; right: 0; bottom: 4%; text-align: center; font-weight: 700; font-size: clamp(8px, min(2.2vh, 2.6vw), 20px); color: #fff; paint-order: stroke fill; -webkit-text-stroke: 0.18em #2a0040; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.orb-tag { position: absolute; top: 4%; left: 0; right: 0; text-align: center; font-weight: 700; font-size: clamp(8px, 1.6vh, 14px); text-transform: uppercase; letter-spacing: 1px; paint-order: stroke fill; -webkit-text-stroke: 0.2em #1a0030; }
+.orb.mini .orb-tag { color: var(--lime); }
+.orb.major .orb-tag { color: var(--gold); }
+.hold-cell.land .orb { animation: orb-land 0.45s cubic-bezier(0.2, 1.6, 0.4, 1); }
+@keyframes orb-land { from { scale: 2; opacity: 0; filter: brightness(2.2); } }
+.hold-cell.reel-glow { box-shadow: inset 0 0 0 2px rgba(255, 170, 60, 0.9), 0 0 16px rgba(255, 150, 40, 0.75); }
+.hold-cell.boosting .orb { animation: lantern-boost 0.5s ease-in-out infinite alternate; }
+@keyframes lantern-boost { to { scale: 1.12; filter: brightness(1.4) drop-shadow(0 0 12px #ff9a2a); } }
+.hold-cell.doubled .orb-v { animation: doubled 0.5s cubic-bezier(0.2, 1.8, 0.4, 1); color: #ffcf6a; }
+@keyframes doubled { from { scale: 1.9; } }
+.hold-cell.counted .orb { filter: brightness(0.62) saturate(0.7); transition: filter 0.2s; }
+.hold-status { display: flex; gap: clamp(6px, 2vw, 20px); }
+.hold-respins { flex-direction: row !important; gap: 6px; }
+.hold-respins i { width: clamp(14px, 2.4vh, 22px); aspect-ratio: 1; border-radius: 50%; background: var(--ui-knob) center / contain no-repeat; filter: grayscale(1) brightness(0.45); transition: filter 0.2s; }
+.hold-respins i.on { filter: drop-shadow(0 0 6px rgba(157, 255, 74, 0.8)); }
+.hold-total b { color: var(--gold); }
+.hold-total.bump { animation: tier-punch 0.5s cubic-bezier(0.2, 1.6, 0.4, 1); }
+#hold.grand .hold-board { animation: grand-flash 0.3s linear 6; }
+@keyframes grand-flash { 50% { filter: brightness(1.8) drop-shadow(0 0 30px #ffd34d); } }
+body.reduced #hold * { animation: none !important; }
+@media (orientation: portrait) {
+  .hold-card { width: 96vw; }
+  .hold-jackpots .jp { min-width: 0; flex: 1; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .hold-card { gap: 2px; width: min(96vw, calc((100vh - 180px) * 1.2 + 36px)); }
+  .hold-board { --fk: 0.08; }
+  .hold-jackpots .jp, .hold-status > div { --pk: 0.14; }
 }

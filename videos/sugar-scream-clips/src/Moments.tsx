@@ -15,10 +15,15 @@ const Title: React.FC<{ readonly at: number; readonly size: number; readonly col
       style={{
         maxWidth: "92%",
         textAlign: "center",
-        fontFamily: "Creepster",
-        fontSize: size,
+        // the game's heading lettering: bold rounded candy type, outlined, with a dropped shadow
+        fontFamily: "Fredoka",
+        fontWeight: 700,
+        fontSize: size * 0.88,
         lineHeight: 1,
-        letterSpacing: 4,
+        letterSpacing: 2,
+        textTransform: "uppercase",
+        WebkitTextStroke: `${Math.round(size * 0.07)}px #2a0040`,
+        paintOrder: "stroke fill",
         color,
         textShadow: `0 0 40px ${glow}, 0 10px 0 rgba(0,0,0,0.6)`,
         scale: interpolate(frame, [at, at + 0.35 * fps], [2.4, 1], {

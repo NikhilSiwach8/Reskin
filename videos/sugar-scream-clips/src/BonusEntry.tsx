@@ -153,11 +153,16 @@ const Arrival: React.FC<{ readonly world: string; readonly title: string; readon
           name="Bonus title"
           style={{
             maxWidth: "92%",
-            fontFamily: "Creepster",
-            fontSize: 190,
+            // the game's heading lettering: bold rounded candy type, outlined, with a dropped shadow
+            fontFamily: "Fredoka",
+            fontWeight: 700,
+            fontSize: 170,
             lineHeight: 1,
             color: "white",
-            letterSpacing: 6,
+            letterSpacing: 2,
+            textTransform: "uppercase",
+            WebkitTextStroke: "12px #2a0040",
+            paintOrder: "stroke fill",
             textAlign: "center",
             textShadow: `0 0 40px ${accent}, 0 12px 0 rgba(0,0,0,0.6)`,
             scale: interpolate(frame, [0.15 * fps, 0.6 * fps], [2.2, 1], {

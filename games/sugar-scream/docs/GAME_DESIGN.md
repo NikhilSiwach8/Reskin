@@ -51,6 +51,21 @@ On a base or Ante spin that triggered no other feature, a Loot Box drops with pr
 
 A Max Win box pays the 5,000x cap and ends the round. As with Trick or Treat, the box clicked only decides where the predetermined prize is shown. The `lootbox` bet mode (92x) opens a Loot Box directly, with no board. Its book is just `lootBox`, `win`, `finalWin`.
 
+### New: Graveyard Lock (bought for 77x)
+
+A hold-and-win bonus that pays in a way nothing else in the game does: there are no candies and no symbol wins. The board empties and `GRAVE_START_ORBS` (6) Soul Orbs lock on random graves, each carrying a cash value from `ORB_VALUES` (1x to 50x). The player has `GRAVE_RESPINS` (3) respins.
+
+On each respin every empty grave independently catches a new orb with probability `GRAVE_LAND` (4%). An orb that lands locks in place, and any landing resets the respins to 3; a respin with no landing uses one up. A new orb is drawn from `ORB_KINDS`:
+
+| Orb | Chance | Value |
+|---|---|---|
+| Soul Orb | 94% | from `ORB_VALUES` |
+| Mini jackpot | 3% | 25x |
+| Major jackpot | 0.6% | 100x |
+| Lantern Orb (the Jack-o'-Lantern) | 2.4% | from `ORB_VALUES`; when it lands, every other orb already locked in its reel doubles |
+
+The bonus ends when the respins run out (or the board is full) and pays the sum of all orbs. Filling all 30 graves pays the **Grand**, the 5,000x cap, instead. A buy averages about 15 orbs; it pays at least its price in 39% of buys, and the Grand comes about 1 in 17,800. It is bought only (no base-game trigger), at its simulated value (raw 96.2%).
+
 ## Free spins
 
 | Trigger | Feature | Spins | Cauldron start | Each Jack-o'-Lantern adds |
@@ -87,6 +102,7 @@ Every round is capped at 5,000x (`WINCAP`). When a win would cross it, that win 
 | `bonus` | 100x | board forced to exactly 4 Skull Lollipops (base symbols otherwise); its base tumbles and scatter pay count |
 | `fullmoon` | 300x | board forced to exactly 5 Skull Lollipops |
 | `lootbox` | 92x | opens a Loot Box directly (no board) |
+| `graveyard` | 77x | plays Graveyard Lock directly (no board) |
 
 Witch's Spell only appears in `base` and `ante`. A bought Haunted Cauldron can still upgrade to Full Moon if a tumble lands a fifth Lollipop.
 
@@ -103,6 +119,8 @@ reveal (base)
      ├─ 3  → trickOrTreat → knock x1..3 → trickOrTreatEnd → win(treat)
      │                                   └─ Golden Lollipop → freeSpins(cauldron)
      └─ else, 1 in 1,500 → lootBox → win(loot)
+graveyard (bought):
+ holdStart → holdRespin* (until the respins run out or 30 orbs) → holdEnd → win(hold)
 freeSpins:
  freeSpinsStart
  repeat: freeSpin → reveal(free) → [tumbleWin → tumble]* → multiplier? → win(spin) → cauldron? → retrigger?
@@ -122,7 +140,7 @@ Amounts are integer centi-bet (100 = 1x). Boards are `board[reel][row]` with row
 | `tumble` | `fill[reel][]`, `mults` | The winning cells burst. Survivors fall and `fill[reel]` drops in on top (top to bottom). The new board is `applyTumble(board, winSymbols, fill)` (`src/engine/board.ts`). |
 | `pumpkinSplit` | `splits: [{ from, to, value }]` | Full Moon, after a winning spin's tumbles and before its `multiplier`: each `from` Jack-o'-Lantern sprouts a copy of `value` on the candy at `to`. The validator replays it and checks the copies against the next `multiplier`. |
 | `multiplier` | `cells`, `landed`, `cauldronBefore`, `mult`, `base` | End of a winning free spin: `mult = max(1, landed + cauldronBefore)`. `cells` is every Jack-o'-Lantern on the board, Pumpkin Patch copies included. |
-| `win` | `kind` (`spin`/`scatter`/`treat`), `amount`, `totalWin` | Adds `amount` to the round total. A spin win is `base x mult`, except when clamped at the cap. |
+| `win` | `kind` (`spin`/`scatter`/`treat`/`loot`/`hold`), `amount`, `totalWin` | Adds `amount` to the round total. A spin win is `base x mult`, except when clamped at the cap. |
 | `trickOrTreat` | `cells`, `knocks` | Doorstep bonus starts. |
 | `knock` | `index`, `prize` (`treat` + `amount` / `trick` / `lollipop`) | One door. `index` is the auto-pick door. |
 | `trickOrTreatEnd` | `total`, `lollipop` | Sum of treats, and whether free spins follow. |
@@ -132,6 +150,9 @@ Amounts are integer centi-bet (100 = 1x). Boards are `board[reel][row]` with row
 | `retrigger` | `added`, `total`, `cells` | |
 | `freeSpinsEnd` | `kind`, `featureWin`, `totalWin` | |
 | `lootBox` | `boxes`, `tier`, `multiplier` | Loot Box: the opened box holds `tier` at `multiplier` x the bet; the next `win` (kind `loot`) pays it, clamped at the cap. |
+| `holdStart` | `respins`, `orbs[{reel,row,kind,value}]` | Graveyard Lock starts: the board empties and `orbs` lock in place. |
+| `holdRespin` | `index`, `landed[]`, `boosts?[{lantern, cells[{reel,row,value}]}]`, `respins`, `filled` | One respin: `landed` orbs lock on empty graves (values as they land). Each Lantern Orb among them then doubles every other orb in its reel; `boosts` lists the new values (left out when there are none). `respins` is what is left (3 after any landing) and `filled` the orbs on the board. |
+| `holdEnd` | `filled`, `total`, `grand` | The sum of every orb, or the 5,000x Grand for a full board. The next `win` (kind `hold`) pays it. The validator replays every landing and boost. |
 | `wincap` | `totalWin` | The 5,000x cap was reached. |
 | `finalWin` | `amount` | Always last; equals the book's `payoutMultiplier`. |
 

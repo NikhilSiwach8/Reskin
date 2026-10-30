@@ -105,6 +105,24 @@ export const LOOT_TIERS: Record<LootTier, { name: string; min: number; max: numb
 };
 export const LOOT_TABLE: Weighted<LootTier> = [['big', 700], ['mega', 200], ['monster', 80], ['sugar', 19], ['max', 1]];
 
+// ------------------------------------------------------------------ Graveyard Lock (hold and win)
+// The board empties and Soul Orbs lock in place. Each respin, every empty cell may catch a new orb;
+// any new orb resets the respins to 3. When the respins run out the round pays the sum of every orb,
+// and filling all 30 cells pays the Grand: the 5,000x max win.
+export const GRAVE_START_ORBS = 6;
+export const GRAVE_RESPINS = 3;
+/** Chance per empty cell per respin that a Soul Orb lands. */
+export const GRAVE_LAND = 0.04;
+export type OrbKind = 'soul' | 'mini' | 'major' | 'lantern';
+/** Soul Orb values (centi-bet); Lantern Orbs carry one too. */
+export const ORB_VALUES: Weighted<number> = [
+  [100, 300], [200, 250], [300, 180], [500, 120], [800, 70], [1000, 50], [1500, 25], [2000, 15], [2500, 10], [5000, 4],
+];
+/** What a newly landed orb is. A Lantern Orb doubles every other orb locked in its reel. */
+export const ORB_KINDS: Weighted<OrbKind> = [['soul', 940], ['mini', 30], ['major', 6], ['lantern', 24]];
+/** Jackpot orbs (centi-bet). */
+export const JACKPOTS: Record<'mini' | 'major', number> = { mini: 2500, major: 10000 };
+
 // ------------------------------------------------------------------ free spins
 /**
  * Pumpkin Patch (Full Moon only): when a free spin's tumbles end with a win, each Jack-o'-Lantern
@@ -147,6 +165,8 @@ export interface BetModeDef {
   forcedScatters?: number;
   /** The buy opens a Loot Box directly. */
   lootBox?: boolean;
+  /** The buy plays Graveyard Lock (hold and win). */
+  holdWin?: boolean;
   buy?: boolean;
 }
 
@@ -168,6 +188,10 @@ export const BET_MODES: BetModeDef[] = [
   {
     name: 'lootbox', cost: 92, label: 'Loot Box', draw: 'base', lootBox: true, buy: true,
     description: 'Open one of 6 Loot Boxes for a Big (15x+), Mega (40x+), Monster (100x+) or Sugar Scream (500x+) win, or the 5,000x Max Win.',
+  },
+  {
+    name: 'graveyard', cost: 77, label: 'Graveyard Lock', draw: 'base', holdWin: true, buy: true,
+    description: 'Hold and win: 6 Soul Orbs lock on an empty board with 3 respins, reset by every new orb. Win the sum of all orbs, Mini (25x) and Major (100x) jackpots, Lantern Orbs that double their reel, and the 5,000x Grand for filling the board.',
   },
 ];
 

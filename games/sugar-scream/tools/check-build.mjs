@@ -85,7 +85,7 @@ for (const viewport of [{ width: 1600, height: 900 }, { width: 390, height: 844 
   };
   console.log(`${viewport.width}x${viewport.height}`);
   for (let i = 1; i <= 4; i++) await play(`spin ${i}`, () => tap('#btn-spin'));
-  for (const [n, label] of [[1, 'buy cauldron'], [2, 'buy full moon'], [3, 'buy loot box']]) {
+  for (const [n, label] of [[1, 'buy cauldron'], [2, 'buy full moon'], [3, 'buy loot box'], [4, 'buy graveyard']]) {
     await play(label, async () => {
       await tap('#btn-buy');
       // the cards fly in: tap Buy once they have landed (a tap mid-flight can hit the backdrop and close the sheet)

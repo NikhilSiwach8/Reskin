@@ -1,7 +1,7 @@
 // Plays a validated book's events on the scene and HUD. Presentation only: every amount
 // shown comes from the book, and skipping or turbo never changes what is paid.
 import { applyTumble, cellsOf, winningCells } from '../../engine/board.ts';
-import { FREE_SPINS, LOOT_TIERS, SYMBOLS, WINCAP } from '../../engine/config.ts';
+import { FREE_SPINS, JACKPOTS, LOOT_TIERS, SYMBOLS, WINCAP } from '../../engine/config.ts';
 import type { Board, GameEvent, SymbolId } from '../../engine/types.ts';
 import { bgSrc, panelSrc, symbolSrc } from '../assets.ts';
 import type { Audio } from '../audio.ts';
@@ -325,6 +325,44 @@ export class Player {
           this.inFeature = false;
           break;
         }
+        case 'holdStart': {
+          // a bought Graveyard Lock has no board: bring the old board back first
+          if (this.dropping) {
+            await this.dropping;
+            this.dropping = null;
+            await this.scene.dropIn(this.board, []);
+          }
+          this.inFeature = true;
+          this.audio.play('bonus');
+          void this.scene.shake(500, 10);
+          this.hud.message('Graveyard Lock');
+          await this.hud.enterDoor('graveyard', fast(), () => this.audio.setMusic('feature'));
+          await this.hud.splash(
+            'Graveyard Lock',
+            `${e.orbs.length} Soul Orbs lock in place with ${e.respins} respins.\nEvery new orb resets the respins. Lantern Orbs double their reel.\nFill all 30 graves for the Grand!`,
+            'Start', autoMs(), bgSrc('graveyard'),
+          );
+          this.hud.holdOpen(e.orbs, e.respins, { mini: this.o.fmt(JACKPOTS.mini), major: this.o.fmt(JACKPOTS.major), grand: this.o.fmt(WINCAP) }, this.o.fmt);
+          this.audio.play('scatter');
+          await wait(this.ms(700));
+          break;
+        }
+        case 'holdRespin':
+          await this.hud.holdRespin(e.landed, e.boosts ?? [], e.respins, this.o.fmt, (v) => this.ms(v));
+          if (e.landed.some((o) => o.kind !== 'soul')) this.audio.haptic([30, 30, 60]);
+          break;
+        case 'holdEnd':
+          if (e.grand) {
+            this.audio.haptic([80, 50, 80, 50, 160]);
+            this.audio.sting('bigwin');
+          }
+          await this.hud.holdEnd(this.o.fmt(e.total), e.grand, (v) => this.ms(v));
+          await this.hud.exitDoor(fast(), () => {
+            this.hud.holdClose();
+            this.audio.setMusic('base');
+          });
+          this.inFeature = false;
+          break;
         case 'finalWin':
           this.scene.undim();
           this.hud.combo(null);
@@ -355,9 +393,10 @@ export class Player {
     const fast = this.o.turbo() || this.skipping || this.o.hands();
     const x = `${(amount / 100).toLocaleString('en-US')}x`;
     const big = WIN_TIERS.filter((tier) => amount >= tier.min);
+    // never celebrate a win smaller than what was staked (a bought bonus included): it is a loss,
+    // shown plainly on the meter
+    if (amount < minSmall) return;
     if (!big.length) {
-      // never celebrate a win smaller than what was staked: it is a loss, shown plainly on the meter
-      if (amount < minSmall) return;
       const small = [...SMALL_TIERS].reverse().find((tier) => amount >= tier.min) ?? SMALL_TIERS[0];
       this.audio.play('nice');
       await this.hud.winSplash([{ title: small.title }], this.o.fmt(amount), x, { tierMs: fast ? 250 : 450, holdMs: fast ? 550 : 1000, mini: true });

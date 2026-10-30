@@ -1,8 +1,8 @@
 // Book validation. Used by the tests, the math pipeline and the client: the client
 // refuses to play a round whose events are not internally consistent.
 import { applyTumble, cellsOf } from './board.ts';
-import { FREE_SPINS, LOOT_TIERS, PAYING, REELS, ROWS, SYMBOLS, WINCAP, clusterPay } from './config.ts';
-import type { Board, Cell, GameEvent, MultCell, SymbolId } from './types.ts';
+import { FREE_SPINS, GRAVE_RESPINS, JACKPOTS, LOOT_TIERS, ORB_VALUES, PAYING, REELS, ROWS, SYMBOLS, WINCAP, clusterPay } from './config.ts';
+import type { Board, Cell, GameEvent, MultCell, Orb, SymbolId } from './types.ts';
 
 export interface ValidationResult {
   ok: boolean;
@@ -36,6 +36,17 @@ function checkCells(cells: unknown, where: string, errors: string[]): void {
   if (!Array.isArray(cells) || !cells.every(inGrid)) errors.push(`${where}: cell out of range`);
 }
 
+const ORB_BASE = new Set(ORB_VALUES.map(([v]) => v));
+
+/** A newly landed orb: a free cell, and a value its kind can carry. */
+function checkOrb(o: Orb, orbs: Map<string, number>, where: string, errors: string[]): void {
+  if (!inGrid(o)) return void errors.push(`${where}: orb out of range`);
+  if (orbs.has(`${o.reel},${o.row}`)) errors.push(`${where}: orb on a locked cell`);
+  const ok = o.kind === 'mini' || o.kind === 'major' ? o.value === JACKPOTS[o.kind] : (o.kind === 'soul' || o.kind === 'lantern') && ORB_BASE.has(o.value);
+  if (!ok) errors.push(`${where}: bad ${o.kind} orb value ${o.value}`);
+  orbs.set(`${o.reel},${o.row}`, o.value);
+}
+
 export function validateBook(book: { payoutMultiplier: unknown; events: unknown }): ValidationResult {
   const errors: string[] = [];
   if (!isInt(book.payoutMultiplier)) errors.push('payoutMultiplier must be a non-negative integer');
@@ -52,6 +63,10 @@ export function validateBook(book: { payoutMultiplier: unknown; events: unknown 
   // the Jack-o'-Lanterns on the board (free spins), and the free-spin kind being played
   let mults: MultCell[] = [];
   let freeKind: keyof typeof FREE_SPINS | null = null;
+  // Graveyard Lock: the locked orbs (by "reel,row") and the respins left
+  let orbs: Map<string, number> | null = null;
+  let respins = 0;
+  let holdTotal = -1;
 
   events.forEach((e, i) => {
     const where = `event ${i} (${e?.type})`;
@@ -149,9 +164,59 @@ export function validateBook(book: { payoutMultiplier: unknown; events: unknown 
         if (!isInt(e.amount) || e.amount === 0) errors.push(`${where}: bad amount`);
         if (e.kind === 'spin' && e.amount !== spinBase * spinMult && total + e.amount !== WINCAP) errors.push(`${where}: spin win ${e.amount} != ${spinBase} x ${spinMult}`);
         if (e.kind === 'loot' && e.amount !== lootMult * 100 && total + e.amount !== WINCAP) errors.push(`${where}: loot win ${e.amount} != ${lootMult}x`);
+        if (e.kind === 'hold' && e.amount !== holdTotal && total + e.amount !== WINCAP) errors.push(`${where}: hold win ${e.amount} != ${holdTotal}`);
         total += e.amount;
         if (e.totalWin !== total) errors.push(`${where}: totalWin ${e.totalWin} != running total ${total}`);
         break;
+      case 'holdStart':
+        orbs = new Map();
+        if (!Array.isArray(e.orbs) || e.orbs.length === 0) errors.push(`${where}: no orbs`);
+        for (const o of e.orbs ?? []) checkOrb(o, orbs, where, errors);
+        if (e.respins !== GRAVE_RESPINS) errors.push(`${where}: should start with ${GRAVE_RESPINS} respins`);
+        respins = e.respins;
+        break;
+      case 'holdRespin': {
+        if (!orbs || respins <= 0) {
+          errors.push(`${where}: respin outside Graveyard Lock`);
+          break;
+        }
+        for (const o of e.landed ?? []) checkOrb(o, orbs, where, errors);
+        const lanterns = (e.landed ?? []).filter((o) => o.kind === 'lantern');
+        let li = 0;
+        for (const l of lanterns) {
+          // every other orb locked in the lantern's reel doubles (a reel holding only the lantern has no boost)
+          const others = [...orbs].filter(([k]) => k.split(',')[0] === String(l.reel) && k !== `${l.reel},${l.row}`);
+          if (!others.length) continue;
+          const b = e.boosts?.[li++];
+          if (!b || b.lantern.reel !== l.reel || b.lantern.row !== l.row || b.cells.length !== others.length) {
+            errors.push(`${where}: lantern boost does not match the board`);
+            continue;
+          }
+          for (const [k, v] of others) {
+            const c = b.cells.find((x) => `${x.reel},${x.row}` === k);
+            if (!c || c.value !== v * 2) errors.push(`${where}: lantern should double ${k} to ${v * 2}`);
+            orbs.set(k, v * 2);
+          }
+        }
+        if ((e.boosts?.length ?? 0) !== li) errors.push(`${where}: boosts without a lantern`);
+        respins = e.landed?.length ? GRAVE_RESPINS : respins - 1;
+        if (e.respins !== respins) errors.push(`${where}: respins ${e.respins} != ${respins}`);
+        if (e.filled !== orbs.size) errors.push(`${where}: filled ${e.filled} != ${orbs.size}`);
+        break;
+      }
+      case 'holdEnd': {
+        if (!orbs) {
+          errors.push(`${where}: Graveyard Lock never started`);
+          break;
+        }
+        const full = orbs.size === REELS * ROWS;
+        if (respins > 0 && !full) errors.push(`${where}: ended with respins left`);
+        if (e.grand !== full || e.filled !== orbs.size) errors.push(`${where}: board count mismatch`);
+        const sum = [...orbs.values()].reduce((a, v) => a + v, 0);
+        if (e.total !== (full ? WINCAP : sum)) errors.push(`${where}: total ${e.total} should be ${full ? WINCAP : sum}`);
+        holdTotal = e.total;
+        break;
+      }
       case 'lootBox': {
         const tier = LOOT_TIERS[e.tier];
         if (!tier || !isInt(e.multiplier) || e.multiplier < tier.min || e.multiplier > tier.max) errors.push(`${where}: bad loot prize`);
@@ -177,7 +242,7 @@ export function validateBook(book: { payoutMultiplier: unknown; events: unknown 
         break;
     }
   });
-  if (reveals === 0 && !events.some((e) => e.type === 'lootBox')) errors.push('book has no reveal');
+  if (reveals === 0 && !events.some((e) => e.type === 'lootBox' || e.type === 'holdStart')) errors.push('book has no reveal');
   if (events[events.length - 1]?.type !== 'finalWin') errors.push('last event must be finalWin');
   if (total > WINCAP) errors.push(`total ${total} exceeds win cap`);
   return { ok: errors.length === 0, errors };
