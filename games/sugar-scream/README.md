@@ -139,7 +139,7 @@ Build the upload zips with `npm run math:publish && npm run build && npm run rel
     - A retrigger burst ("+5 Free Spins").
     - The Golden Lollipop reveal.
     - A free-spins total screen with the real win and spin count overlaid.
-  - **Jumpscares:** one of seven jumpscares (ghost, witch, pumpkin, skull, eyeball, bat, poison apple) can follow a losing spin, never in the first rounds, autoplay or turbo, and at most every two minutes. It can be switched off in the menu.
+  - **Jumpscares:** one of seven jumpscares (ghost, witch, pumpkin, skull, eyeball, bat, poison apple) can follow a losing base game spin (1 in 6), never in the first two rounds, autoplay, turbo or the bonuses, at most every 40 seconds and never the same one twice in a row. It can be switched off in the menu.
 
   Each clip comes as a landscape (1280x720) and a portrait (540x960) cut, and the one matching the screen plays full screen. Turbo, slam stop and autoplay play the clips faster, and a tap skips them. The game's music steps aside while a clip plays its own sound, which follows mute and the volume sliders. Reduced motion turns the clips off. If a clip cannot play (codec, network, autoplay policy), the CSS animation plays instead. The jumpscare's flashes stay under three a second (photosensitivity).
 - **Animated interface:** floating logo, breathing spin button, light sweep and hop on Buy, glowing Ante when on, pulsing info button, bubbling Cauldron panel and breathing Trick-or-Treat doors. Everything stops with reduced motion.

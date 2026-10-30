@@ -113,6 +113,7 @@ class Game {
   /** Cost multiplier of the round being shown (1 spin, 1.25 Ante Bet, 100 for a buy, ...). */
   private roundCost = 1;
   private lastScare = 0;
+  private lastScareClip: ClipName | null = null;
 
   constructor() {
     this.hud = new Hud({
@@ -358,7 +359,7 @@ class Game {
     }
     const feature = await this.presentRound(round);
     this.roundsPlayed++;
-    if (round.payoutMultiplier === 0) await this.maybeScare();
+    if (round.payoutMultiplier === 0 && (mode === 'base' || mode === 'ante')) await this.maybeScare();
     const minMs = this.jurisdiction?.minimumRoundDuration ?? 0;
     const elapsed = performance.now() - started;
     if (minMs > elapsed) await wait(minMs - elapsed);
@@ -368,17 +369,23 @@ class Game {
   }
 
   /**
-   * A random jumpscare after a losing spin. Cosmetic only: it plays after the round has settled,
-   * never in autoplay or turbo, never in the first rounds, at most every two minutes, and can be
-   * switched off in the menu (reduced motion turns it off too).
+   * A random jumpscare after a losing base game spin (1 in 6). Cosmetic only: it plays after the
+   * round has settled, never in autoplay or turbo, never in the first two rounds, at most every
+   * 40 seconds, never the same creature twice in a row, and can be switched off in the menu
+   * (reduced motion turns it off too).
    */
   private async maybeScare(): Promise<void> {
     const now = Date.now();
     if (!this.settings.scares || this.autoplay || this.settings.turbo || launch.replay) return;
-    if (this.roundsPlayed < 4 || now - this.lastScare < 120_000 || Math.random() >= 1 / 18) return;
-    const pick: ClipName[] = ['scare-ghost', 'scare-witch', 'scare-pumpkin', 'scare-skull', 'scare-eyeball', 'scare-bat', 'scare-apple'];
+    if (this.roundsPlayed < 3 || now - this.lastScare < 40_000 || Math.random() >= 1 / 6) return;
+    const all: ClipName[] = ['scare-ghost', 'scare-witch', 'scare-pumpkin', 'scare-skull', 'scare-eyeball', 'scare-bat', 'scare-apple'];
+    const pick = all.filter((c) => c !== this.lastScareClip);
+    const clip = pick[Math.floor(Math.random() * pick.length)];
     this.audio.haptic(250);
-    if (await this.clips.play(pick[Math.floor(Math.random() * pick.length)])) this.lastScare = now;
+    if (await this.clips.play(clip)) {
+      this.lastScare = now;
+      this.lastScareClip = clip;
+    }
   }
 
   /**
