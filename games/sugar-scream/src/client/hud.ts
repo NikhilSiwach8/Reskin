@@ -1,5 +1,5 @@
 // DOM user interface: meters, buttons, dialogs, banners, win screens and the Trick or Treat doors.
-import type { Cell, KnockPrize, MultCell, Orb } from '../engine/types.ts';
+import type { Cell, KnockPrize, MultCell, Orb, SymbolId } from '../engine/types.ts';
 import type { Sfx } from './audio.ts';
 import type { ClipName, Clips } from './clips.ts';
 import { bgSrc, buttonSrc, panelSrc, portalHole, symbolSrc } from './assets.ts';
@@ -28,8 +28,6 @@ export interface Settings {
   scares: boolean;
   /** Phone vibration on big moments. */
   haptics: boolean;
-  /** Cosmetic board skin. */
-  skin: 'classic' | 'bloodmoon' | 'ghost';
 }
 
 export interface BuyOption {
@@ -119,10 +117,6 @@ export class Hud {
         h.settings(this.settings);
       });
     }
-    document.querySelectorAll<HTMLButtonElement>('#set-skin button').forEach((b) => b.addEventListener('click', () => {
-      this.settings = { ...this.settings, skin: b.dataset.skin as Settings['skin'] };
-      h.settings(this.settings);
-    }));
     for (const id of ['music', 'sfx'] as const) {
       $<HTMLInputElement>(`#set-${id}`).addEventListener('input', (e) => {
         const v = Number((e.target as HTMLInputElement).value) / 100;
@@ -209,8 +203,8 @@ export class Hud {
       $('#loot-title-art').classList.remove('hidden');
       $('#loot .loot-title-main').classList.add('hidden');
     }
-    // Full-screen painted backdrops for the loading, intro, Trick or Treat and Loot Box screens.
-    for (const [sel, name] of [['#loading', 'loading'], ['#intro', 'intro'], ['#tot', 'tot'], ['#loot', 'loot']] as const) {
+    // Full-screen painted backdrops for the loading, Trick or Treat and Loot Box screens.
+    for (const [sel, name] of [['#loading', 'loading'], ['#tot', 'tot'], ['#loot', 'loot']] as const) {
       const src = bgSrc(name);
       if (!src) continue;
       $(sel).classList.add('painted-bg');
@@ -361,7 +355,6 @@ export class Hud {
   showSettings(s: Settings): void {
     this.settings = { ...s };
     for (const id of ['reduced', 'intro', 'scares', 'haptics'] as const) $<HTMLInputElement>(`#set-${id}`).checked = s[id];
-    document.querySelectorAll<HTMLButtonElement>('#set-skin button').forEach((b) => b.classList.toggle('on', b.dataset.skin === s.skin));
     $<HTMLInputElement>('#set-music').value = String(Math.round((s.music ? s.musicVol : 0) * 100));
     $<HTMLInputElement>('#set-sfx').value = String(Math.round((s.sfx ? s.sfxVol : 0) * 100));
     document.body.classList.toggle('reduced', s.reduced);
@@ -667,17 +660,36 @@ export class Hud {
     });
   }
 
-  introSplash(): Promise<{ skipNextTime: boolean }> {
+  /**
+   * The intro, over the loading screen: its witch clip keeps playing behind (landing on the logo
+   * at the top), the three feature cards fly in, then "Click to continue" pulses. A tap anywhere
+   * enters the game and closes the loading screen. Without the clip (reduced motion, no video) it
+   * stands on the painted witch art with the logo on top.
+   */
+  introSplash(): Promise<void> {
     this.splashOpen = true;
-    $('#intro').classList.remove('hidden');
-    const go = $<HTMLButtonElement>('#intro-go');
-    go.focus();
+    const el = $('#intro');
+    for (const img of el.querySelectorAll<HTMLImageElement>('img[data-art]')) {
+      const [kind, name] = img.dataset.art!.split(':');
+      img.src = (kind === 'sym' ? symbolSrc(name as SymbolId) : panelSrc(name)) ?? '';
+    }
+    const v = document.getElementById('loading-video') as HTMLVideoElement | null;
+    const still = !v?.currentSrc || !!v.error;
+    el.classList.toggle('still', still);
+    const bg = bgSrc('intro');
+    if (still && bg) el.style.setProperty('--bg', cssUrl(bg));
+    $('#loading').classList.add('done');
+    el.classList.remove('hidden');
     return new Promise((resolve) => {
-      go.addEventListener('click', () => {
-        $('#intro').classList.add('hidden');
+      const enter = () => {
+        el.removeEventListener('click', enter);
+        el.classList.add('hidden');
         this.splashOpen = false;
-        resolve({ skipNextTime: $<HTMLInputElement>('#intro-skip').checked });
-      }, { once: true });
+        this.hideLoading();
+        resolve();
+      };
+      el.addEventListener('click', enter);
+      window.setTimeout(() => $<HTMLButtonElement>('#intro-go').focus({ preventScroll: true }), 900);
     });
   }
 
@@ -912,6 +924,8 @@ export class Hud {
     this.holdSum(fmt);
     const bg = bgSrc('graveyard');
     if (bg) $('#hold').style.setProperty('--bg', cssUrl(bg));
+    const strip = panelSrc('orb_soul');
+    if (strip) $('#hold').style.setProperty('--orb-strip', cssUrl(strip));
     $('#hold').classList.toggle('painted-bg', !!bg);
     $('#hold').classList.remove('hidden', 'grand');
   }
@@ -956,23 +970,34 @@ export class Hud {
   }
 
   /**
-   * One respin: the empty graves shimmer, the new orbs lock in, each Lantern Orb doubles its
-   * reel, then the respin lamps show what is left (all three again after a landing).
+   * One respin: every empty grave spins like a reel (a blurred strip of orbs scrolling down), the
+   * reels stop column by column from the left and each new orb drops into its grave as its reel
+   * stops. Then each Lantern Orb doubles its reel, and the respin lamps show what is left (all
+   * three again after a landing).
    */
   async holdRespin(landed: Orb[], boosts: { lantern: Cell; cells: MultCell[] }[], respins: number, fmt: (c: number) => string, ms: (v: number) => number): Promise<void> {
     const grid = $('#hold-grid');
-    grid.classList.add('spinning');
+    const empty = [...grid.querySelectorAll<HTMLElement>('.hold-cell:not(.locked)')];
+    for (const cell of empty) {
+      cell.classList.remove('land', 'drop');
+      const strip = document.createElement('div');
+      strip.className = 'reel-strip';
+      strip.style.animationDelay = `${-Math.random() * 0.2}s`;
+      cell.appendChild(strip);
+    }
     this.h.sound('drop');
-    await wait(ms(650));
-    grid.classList.remove('spinning');
-    for (const o of landed) {
-      this.placeOrb(o, fmt);
-      const cell = this.holdCell(o);
-      cell.classList.remove('land');
-      void cell.offsetWidth;
-      cell.classList.add('land');
-      this.h.sound(o.kind === 'mini' || o.kind === 'major' ? 'lollipop' : o.kind === 'lantern' ? 'mult' : 'scatter');
-      await wait(ms(o.kind === 'soul' ? 260 : 600));
+    await wait(ms(420));
+    for (let reel = 0; reel < 6; reel++) {
+      grid.querySelectorAll(`.hold-cell[data-cell^="${reel},"] .reel-strip`).forEach((s) => s.remove());
+      const here = landed.filter((o) => o.reel === reel);
+      for (const o of here) {
+        this.placeOrb(o, fmt);
+        const cell = this.holdCell(o);
+        void cell.offsetWidth;
+        cell.classList.add('drop');
+        this.h.sound(o.kind === 'mini' || o.kind === 'major' ? 'lollipop' : o.kind === 'lantern' ? 'mult' : 'scatter');
+      }
+      await wait(ms(here.some((o) => o.kind !== 'soul') ? 520 : here.length ? 300 : 120));
     }
     for (const b of boosts) {
       const lantern = this.holdCell(b.lantern);

@@ -1,7 +1,7 @@
 // Slot intro: the witch streaks across the moonlit sky, the logo slams in, candies rain,
 // the five bonuses are named one by one, then the max win. The loading cut (`loading`) is the
-// silent opening only: fly-by, logo and tagline, ending on the logo with the bottom left clear
-// for the game's progress bar.
+// silent opening only: the fly-by and the logo landing small at the top, holding there while the
+// game's intro cards and progress bar stand over the rest.
 import { Audio } from "@remotion/media";
 import {
   AbsoluteFill,
@@ -155,29 +155,32 @@ export const SlotIntro: React.FC<{ readonly loading?: boolean }> = ({
         style={{
           justifyContent: "flex-start",
           alignItems: "center",
-          paddingTop: portrait ? 260 : 150,
+          // the loading cut lands the logo small at the top, leaving the middle to the game's intro cards
+          paddingTop: loading ? (portrait ? 110 : 36) : portrait ? 260 : 150,
         }}
       >
-        <Logo at={1.6 * fps} size={230} />
-        <Interactive.Div
-          name="Tagline"
-          style={{
-            marginTop: 30,
-            maxWidth: "90%",
-            textAlign: "center",
-            fontFamily: "Fredoka",
-            fontWeight: 700,
-            fontSize: 76,
-            color: "#ffd34d",
-            textShadow: outline(5, "#5a1300"),
-            opacity: interpolate(frame, [2.3 * fps, 2.8 * fps], [0, 1], {
-              extrapolateLeft: "clamp",
-              extrapolateRight: "clamp",
-            }),
-          }}
-        >
-          A Halloween candy nightmare
-        </Interactive.Div>
+        <Logo at={1.6 * fps} size={loading ? (portrait ? 170 : 128) : 230} />
+        {!loading && (
+          <Interactive.Div
+            name="Tagline"
+            style={{
+              marginTop: 30,
+              maxWidth: "90%",
+              textAlign: "center",
+              fontFamily: "Fredoka",
+              fontWeight: 700,
+              fontSize: 76,
+              color: "#ffd34d",
+              textShadow: outline(5, "#5a1300"),
+              opacity: interpolate(frame, [2.3 * fps, 2.8 * fps], [0, 1], {
+                extrapolateLeft: "clamp",
+                extrapolateRight: "clamp",
+              }),
+            }}
+          >
+            A Halloween candy nightmare
+          </Interactive.Div>
+        )}
       </AbsoluteFill>
 
       {!loading && (

@@ -12,7 +12,7 @@
   --board-h: 600px;
   --board-pad: 30px;
   --fd: 'Fredoka', system-ui, sans-serif;
-  --fh: 'Fredoka', system-ui, sans-serif;
+  --fh: 'Luckiest Guy', 'Fredoka', system-ui, sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -24,12 +24,10 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outl
 .hidden { display: none !important; }
 
 /* ------------------------------------------------------------------ logo */
-#logo, .intro-logo { font-family: var(--fh); text-align: center; line-height: 0.85; letter-spacing: 2px; pointer-events: none; }
+#logo { font-family: var(--fh); text-align: center; line-height: 0.85; letter-spacing: 2px; pointer-events: none; }
 #logo { position: fixed; top: max(6px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); font-size: clamp(30px, 5.2vh, 60px); display: flex; gap: 0.3em; z-index: 2; white-space: nowrap; }
 .l1 { color: #ffd1ec; text-shadow: 0 0 12px #ff4fb0, 0 4px 0 #8a0050; }
 .l2 { color: var(--lime); text-shadow: 0 0 14px #5fd400, 0 4px 0 #1e5200; }
-.intro-logo { font-size: clamp(54px, 10vw, 110px); display: flex; flex-direction: column; animation: wobble 3s ease-in-out infinite; }
-@keyframes wobble { 50% { transform: rotate(-2deg) scale(1.03); } }
 
 /* ------------------------------------------------------------------ side panels */
 #side-left { position: fixed; top: var(--board-top); display: flex; flex-direction: column; gap: 10px; z-index: 2; width: min(170px, 11.5vw); }
@@ -102,9 +100,6 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outl
 /* painted full-screen backdrops */
 .overlay.painted-bg { background: var(--bg) center / cover no-repeat, #0b0326; }
 #loading.painted-bg { background: var(--bg) center / cover no-repeat, #0b0326; justify-content: flex-end; padding-bottom: 7vh; }
-#loading.painted-bg .intro-logo { display: none; }
-#intro.painted-bg { align-items: flex-start; padding-left: 5vw; }
-#intro.painted-bg .splash-card { background: linear-gradient(180deg, rgba(40, 6, 70, 0.82), rgba(14, 2, 30, 0.86)); backdrop-filter: blur(3px); max-width: min(560px, 46vw); }
 #tot.painted-bg { background: linear-gradient(rgba(10, 0, 25, 0.35), rgba(10, 0, 25, 0.6)), var(--bg) center / cover no-repeat, #0b0326; }
 
 #splash.painted-bg { justify-content: flex-start; padding-top: 6vh; }
@@ -139,9 +134,6 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outl
 #splash-title { font-family: var(--fh); font-size: clamp(40px, 8vw, 80px); color: var(--gold); text-shadow: 0 0 20px #ff4fb0, 0 5px 0 #5a1300; letter-spacing: 2px; line-height: 1; }
 #splash-sub { font-size: clamp(16px, 2.6vw, 24px); margin: 14px 0 20px; white-space: pre-line; }
 .cta { padding: 12px 34px; border-radius: 30px; border: 3px solid var(--gold); background: linear-gradient(180deg, #ff5fbf, #b8006a); font-size: 20px; font-weight: 700; box-shadow: 0 5px 0 #4a0030; }
-.intro .intro-logo { font-size: clamp(44px, 8vw, 80px); margin-bottom: 10px; }
-.intro-list { text-align: left; padding-left: 20px; margin: 0 0 16px; line-height: 1.4; font-size: clamp(14px, 2vw, 17px); }
-.intro-list li { margin-bottom: 6px; }
 .check { display: flex; align-items: center; gap: 8px; justify-content: center; margin: 10px 0; font-size: 16px; cursor: pointer; }
 .check input { width: 20px; height: 20px; accent-color: var(--pink); }
 
@@ -208,8 +200,6 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outl
   #tumble-win { display: none !important; }
   #cauldron img { display: none; }
   #cauldron.painted-panel { background: linear-gradient(180deg, rgba(60, 10, 90, 0.9), rgba(20, 4, 40, 0.92)); border: 3px solid var(--lime); aspect-ratio: auto; padding: 4px 10px; }
-  #intro.painted-bg { align-items: center; padding-left: 0; }
-  #intro.painted-bg .splash-card { max-width: 92vw; }
   #splash.painted-bg[data-art='fs_fullmoon'] { justify-content: flex-start; align-items: center; padding: 6vh 0 0; }
   #splash.painted-bg[data-art='fs_fullmoon'] .splash-card { max-width: 92vw; }
   #tot-doors { grid-template-columns: repeat(3, 1fr); width: min(360px, 80vw); }
@@ -600,7 +590,7 @@ body.reduced #combo, body.reduced #peek { animation: none !important; }
 }
 
 /* loading screen: the witch fly-by clip behind the bar (held on its last frame) */
-#loading-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; z-index: 0; }
+#loading-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 0; pointer-events: none; z-index: 0; }
 #loading > :not(video) { position: relative; z-index: 1; }
 
 /* Trick or Treat / Loot Box: after 5 s without a pick, the closed doors and boxes wiggle for attention */
@@ -629,13 +619,6 @@ body.reduced #combo, body.reduced #peek { animation: none !important; }
 #guide .guide-skip { border: none; background: none; color: #6a4a7a; font-weight: 700; font-size: 15px; }
 #guide .guide-next { padding: 8px 22px; }
 
-/* board skin chips in the menu */
-.pop-skin { display: flex; flex-direction: column; gap: 6px; font-weight: 700; text-transform: uppercase; font-size: 15px; letter-spacing: 0.5px; }
-#set-skin { display: flex; gap: 6px; }
-#set-skin button { flex: 1; padding: 6px 4px; border-radius: 12px; border: 3px solid #1a0430; background: #fff; color: #1a0430; font-weight: 700; font-size: 12px; text-transform: none; }
-#set-skin button[data-skin='bloodmoon'] { background: linear-gradient(180deg, #ffd0c8, #ff8a7a); }
-#set-skin button[data-skin='ghost'] { background: linear-gradient(180deg, #e4f6ff, #9cc8ff); }
-#set-skin button.on { outline: 3px solid #ff2e9a; outline-offset: 1px; }
 
 /* ------------------------------------------------------------------ painted interface
    Every dialog, label, button, toggle and bar is drawn with the game's own painted art (frame, crest,
@@ -643,8 +626,6 @@ body.reduced #combo, body.reduced #peek { animation: none !important; }
    in place of drawn gradients, outlines and emoji. The art arrives as --ui-* variables (hud.ts). */
 .logo-art { display: block; height: 100%; width: auto; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.55)); }
 #logo { height: clamp(48px, 9.5vh, 96px); font-size: 0; }
-.intro-logo { height: clamp(90px, 20vh, 190px); font-size: 0; margin: 0 auto 6px; display: block; width: fit-content; }
-.intro .intro-logo { height: clamp(80px, 18vh, 170px); }
 @media (orientation: portrait) { #logo { height: clamp(56px, 10vh, 120px); } }
 @media (max-height: 500px) and (orientation: landscape) { #logo { height: clamp(40px, 13vh, 60px); } }
 
@@ -666,9 +647,7 @@ body.reduced #combo, body.reduced #peek { animation: none !important; }
 }
 .modal-card { padding: 4px 10px 6px; overflow: visible; display: flex; flex-direction: column; }
 .splash-card { padding: 4px 12px 6px; overflow: visible; max-height: none; }
-#intro.painted-bg .splash-card, #splash.painted-bg .splash-card { background: none; backdrop-filter: none; }
 #rules-body { overflow: auto; min-height: 0; max-height: calc(92vh - 180px); padding-right: 4px; }
-.intro-list { max-height: 38vh; overflow: auto; }
 #menu-pop { --fk: 0.17; padding: 2px 8px 4px; width: min(340px, 90vw); }
 #guide .guide-tip { --fk: 0.15; padding: 0 6px 2px; }
 #guide .guide-step { color: var(--gold); opacity: 1; }
@@ -690,7 +669,7 @@ body.reduced #combo, body.reduced #peek { animation: none !important; }
 
 /* the chocolate pill: labels, messages, secondary buttons, tracks */
 #msg-bar, #toast, #session-bar, #btn-share, #combo, .tile-tag, #meter-balance .meter-label, #meter-bet .meter-label, #ante-badge, .bc-preview,
-.row button:not(.cta), #auto-counts button, .pop-btn, #btn-rules, #set-skin button, #guide .guide-skip, .bar, .buy-betpanel, .panel:not(.painted-panel) {
+.row button:not(.cta), #auto-counts button, .pop-btn, #btn-rules, #guide .guide-skip, .bar, .buy-betpanel, .panel:not(.painted-panel) {
   --pk: 0.2;
   border-style: solid; border-color: transparent; border-radius: 0;
   border-width: calc(60px * var(--pk)) calc(110px * var(--pk));
@@ -709,9 +688,7 @@ body.reduced #combo, body.reduced #peek { animation: none !important; }
 #combo[data-level='4'] .combo-n { color: var(--lime); }
 #combo[data-level='5'] .combo-n { color: #e7b8ff; }
 .row button:not(.cta), #auto-counts button, .pop-btn, #btn-rules { --pk: 0.24; padding: 2px 8px; }
-#auto-counts button.on, #set-skin button.on { border-image-source: var(--ui-cta); border-image-slice: 100 100 60 120 fill; outline: none; }
-#set-skin button { --pk: 0.17; padding: 0 2px; }
-#set-skin button[data-skin] { background: none; }
+#auto-counts button.on { border-image-source: var(--ui-cta); border-image-slice: 100 100 60 120 fill; outline: none; }
 #guide .guide-skip { --pk: 0.2; padding: 0 6px; color: var(--ink); }
 .panel:not(.painted-panel) { --pk: 0.3; padding: 2px 6px; }
 #side-left .panel:not(.painted-panel) { border-width: calc(60px * var(--pk)) calc(110px * var(--pk)); border-radius: 0; }
@@ -743,7 +720,7 @@ body.reduced #combo, body.reduced #peek { animation: none !important; }
 .pop-toggle input:checked + i { background: none; }
 .pop-toggle input:checked + i::after { left: 22px; filter: none; }
 #ante.on .ante-switch { box-shadow: none; filter: drop-shadow(0 0 6px rgba(157, 255, 74, 0.8)); }
-.pop-toggle, .pop-skin { color: var(--ink); }
+.pop-toggle { color: var(--ink); }
 .pop-icon { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; width: 62px; text-align: left; }
 
 /* sliders: the candy-cane strip as the track, the swirl sweet as the thumb */
@@ -789,7 +766,7 @@ body.reduced #combo, body.reduced #peek { animation: none !important; }
 .check input:checked { filter: drop-shadow(0 0 6px rgba(157, 255, 74, 0.8)); }
 /* focus on painted controls: a glow around the art rather than a box */
 .cta:focus-visible, .bc-buy:focus-visible, .modal-close:focus-visible, .pop-btn:focus-visible, #btn-rules:focus-visible, .row button:focus-visible,
-#auto-counts button:focus-visible, #set-skin button:focus-visible, #btn-share:focus-visible, .bp-arrow:focus-visible, .check input:focus-visible {
+#auto-counts button:focus-visible, #btn-share:focus-visible, .bp-arrow:focus-visible, .check input:focus-visible {
   outline: none; filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 8px var(--gold));
 }
 /* short landscape screens: slimmer frames so every dialog fits the height */
@@ -797,8 +774,6 @@ body.reduced #combo, body.reduced #peek { animation: none !important; }
   .modal-card, .splash-card, #menu-pop, #guide .guide-tip { --fk: 0.1; }
   .modal-card h2 { font-size: 26px; margin-bottom: 6px; }
   .modal-close, .buy-sheet .modal-close { width: 34px; height: 34px; }
-  .intro .intro-logo { height: 56px; margin-bottom: 2px; }
-  .intro-list { max-height: 34vh; margin-bottom: 4px; }
   .check { margin: 4px 0; }
   #menu-pop { top: max(6px, env(safe-area-inset-top)); bottom: auto; max-height: calc(100vh - 12px); overflow: auto; gap: 5px; }
   .row button:not(.cta), #auto-counts button, .pop-btn, #btn-rules { --pk: 0.18; }
@@ -846,10 +821,13 @@ body.reduced #combo, body.reduced #peek { animation: none !important; }
 }
 #hold-grid { display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(5, 1fr); gap: clamp(2px, 0.6vw, 8px); aspect-ratio: 6 / 5; padding: 2px; }
 .hold-cell { position: relative; border-radius: 22%; background: rgba(10, 0, 24, 0.45) var(--ui-window) center / cover; box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.85), inset 0 0 0 1px rgba(200, 170, 255, 0.14); display: grid; place-items: center; }
-#hold-grid.spinning .hold-cell:not(.locked) { animation: grave-shimmer 0.32s linear infinite; }
-#hold-grid.spinning .hold-cell:not(.locked):nth-child(3n) { animation-delay: -0.1s; }
-#hold-grid.spinning .hold-cell:not(.locked):nth-child(3n + 1) { animation-delay: -0.2s; }
-@keyframes grave-shimmer { 50% { background-color: rgba(190, 150, 255, 0.22); } }
+/* a respin: each empty grave scrolls a blurred strip of orbs like a reel */
+.hold-cell { overflow: hidden; }
+.reel-strip { position: absolute; inset: 0; background: var(--orb-strip) 50% 0 / 78% 50% repeat-y; opacity: 0.5; filter: blur(1.6px) brightness(0.8); animation: reel-scroll 0.2s linear infinite; pointer-events: none; }
+@keyframes reel-scroll { to { background-position: 50% 100%; } }
+/* a new orb drops into its grave as its reel stops */
+.hold-cell.drop .orb { animation: orb-drop 0.42s cubic-bezier(0.3, 1.5, 0.5, 1); }
+@keyframes orb-drop { from { translate: 0 -120%; opacity: 0.2; } 40% { opacity: 1; } }
 .orb { position: relative; width: 100%; height: 100%; display: grid; place-items: center; }
 .orb img { position: absolute; inset: 3%; width: 94%; height: 94%; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55)); }
 .orb.lantern img { inset: 6%; width: 88%; height: 88%; }
@@ -857,8 +835,6 @@ body.reduced #combo, body.reduced #peek { animation: none !important; }
 .orb-tag { position: absolute; top: 4%; left: 0; right: 0; text-align: center; font-weight: 700; font-size: clamp(8px, 1.6vh, 14px); text-transform: uppercase; letter-spacing: 1px; paint-order: stroke fill; -webkit-text-stroke: 0.2em #1a0030; }
 .orb.mini .orb-tag { color: var(--lime); }
 .orb.major .orb-tag { color: var(--gold); }
-.hold-cell.land .orb { animation: orb-land 0.45s cubic-bezier(0.2, 1.6, 0.4, 1); }
-@keyframes orb-land { from { scale: 2; opacity: 0; filter: brightness(2.2); } }
 .hold-cell.reel-glow { box-shadow: inset 0 0 0 2px rgba(255, 170, 60, 0.9), 0 0 16px rgba(255, 150, 40, 0.75); }
 .hold-cell.boosting .orb { animation: lantern-boost 0.5s ease-in-out infinite alternate; }
 @keyframes lantern-boost { to { scale: 1.12; filter: brightness(1.4) drop-shadow(0 0 12px #ff9a2a); } }
@@ -882,4 +858,76 @@ body.reduced #hold * { animation: none !important; }
   .hold-card { gap: 2px; width: min(96vw, calc((100vh - 180px) * 1.2 + 36px)); }
   .hold-board { --fk: 0.08; }
   .hold-jackpots .jp, .hold-status > div { --pk: 0.14; }
+}
+
+/* ------------------------------------------------------------------ display lettering
+   Chunky cartoon capitals (Luckiest Guy) for every title, button, meter, label and amount, with a
+   dark outline and a dropped shadow; Fredoka stays for running text (rules, guide, descriptions). */
+.modal-card h2, .buy-sheet h2, .buy-card h3, #rules-body h3, #splash-title, .tot-title, #banner-title, #win-title, .loot-title-main,
+#loot-title, #loot-mult, #loot-amount, #loot-sub, #combo, .side-btn .big, .side-btn, .panel-value, .panel-title, #btn-spin, .meter-value,
+.meter-label, .tile-tag, #msg-bar, #toast, .cta, .bc-buy, .bc-price, .bc-preview, .bp-value, .pop-btn, #btn-rules, .pop-toggle,
+.pop-icon, #session-bar, #btn-share, .row button, #auto-counts button, #win-amount, #win-x, #clip-amount .ca-value, #clip-amount .ca-x,
+.hold-title, .hold-jackpots, .hold-status, .orb-v, .orb-tag, #tot-total, #tot-sub, #banner-sub, #guide .guide-step, #guide .guide-skip,
+#loading-text, .bc-vol, #ante-badge, .door .prize, #replay-info dt, #replay-info dd, #session-stats dd, .ante .big, #btn-replay {
+  font-family: var(--fh); font-weight: 400; letter-spacing: 0.04em;
+}
+.meter-value, #win-amount, .bp-value, .bc-price, #clip-amount .ca-value, #tot-total, .panel-value, #loot-amount, .hold-total b, .hold-jackpots b {
+  paint-order: stroke fill; -webkit-text-stroke: 0.08em #2a0040; text-shadow: 0 0.08em 0 #2a0040, 0 0.14em 0.2em rgba(0, 0, 0, 0.5);
+}
+.cta, .bc-buy, #msg-bar, .tile-tag, .meter-label, .pop-btn, #btn-rules, #btn-share, .row button, #auto-counts button, .hold-jackpots span, .hold-status span {
+  paint-order: stroke fill; -webkit-text-stroke: 0.06em #2a0040; text-shadow: 0 0.07em 0 #2a0040;
+}
+.modal-card h2, .buy-sheet h2, #splash-title, .tot-title, .hold-title, #win-title, #banner-title, .loot-title-main { letter-spacing: 0.06em; -webkit-text-stroke-width: 0.06em; }
+#msg-bar { font-size: clamp(12px, 1.3vw, 17px); }
+/* Graveyard Lock: its board in a cold ghost light (the candy-cane frame turned to blue-violet) */
+.hold-board { filter: hue-rotate(205deg) saturate(0.85) brightness(1.05) drop-shadow(0 0 18px rgba(120, 200, 255, 0.45)) drop-shadow(0 14px 22px rgba(0, 0, 0, 0.55)); }
+.hold-board #hold-grid { filter: hue-rotate(-205deg) saturate(1.18) brightness(0.95); }
+#splash.painted-bg .splash-card { background: none; backdrop-filter: none; }
+
+/* ------------------------------------------------------------------ intro (over the loading clip)
+   The loading screen's witch clip lands on the logo at the top; the three framed feature cards fly
+   in under it, then "Click to continue" pulses at the bottom. A tap anywhere enters the game. */
+#loading.done .bar, #loading.done #loading-text { opacity: 0; transition: opacity 0.3s; }
+#intro { position: fixed; inset: 0; z-index: 31; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: clamp(10px, 3vh, 36px); padding: 0 16px max(4vh, env(safe-area-inset-bottom)); cursor: pointer; }
+#intro.still { justify-content: space-between; padding-top: 3vh; background: linear-gradient(rgba(10, 0, 25, 0.2), rgba(10, 0, 25, 0.55)), var(--bg) center / cover no-repeat, #0b0326; }
+#intro .intro-logo { display: none; height: clamp(90px, 22vh, 220px); }
+#intro.still .intro-logo { display: block; }
+.intro-cards { display: flex; justify-content: center; align-items: stretch; gap: clamp(10px, 3vw, 48px); width: min(1180px, 100%); }
+.feat {
+  --fk: 0.15; flex: 1; max-width: 340px; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  border-style: solid; border-color: transparent; border-width: calc(270px * var(--fk)) calc(220px * var(--fk)) calc(385px * var(--fk));
+  border-image: var(--ui-frame) 270 220 385 220 fill / 1 / 0 round; filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.6));
+  animation: feat-in 0.55s cubic-bezier(0.2, 1.5, 0.4, 1) backwards;
+}
+.feat:nth-child(2) { animation-delay: 0.15s; }
+.feat:nth-child(3) { animation-delay: 0.3s; }
+@keyframes feat-in { from { translate: 0 60px; scale: 0.6; opacity: 0; } }
+.feat-art { width: 100%; height: clamp(70px, 20vh, 200px); display: grid; place-items: center; }
+.feat-art img { max-width: 100%; max-height: clamp(70px, 20vh, 200px); object-fit: contain; filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.55)); animation: feat-bob 2.6s ease-in-out infinite; }
+.feat:nth-child(2) .feat-art img { animation-delay: -0.9s; }
+.feat:nth-child(3) .feat-art img { animation-delay: -1.7s; }
+@keyframes feat-bob { 50% { translate: 0 -6px; rotate: -2deg; } }
+.feat p { margin: 0; font-family: var(--fh); font-size: clamp(12px, 2.1vh, 21px); line-height: 1.25; letter-spacing: 0.04em; text-align: center; text-transform: uppercase; color: #fff; paint-order: stroke fill; -webkit-text-stroke: 0.08em #2a0040; text-shadow: 0 0.08em 0 #2a0040; }
+.feat p em { font-style: normal; color: var(--gold); }
+.intro-continue { border: none; background: none; padding: 0 12px; font-family: var(--fh); font-size: clamp(30px, 7vh, 72px); letter-spacing: 0.06em; color: #f6d9f2; paint-order: stroke fill; -webkit-text-stroke: 0.08em #3a0a40; text-shadow: 0 0.08em 0 #3a0a40, 0 0 30px rgba(255, 120, 220, 0.55); animation: continue-in 0.5s ease-out 0.75s backwards, continue-pulse 1.5s ease-in-out 1.25s infinite; }
+@keyframes continue-in { from { opacity: 0; translate: 0 20px; } }
+@keyframes continue-pulse { 50% { opacity: 0.55; scale: 0.96; } }
+.intro-continue:focus-visible { outline: none; color: #fff; }
+@media (orientation: portrait) {
+  #intro { gap: 2vh; }
+  .intro-cards { flex-direction: column; align-items: center; width: min(460px, 100%); }
+  .feat { --fk: 0.1; max-width: none; width: 100%; flex-direction: row; gap: 10px; animation-name: feat-in-side; }
+  @keyframes feat-in-side { from { translate: -60px 0; opacity: 0; } }
+  .feat-art { width: 30%; height: 12vh; flex: none; }
+  .feat-art img { max-height: 12vh; }
+  .feat p { text-align: left; font-size: clamp(12px, 3.6vw, 17px); }
+  .intro-continue { font-size: clamp(26px, 8.5vw, 44px); }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  #intro { gap: 6px; padding-bottom: 8px; }
+  .feat { --fk: 0.08; }
+  .feat-art { height: 20vh; }
+  .feat-art img { max-height: 20vh; }
+  .feat p { font-size: 11px; }
+  .intro-continue { font-size: 26px; }
 }

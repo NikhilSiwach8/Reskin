@@ -13,7 +13,6 @@ const WIN_TIERS = ["panel_win_big", "panel_win_mega", "panel_win_monster", "pane
 const GAME_CLIPS = [
   // the loading screen: the intro's witch fly-by and logo, silent, held on its last frame
   { id: "loading", component: SlotIntro, frames: 165, props: { loading: true } },
-  { id: "intro", component: SlotIntro, frames: 300, props: {} },
   { id: "entry-cauldron", component: BonusEntry, frames: 165, props: { world: "bg_portal_cauldron", title: "Haunted Cauldron", subtitle: "10 FREE SPINS", accent: "#9dff4a", track: "music_free" } },
   { id: "entry-fullmoon", component: BonusEntry, frames: 165, props: { world: "bg_portal_fullmoon", title: "Full Moon", subtitle: "12 FREE SPINS · CAULDRON STARTS AT x5", accent: "#ff5a2a", track: "music_fullmoon" } },
   { id: "entry-tot", component: BonusEntry, frames: 165, props: { world: "bg_portal_tot", title: "Trick or Treat", subtitle: "KNOCK ON 3 DOORS", accent: "#ff8a00", track: "music_feature" } },

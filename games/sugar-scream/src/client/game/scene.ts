@@ -1,6 +1,6 @@
 // PixiJS scene: background, board panel, the 6x5 grid of candies and every board animation.
 // Animations only present an outcome that the book has already fixed.
-import { Application, Container, Graphics, NineSliceSprite, Sprite, Text, Texture, type Ticker } from 'pixi.js';
+import { Application, ColorMatrixFilter, Container, Graphics, NineSliceSprite, Sprite, Text, Texture, type Ticker } from 'pixi.js';
 import { REELS, ROWS } from '../../engine/config.ts';
 import type { Board, Cell, MultCell, SymbolId } from '../../engine/types.ts';
 import { hasTexture, isPainted, symbolTexture, tex } from '../assets.ts';
@@ -67,7 +67,7 @@ class CellView {
     if (symbol === 'JK' && mult > 0) {
       this.label = new Text({
         text: `x${mult}`,
-        style: { fontFamily: 'Fredoka, sans-serif', fontWeight: '700', fontSize: 56, fill: '#fff6c2', stroke: { color: '#5a1300', width: 8 }, dropShadow: { color: '#000', blur: 6, distance: 3, alpha: 0.7 } },
+        style: { fontFamily: '"Luckiest Guy", Fredoka, sans-serif', fontWeight: '400', fontSize: 56, fill: '#fff6c2', stroke: { color: '#5a1300', width: 8 }, dropShadow: { color: '#000', blur: 6, distance: 3, alpha: 0.7 } },
       });
       this.label.anchor.set(0.5);
       // painted lantern: the value sits in its open mouth
@@ -100,10 +100,7 @@ export class Scene {
   private readonly frameGlow = new Graphics();
   private readonly lantern = new Graphics();
   private glowColor = 0xff4fb0;
-  private frameSprite?: Container & { tint: number };
-  private mode: 'base' | 'cauldron' | 'fullMoon' = 'base';
-  /** Cosmetic board skin (a local setting): tints the backdrop and the frame, never the symbols. */
-  private skin: BoardSkin = 'classic';
+  private frameSprite?: Container;
   private readonly panel = new Sprite();
   /** Board-unit box covered by the frame (for layout). */
   private frameBox: FrameBox = { x: -55, y: -46, w: BOARD_W + 110, h: BOARD_H + 92 };
@@ -125,7 +122,7 @@ export class Scene {
     this.grid.mask = this.gridMask;
     this.grid.sortableChildren = true;
     const frame = this.makeFrame();
-    this.frameSprite = frame as Container & { tint: number };
+    this.frameSprite = frame;
     this.frameGlow.blendMode = 'add';
     this.lantern.blendMode = 'add';
     this.world.addChild(this.frameGlow, frame, this.lantern, this.gridMask, this.grid, this.fx);
@@ -331,22 +328,24 @@ export class Scene {
   }
 
   setMode(mode: 'base' | 'cauldron' | 'fullMoon'): void {
-    this.mode = mode;
     // A painted feature background when one exists, else the base scene tinted for the feature.
     const name = mode === 'base' ? 'bg' : mode === 'fullMoon' ? 'bg_fullmoon' : 'bg_cauldron';
     const own = mode === 'base' || hasTexture(name);
-    const look = SKINS[this.skin];
+    // each bonus dresses the board in its own colours (the symbols are never tinted)
+    const look = LOOKS[mode];
     this.ambience.setBackground(tex(own ? name : 'bg'), mulTint(own ? 0xffffff : mode === 'fullMoon' ? 0xffb0a0 : 0xd8c8ff, look.bg), mode as AmbientMode);
-    this.glowColor = look.glow ?? (mode === 'fullMoon' ? 0xff6a1a : mode === 'cauldron' ? 0x9dff4a : 0xff4fb0);
-    if (this.frameSprite) this.frameSprite.tint = look.frame;
+    this.glowColor = look.glow;
+    if (this.frameSprite) {
+      // the candy-cane frame turns to the bonus's colours (a hue turn keeps the paint's shading)
+      if (look.hue) {
+        const turn = new ColorMatrixFilter();
+        turn.hue(look.hue, false);
+        turn.saturate(look.saturate, true);
+        this.frameSprite.filters = [turn];
+      } else this.frameSprite.filters = [];
+    }
     this.drawFrameGlow();
     this.layout();
-  }
-
-  setSkin(skin: BoardSkin): void {
-    if (!SKINS[skin] || skin === this.skin) return;
-    this.skin = skin;
-    this.setMode(this.mode);
   }
 
   /** Current symbols fall out of the bottom of the board, column by column (gravity). */
@@ -546,7 +545,7 @@ export class Scene {
       if (!v) return;
       await this.tween.wait(i * 160);
       await this.blast(v);
-      const orb = new Text({ text: `x${c.value}`, style: { fontFamily: 'Fredoka, sans-serif', fontWeight: '700', fontSize: 64, fill: '#ffe066', stroke: { color: '#5a1300', width: 8 } } });
+      const orb = new Text({ text: `x${c.value}`, style: { fontFamily: '"Luckiest Guy", Fredoka, sans-serif', fontWeight: '400', fontSize: 64, fill: '#ffe066', stroke: { color: '#5a1300', width: 8 } } });
       orb.anchor.set(0.5);
       orb.position.set(v.root.x, v.root.y);
       this.fx.addChild(orb);
@@ -582,7 +581,7 @@ export class Scene {
 
   /** Floating text over the board (board units). */
   async floatText(text: string, x: number, y: number, size = 58, color = '#ffffff'): Promise<void> {
-    const t = new Text({ text, style: { fontFamily: 'Fredoka, sans-serif', fontWeight: '700', fontSize: size, fill: color, stroke: { color: '#2a0040', width: 10 } } });
+    const t = new Text({ text, style: { fontFamily: '"Luckiest Guy", Fredoka, sans-serif', fontWeight: '400', fontSize: size, fill: color, stroke: { color: '#2a0040', width: 10 } } });
     t.anchor.set(0.5);
     t.position.set(x, y);
     this.fx.addChild(t);
@@ -763,13 +762,14 @@ export class Scene {
   }
 }
 
-export type BoardSkin = 'classic' | 'bloodmoon' | 'ghost';
-
-/** Board skins: a tint for the backdrop and the frame, and the frame's glow colour (null keeps the mode's). */
-const SKINS: Record<BoardSkin, { bg: number; frame: number; glow: number | null }> = {
-  classic: { bg: 0xffffff, frame: 0xffffff, glow: null },
-  bloodmoon: { bg: 0xff8a7a, frame: 0xffa8a0, glow: 0xff2a2a },
-  ghost: { bg: 0x6fa8ff, frame: 0xa8dcff, glow: 0x7fe8ff },
+/** The board's look in each part of the game: a backdrop tint, the frame's hue turn and its glow. */
+const LOOKS: Record<'base' | 'cauldron' | 'fullMoon', { bg: number; hue: number; saturate: number; glow: number }> = {
+  // the candy-pink board of the base game
+  base: { bg: 0xffffff, hue: 0, saturate: 0, glow: 0xff4fb0 },
+  // Haunted Cauldron: the frame turns slime green and glows like the brew
+  cauldron: { bg: 0xffffff, hue: 125, saturate: 0.1, glow: 0x9dff4a },
+  // Full Moon: a blood-red frame under the red moon
+  fullMoon: { bg: 0xffe0d8, hue: 28, saturate: 0.15, glow: 0xff2a2a },
 };
 
 /** Multiplies two 0xRRGGBB tints channel by channel. */

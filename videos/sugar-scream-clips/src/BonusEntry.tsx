@@ -154,9 +154,8 @@ const Arrival: React.FC<{ readonly world: string; readonly title: string; readon
           style={{
             maxWidth: "92%",
             // the game's heading lettering: bold rounded candy type, outlined, with a dropped shadow
-            fontFamily: "Fredoka",
-            fontWeight: 700,
-            fontSize: 170,
+            fontFamily: "Luckiest Guy",
+            fontSize: 160,
             lineHeight: 1,
             color: "white",
             letterSpacing: 2,
@@ -181,8 +180,7 @@ const Arrival: React.FC<{ readonly world: string; readonly title: string; readon
           style={{
             maxWidth: "88%",
             textAlign: "center",
-            fontFamily: "Fredoka",
-            fontWeight: 700,
+            fontFamily: "Luckiest Guy",
             fontSize: 72,
             color: "#ffd34d",
             textShadow: outline(6, "#5a1300"),

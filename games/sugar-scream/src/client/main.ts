@@ -1,4 +1,5 @@
 // Sugar Scream client entry point and round controller.
+import '@fontsource/luckiest-guy/400.css';
 import '@fontsource/fredoka/500.css';
 import '@fontsource/fredoka/700.css';
 import './styles.css';
@@ -73,7 +74,7 @@ interface Settings extends UiSettings {
 
 function loadSettings(): Settings {
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const defaults: Settings = { turbo: false, reduced, muted: false, music: true, sfx: true, musicVol: 0.7, sfxVol: 0.8, intro: true, scares: true, haptics: true, skin: 'classic', ante: false };
+  const defaults: Settings = { turbo: false, reduced, muted: false, music: true, sfx: true, musicVol: 0.7, sfxVol: 0.8, intro: true, scares: true, haptics: true, ante: false };
   try {
     return { ...defaults, ...JSON.parse(localStorage.getItem('ss-settings') ?? '{}') };
   } catch {
@@ -184,7 +185,7 @@ class Game {
     const app = new Application();
     await app.init({ resizeTo: window, backgroundAlpha: 0, antialias: true, autoDensity: true, resolution: Math.min(window.devicePixelRatio || 1, 2), powerPreference: 'high-performance' });
     document.getElementById('app')!.appendChild(app.canvas);
-    await document.fonts.load('700 40px Fredoka').catch(() => {});
+    await Promise.all(['40px "Luckiest Guy"', '700 40px Fredoka'].map((f) => document.fonts.load(f).catch(() => {})));
     const failures = await loadAssets((p) => this.hud.setLoading(p * 0.8));
     if (failures.length) console.warn(`Missing assets: ${failures.join(', ')}`);
     try {
@@ -239,18 +240,15 @@ class Game {
       this.betIndex = Math.max(0, this.levels.indexOf(auth.config.defaultBetLevel));
       if (auth.config.jurisdiction?.disabledBuyFeature) this.settings.ante = false;
       await this.hud.loadingClipShown();
-      this.hud.hideLoading();
+      // with the intro on, the loading screen (and its clip) stays up behind the intro cards
+      if (!this.settings.intro) this.hud.hideLoading();
       this.refresh();
       this.scene.layout(); // the HUD is now filled in: fit the board around it
       this.hud.setWin(this.fmtMoney(0));
       this.hud.tips();
       if (this.settings.intro) {
-        const { skipNextTime } = await this.hud.introSplash();
+        await this.hud.introSplash();
         this.audio.unlock();
-        if (skipNextTime) this.applySettings({ ...this.settings, intro: false });
-        this.hud.showSettings(this.settings);
-        // the slot intro clip (tap to skip)
-        await this.clips.play('intro');
       }
       // the session clock ticks for the bar and an open Session panel
       this.session.start = Date.now();
@@ -531,7 +529,6 @@ class Game {
     this.audio.hapticsOn = s.haptics;
     this.audio.apply();
     this.scene.reduced = s.reduced;
-    this.scene.setSkin(s.skin);
     this.hud.showSettings(this.settings);
     this.setTurbo(s.turbo);
     saveSettings(this.settings);

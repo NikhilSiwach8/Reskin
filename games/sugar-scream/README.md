@@ -130,10 +130,10 @@ Build the upload zips with `npm run math:publish && npm run build && npm run rel
   - **Bonus previews:** each Bonus Games card has a Preview button that plays that bonus's entrance clip. Nothing is bought.
   - **Session panel:** the menu's Session panel shows the session time, rounds, total bet, total won, net result and biggest win.
   - **Jurisdiction displays:** when the RGS sets the `displaySessionTimer`, `displayNetPosition` or `displayRTP` flags, a line in the top-left corner keeps them on screen.
-- **Board skins** (menu): Classic, Blood Moon (red) and Ghost Light (pale blue). They tint the backdrop and the candy-cane frame and change its glow, never the symbols. Purely cosmetic, saved on the device.
+- **Lettering:** chunky cartoon capitals (Luckiest Guy, Apache 2.0) with a dark outline and a dropped shadow for every title, button, meter, label and amount, in the HUD and the clips alike; Fredoka stays for running text (rules, the guide, descriptions).
+- **Board looks follow the bonus:** the candy-pink board of the base game turns slime green in Haunted Cauldron and blood red in Full Moon (the frame's hue turns and its glow changes; the symbols are never tinted), and the Graveyard Lock board stands in a cold ghost light. It changes by itself on the way in and out of each bonus.
 - **Video clips** (`src/client/clips.ts`, made with Remotion in [videos/sugar-scream-clips](../../videos/sugar-scream-clips)):
-  - **Loading screen:** a silent, seamless loop of the painted loading art (the brew glowing, embers rising, candies drifting down the sides) plays behind the progress bar. The painting is its poster, so it shows at once, and reduced motion keeps it still.
-  - **Intro:** the slot intro plays after Start.
+  - **Loading screen and intro:** the witch flies across the moon on her broom and the painted logo lands at the top (silent, held on its last frame, its first frame as the poster so it shows at once). When loading is done the progress bar fades, three framed feature cards fly in under the logo (the Cauldron multipliers, the Skull Lollipop scatter, the 5,000x max win) and a pulsing CLICK TO CONTINUE follows; a tap anywhere enters the game. The intro can be switched off in the menu; reduced motion stands the cards on the painted witch art.
   - **Bonus entrances:** the bonus entry clip (candy tunnel, hallway, the doors open, into the bonus world) replaces the CSS door transition. The scene switches while the camera dives through the doorway.
   - **Big wins:** the win clip for the highest tier reached plays for Big Win and above. It climbs through the tiers, and the real amount lands on it.
   - **Moments:**

@@ -98,7 +98,7 @@ export class Player {
     const autoMs = () => (this.o.hands() || this.o.turbo() || this.skipping ? 1600 : null);
     // bonus rounds celebrate every hit as it lands (each winning spin, Treat or Loot Box prize),
     // not the total at the end
-    const perHit = events.some((ev) => ev.type === 'freeSpinsStart' || ev.type === 'trickOrTreat' || ev.type === 'lootBox');
+    const perHit = events.some((ev) => ev.type === 'freeSpinsStart' || ev.type === 'trickOrTreat' || ev.type === 'lootBox' || ev.type === 'holdStart');
     // tumble chain of the current spin (1 = the first win on the board)
     let chain = 0;
     for (let i = 0; i < events.length; i++) {
@@ -295,6 +295,8 @@ export class Player {
           this.inFeature = false;
           break;
         case 'wincap':
+          // a Graveyard Lock Grand already had its Max Win screen in the graveyard
+          if (events.some((ev) => ev.type === 'holdStart')) break;
           this.audio.play('bigWin');
           this.audio.sting('bigwin');
           void this.scene.shake(900, 18);
@@ -357,6 +359,13 @@ export class Player {
             this.audio.sting('bigwin');
           }
           await this.hud.holdEnd(this.o.fmt(e.total), e.grand, (v) => this.ms(v));
+          // the bonus's win screen, still in the graveyard: the tiers it reached (Big, Mega, ...)
+          // when it paid back at least its price, else the plain total
+          if (Math.min(e.total, WINCAP) >= this.o.cost()) await this.winSplash(Math.min(e.total, WINCAP), this.o.cost());
+          else if (!(await this.hud.clipWithAmount('fs-total', this.o.fmt(e.total), t('Graveyard Lock'), 1.2, fast() ? 1.5 : 1))) {
+            this.audio.play('end');
+            await this.hud.splash('Graveyard Lock', `You have won\n${this.o.fmt(e.total)}`, 'Collect', autoMs(), bgSrc('graveyard'));
+          }
           await this.hud.exitDoor(fast(), () => {
             this.hud.holdClose();
             this.audio.setMusic('base');

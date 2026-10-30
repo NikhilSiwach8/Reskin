@@ -15,6 +15,7 @@ import {
 } from "remotion";
 
 loadFont({ family: "Creepster", url: staticFile("fonts/Creepster.woff2") });
+loadFont({ family: "Luckiest Guy", url: staticFile("fonts/LuckiestGuy.woff2") });
 loadFont({ family: "Fredoka", url: staticFile("fonts/Fredoka-500.woff2"), weight: "500" });
 loadFont({ family: "Fredoka", url: staticFile("fonts/Fredoka-700.woff2"), weight: "700" });
 

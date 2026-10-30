@@ -89,7 +89,6 @@
       <label class="pop-toggle"><span>Intro screen</span><input type="checkbox" id="set-intro" /><i></i></label>
       <label class="pop-toggle"><span>Jumpscares</span><input type="checkbox" id="set-scares" /><i></i></label>
       <label class="pop-toggle"><span>Vibration</span><input type="checkbox" id="set-haptics" /><i></i></label>
-      <div class="pop-skin"><span>Board</span><div id="set-skin" role="group" aria-label="Board skin"><button type="button" data-skin="classic">Classic</button><button type="button" data-skin="bloodmoon">Blood Moon</button><button type="button" data-skin="ghost">Ghost Light</button></div></div>
       <button id="btn-session" class="pop-btn" type="button">Session</button>
       <button id="btn-guide" class="pop-btn" type="button">How to play</button>
       <button id="btn-rules" type="button">Game info</button>
@@ -190,20 +189,15 @@
       </div>
     </div>
 
-    <div id="intro" class="overlay hidden">
-      <div class="splash-card intro">
-        <div class="intro-logo"><img class="logo-art" alt="Sugar Scream" /></div>
-        <ul class="intro-list">
-          <li><b>Tumbling candies</b> pay anywhere: 8 or more of a kind wins, then winners burst and new candies fall in.</li>
-          <li><b>Witch's Spell</b> can strike any base spin and conjure a guaranteed win.</li>
-          <li><b>3 Skull Lollipops</b>: Trick or Treat. Knock on doors for treats or the Golden Lollipop.</li>
-          <li><b>4 Lollipops</b>: Haunted Cauldron free spins. Jack-o'-Lanterns fill a Cauldron that multiplies every later win.</li>
-          <li><b>5+ Lollipops</b>: Full Moon. The Cauldron starts at x5 and fills twice as fast.</li>
-          <li><b>Loot Box</b> can drop on any base spin: open a box for a Big, Mega, Monster or Sugar Scream win, or the 5,000x Max Win.</li>
-        </ul>
-        <label class="check"><input type="checkbox" id="intro-skip" /> Don't show again</label>
-        <button id="intro-go" class="cta" type="button">Play</button>
+    <!-- intro: over the loading screen's witch clip, three framed feature cards and "Click to continue" -->
+    <div id="intro" class="hidden" role="dialog" aria-label="Sugar Scream">
+      <img class="intro-logo logo-art" alt="Sugar Scream" />
+      <div class="intro-cards">
+        <div class="feat"><div class="feat-art"><img data-art="panel:cauldron_icon" alt="" /></div><p>Jack-o'-Lanterns fill the <em>Cauldron</em> and multiply every win</p></div>
+        <div class="feat"><div class="feat-art"><img data-art="sym:SC" alt="" /></div><p><em>3</em> Skull Lollipops: Trick or Treat · <em>4</em>: free spins · <em>5+</em>: Full Moon</p></div>
+        <div class="feat"><div class="feat-art"><img data-art="panel:win_max" alt="" /></div><p>Catch the big one with a <em>5,000x</em> max win</p></div>
       </div>
+      <button id="intro-go" class="intro-continue" type="button">Click to continue</button>
     </div>
 
     <div id="modal-buy" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="buy-title">

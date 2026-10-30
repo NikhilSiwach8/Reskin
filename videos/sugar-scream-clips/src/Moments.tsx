@@ -16,9 +16,8 @@ const Title: React.FC<{ readonly at: number; readonly size: number; readonly col
         maxWidth: "92%",
         textAlign: "center",
         // the game's heading lettering: bold rounded candy type, outlined, with a dropped shadow
-        fontFamily: "Fredoka",
-        fontWeight: 700,
-        fontSize: size * 0.88,
+        fontFamily: "Luckiest Guy",
+        fontSize: size * 0.82,
         lineHeight: 1,
         letterSpacing: 2,
         textTransform: "uppercase",
