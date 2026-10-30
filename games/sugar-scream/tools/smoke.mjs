@@ -39,12 +39,11 @@ for (const [i, [mode, scenario]] of scenarios.entries()) {
     document.querySelector('#tot:not(.hidden) .door:not(:disabled)')?.click();
   }, 500));
   await page.goto(`http://localhost:5199/?sessionID=smoke-${scenario}-${Date.now()}&rgs_url=localhost:5199/rgs&lang=en&currency=USD`);
-  await page.waitForSelector('#loading', { state: 'hidden', timeout: 120000 }); // the mock RGS loads every book set on first use
-  // dismiss the intro splash
-  await page.waitForSelector('#intro', { state: 'visible', timeout: 10000 }).then(() => page.evaluate(() => document.querySelector('#intro-go').click())).catch(() => {});
-  // the slot intro clip follows Start: tap it away like a player
-  await page.waitForSelector('#clip.on', { timeout: 6000 }).then(() => page.dispatchEvent('#clip', 'pointerdown')).catch(() => {});
-  await page.waitForSelector('#clip', { state: 'hidden', timeout: 5000 }).catch(() => {});
+  // the mock RGS loads every book set on first use; the intro then stands over the loading screen
+  await page.waitForSelector('#intro:not(.hidden), #loading.hidden', { timeout: 120000 });
+  // tap the intro away like a player (a tap anywhere enters the game)
+  await page.evaluate(() => document.querySelector('#intro:not(.hidden) #intro-go')?.click());
+  await page.waitForSelector('#loading', { state: 'hidden', timeout: 10000 });
   // a first visit shows the controls guide: skip it like a player
   await page.waitForSelector('#guide:not(.hidden)', { timeout: 3000 }).then(() => page.click('#guide .guide-skip', { force: true })).catch(() => {});
   // Turbo keeps long bonus rounds short; results must still settle identically.

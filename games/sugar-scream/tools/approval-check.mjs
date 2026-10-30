@@ -40,15 +40,13 @@ async function open(params = {}, viewport = { width: 1280, height: 720 }, { intr
   await page.goto(`http://localhost:${PORT}/?${q}`);
   await page.waitForFunction(() => {
     const l = document.querySelector('#loading');
-    return !l || l.classList.contains('hidden') || /error|failed|missing|problem|unavailable/i.test(l.textContent ?? '');
+    // ready: the game (loading closed), the intro standing over the loading screen, or an error
+    return !l || l.classList.contains('hidden') || !document.querySelector('#intro')?.classList.contains('hidden') || /error|failed|missing|problem|unavailable/i.test(l.textContent ?? '');
   }, null, { timeout: 120000, polling: 200 });
   // the intro splash follows a successful authenticate; dismiss it once it is up
-  if (intro && (await page.isHidden('#loading'))) {
-    await page.waitForSelector('#intro', { state: 'visible', timeout: 15000 }).then(() => page.click('#intro-go', { force: true })).catch(() => {});
-    await page.waitForSelector('#intro', { state: 'hidden', timeout: 5000 }).catch(() => {});
-    // the slot intro clip follows Start: tap it away like a player
-    await page.waitForSelector('#clip.on', { timeout: 6000 }).then(() => page.dispatchEvent('#clip', 'pointerdown')).catch(() => {});
-    await page.waitForSelector('#clip', { state: 'hidden', timeout: 5000 }).catch(() => {});
+  if (intro && (await page.isVisible('#intro'))) {
+    await page.click('#intro-go', { force: true });
+    await page.waitForSelector('#loading', { state: 'hidden', timeout: 10000 }).catch(() => {});
     // a first visit shows the controls guide: skip it like a player
     await page.waitForSelector('#guide:not(.hidden)', { timeout: 3000 }).then(() => page.click('#guide .guide-skip', { force: true })).catch(() => {});
   }
