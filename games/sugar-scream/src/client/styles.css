@@ -673,7 +673,7 @@ body.reduced #combo, body.reduced #peek { animation: none !important; }
   --pk: 0.2;
   border-style: solid; border-color: transparent; border-radius: 0;
   border-width: calc(60px * var(--pk)) calc(110px * var(--pk));
-  border-image: var(--ui-pill) 60 110 fill / 1 / 0 stretch;
+  border-image: var(--ui-pill) 83 151 fill / 1 / 0 stretch;
   background: none; box-shadow: none; color: var(--ink); outline-offset: 0;
 }
 .tile-tag, #meter-balance .meter-label, #meter-bet .meter-label, #ante-badge, .bc-preview { --pk: 0.13; padding: 0 2px; color: #fff; }
@@ -688,12 +688,12 @@ body.reduced #combo, body.reduced #peek { animation: none !important; }
 #combo[data-level='4'] .combo-n { color: var(--lime); }
 #combo[data-level='5'] .combo-n { color: #e7b8ff; }
 .row button:not(.cta), #auto-counts button, .pop-btn, #btn-rules { --pk: 0.24; padding: 2px 8px; }
-#auto-counts button.on { border-image-source: var(--ui-cta); border-image-slice: 100 100 60 120 fill; outline: none; }
+#auto-counts button.on { border-image-source: var(--ui-cta); border-image-slice: 125 125 75 150 fill; outline: none; }
 #guide .guide-skip { --pk: 0.2; padding: 0 6px; color: var(--ink); }
 .panel:not(.painted-panel) { --pk: 0.3; padding: 2px 6px; }
 #side-left .panel:not(.painted-panel) { border-width: calc(60px * var(--pk)) calc(110px * var(--pk)); border-radius: 0; }
 @media (max-height: 500px) and (orientation: landscape), (orientation: portrait) {
-  #side-left #cauldron.painted-panel { --pk: 0.26; background: none; border-style: solid; border-color: transparent; border-radius: 0; border-width: calc(60px * var(--pk)) calc(110px * var(--pk)); border-image: var(--ui-pill) 60 110 fill / 1 / 0 stretch; padding: 2px 6px; }
+  #side-left #cauldron.painted-panel { --pk: 0.26; background: none; border-style: solid; border-color: transparent; border-radius: 0; border-width: calc(60px * var(--pk)) calc(110px * var(--pk)); border-image: var(--ui-pill) 83 151 fill / 1 / 0 stretch; padding: 2px 6px; }
 }
 .buy-betpanel { --pk: 0.3; padding: 0 8px 2px; }
 
@@ -702,7 +702,7 @@ body.reduced #combo, body.reduced #peek { animation: none !important; }
   --ck: 0.2;
   border-style: solid; border-color: transparent; border-radius: 0;
   border-width: calc(100px * var(--ck)) calc(100px * var(--ck)) calc(60px * var(--ck)) calc(120px * var(--ck));
-  border-image: var(--ui-cta) 100 100 60 120 fill / 1 / 0 stretch;
+  border-image: var(--ui-cta) 125 125 75 150 fill / 1 / 0 stretch;
   background: none; box-shadow: none; color: #fff; text-shadow: 0 2px 0 #6a0040; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
 }
 .cta { padding: 0 12px; }
@@ -713,7 +713,7 @@ body.reduced #combo, body.reduced #peek { animation: none !important; }
 
 /* toggles: a chocolate track and the swirl sweet as the knob (grey while off) */
 .pop-toggle i, .ante-switch {
-  border: 6px solid transparent; border-image: var(--ui-pill) 60 110 fill / 8px 14px / 0 stretch; background: none; box-shadow: none; border-radius: 0;
+  border: 6px solid transparent; border-image: var(--ui-pill) 83 151 fill / 8px 14px / 0 stretch; background: none; box-shadow: none; border-radius: 0;
 }
 .pop-toggle i { width: 58px; height: 30px; }
 .pop-toggle i::after { top: 50%; left: 0; translate: 0 -50%; width: 24px; height: 24px; border: none; background: var(--ui-knob) center / contain no-repeat; filter: grayscale(1) brightness(0.8); transition: left 0.22s cubic-bezier(0.3, 1.5, 0.5, 1), filter 0.22s; }
@@ -780,7 +780,7 @@ body.reduced #combo, body.reduced #peek { animation: none !important; }
   #guide .guide-text { font-size: 14px; margin-bottom: 6px; }
   #rules-body { max-height: calc(100vh - 110px); }
 }
-.door .prize.over-art { --pk: 0.13; background: none; border-style: solid; border-color: transparent; border-radius: 0; border-width: calc(60px * var(--pk)) calc(110px * var(--pk)); border-image: var(--ui-pill) 60 110 fill / 1 / 0 stretch; padding: 0 2px; }
+.door .prize.over-art { --pk: 0.13; background: none; border-style: solid; border-color: transparent; border-radius: 0; border-width: calc(60px * var(--pk)) calc(110px * var(--pk)); border-image: var(--ui-pill) 83 151 fill / 1 / 0 stretch; padding: 0 2px; }
 /* the replay card stays clear of the Play button on short screens */
 @media (max-height: 500px) and (orientation: landscape) {
   #replay-info { --fk: 0.08; font-size: 11px; }
@@ -806,7 +806,7 @@ body.reduced #combo, body.reduced #peek { animation: none !important; }
 .hold-jackpots .jp, .hold-status > div {
   --pk: 0.2; display: flex; flex-direction: column; align-items: center; line-height: 1.05;
   border-style: solid; border-color: transparent; border-width: calc(60px * var(--pk)) calc(110px * var(--pk));
-  border-image: var(--ui-pill) 60 110 fill / 1 / 0 stretch; padding: 0 6px; min-width: clamp(80px, 12vw, 150px);
+  border-image: var(--ui-pill) 83 151 fill / 1 / 0 stretch; padding: 0 6px; min-width: clamp(80px, 12vw, 150px);
 }
 .hold-jackpots span, .hold-status span { font-size: clamp(10px, 1.6vh, 14px); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #e9d6f5; }
 .hold-jackpots b, .hold-status b { font-size: clamp(14px, 2.6vh, 24px); font-variant-numeric: tabular-nums; }
@@ -821,13 +821,22 @@ body.reduced #combo, body.reduced #peek { animation: none !important; }
 }
 #hold-grid { display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(5, 1fr); gap: clamp(2px, 0.6vw, 8px); aspect-ratio: 6 / 5; padding: 2px; }
 .hold-cell { position: relative; border-radius: 22%; background: rgba(10, 0, 24, 0.45) var(--ui-window) center / cover; box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.85), inset 0 0 0 1px rgba(200, 170, 255, 0.14); display: grid; place-items: center; }
-/* a respin: each empty grave scrolls a blurred strip of orbs like a reel */
+/* a respin: one strip per column scrolls down behind every empty grave of that column at the same
+   speed, each grave showing it from its own row down (--phase: the tile at the top of the grave,
+   the columns offset from each other), so the orbs run from grave to grave like a real reel. The
+   strip is 12 tiles of one grave pitch and moves by transform only (no repaints while it spins). */
 .hold-cell { overflow: hidden; }
-.reel-strip { position: absolute; inset: 0; background: var(--orb-strip) 50% 0 / 78% 50% repeat-y; opacity: 0.5; filter: blur(1.6px) brightness(0.8); animation: reel-scroll 0.2s linear infinite; pointer-events: none; }
-@keyframes reel-scroll { to { background-position: 50% 100%; } }
+.reel-strip { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.reel-strip::before {
+  content: ''; position: absolute; left: 50%; width: var(--pitch, 100px); margin-left: calc(var(--pitch, 100px) / -2);
+  top: calc(-1 * var(--phase) * var(--pitch, 100px) - var(--pitch, 100px) * 12); height: calc(var(--pitch, 100px) * 25);
+  background: var(--reel-strip) 0 0 / var(--pitch, 100px) calc(var(--pitch, 100px) * 12) repeat-y;
+  filter: blur(1.5px) brightness(0.6) saturate(0.75); opacity: 0.85; will-change: transform; animation: reel-scroll var(--spin-s, 1.15s) linear infinite;
+}
+@keyframes reel-scroll { to { transform: translateY(calc(var(--pitch, 100px) * 12)); } }
 /* a new orb drops into its grave as its reel stops */
-.hold-cell.drop .orb { animation: orb-drop 0.42s cubic-bezier(0.3, 1.5, 0.5, 1); }
-@keyframes orb-drop { from { translate: 0 -120%; opacity: 0.2; } 40% { opacity: 1; } }
+.hold-cell.drop .orb { animation: orb-drop 0.26s cubic-bezier(0.2, 0.8, 0.3, 1); }
+@keyframes orb-drop { from { translate: 0 -100%; } 70% { translate: 0 6%; } }
 .orb { position: relative; width: 100%; height: 100%; display: grid; place-items: center; }
 .orb img { position: absolute; inset: 3%; width: 94%; height: 94%; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55)); }
 .orb.lantern img { inset: 6%; width: 88%; height: 88%; }

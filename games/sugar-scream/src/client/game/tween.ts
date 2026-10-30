@@ -37,7 +37,8 @@ export class Tweener {
 
   constructor(ticker: Ticker) {
     // A long frame (tab switch, garbage collection) is clamped so animations never jump ahead.
-    ticker.add((t) => this.step(Math.min(t.deltaMS, 34)));
+    // real elapsed time (capped after a stall, e.g. a background tab), so a dropped frame does not slow the motion
+    ticker.add((t) => this.step(Math.min(t.deltaMS, 50)));
   }
 
   private step(dt: number): void {

@@ -184,14 +184,20 @@ export class Hud {
     // Preload painted screens shown mid-round so they never pop in late.
     const later = [
       ...['win_big', 'win_mega', 'win_monster', 'win_sugar', 'win_max', 'door_treat', 'door_trick', 'door_lollipop'].map(panelSrc),
-      'assets/loot_box.svg',
+      'assets/loot_box.svg', 'assets/ui_reel_strip.webp',
       panelSrc('door'),
       ...['loot_box_1', 'loot_box_2', 'loot_box_3', 'loot_box_4', 'loot_box_5', 'loot_box_6', 'loot_open', 'loot_pedestal', 'loot_title', 'loot_trigger',
         'portal_wall', 'portal_doors', 'portal_flash', 'bonus_banner', 'orb_soul', 'orb_mini', 'orb_major'].map(panelSrc),
       ...['loot', 'graveyard', 'portal_tunnel', 'portal_cauldron', 'portal_fullmoon', 'portal_tot', 'portal_loot', 'portal_exit'].map(bgSrc),
       ...['fs_cauldron', 'fs_fullmoon', 'feature_end', 'tot'].map(bgSrc),
     ];
-    for (const src of later) if (src) new Image().src = src;
+    // fetched and decoded ahead of time, so a screen's first appearance does not hitch on decoding
+    for (const src of later) {
+      if (!src) continue;
+      const img = new Image();
+      img.src = src;
+      img.decode?.().catch(() => {});
+    }
     const knob = buttonSrc('ante_knob');
     if (knob) ($('#ante .ante-knob') as HTMLElement).style.backgroundImage = cssUrl(knob);
     $<HTMLImageElement>('#ante-art').src = symbolSrc('SC');
@@ -912,6 +918,8 @@ export class Hud {
         const cell = document.createElement('div');
         cell.className = 'hold-cell';
         cell.dataset.cell = `${reel},${row}`;
+        // the reel strip is shared by the column: each grave shows it from its own row down
+        cell.style.setProperty('--phase', String((reel * 5 + row) % 12));
         grid.appendChild(cell);
       }
     }
@@ -924,8 +932,7 @@ export class Hud {
     this.holdSum(fmt);
     const bg = bgSrc('graveyard');
     if (bg) $('#hold').style.setProperty('--bg', cssUrl(bg));
-    const strip = panelSrc('orb_soul');
-    if (strip) $('#hold').style.setProperty('--orb-strip', cssUrl(strip));
+    $('#hold').style.setProperty('--reel-strip', cssUrl('assets/ui_reel_strip.webp'));
     $('#hold').classList.toggle('painted-bg', !!bg);
     $('#hold').classList.remove('hidden', 'grand');
   }
@@ -970,19 +977,24 @@ export class Hud {
   }
 
   /**
-   * One respin: every empty grave spins like a reel (a blurred strip of orbs scrolling down), the
-   * reels stop column by column from the left and each new orb drops into its grave as its reel
-   * stops. Then each Lantern Orb doubles its reel, and the respin lamps show what is left (all
-   * three again after a landing).
+   * One respin: each column spins like a real reel. One strip of orbs (and gaps) per column scrolls
+   * down behind all of its empty graves at once, so an orb runs from grave to grave on its way down
+   * the column. The reels stop column by column from the left, and each new orb settles into its
+   * grave as its reel stops. Then each Lantern Orb doubles its reel, and the respin lamps show what
+   * is left (all three again after a landing).
    */
   async holdRespin(landed: Orb[], boosts: { lantern: Cell; cells: MultCell[] }[], respins: number, fmt: (c: number) => string, ms: (v: number) => number): Promise<void> {
     const grid = $('#hold-grid');
+    // one grave plus the gap to the next: the strip's tile height, so the column lines up
+    const first = grid.querySelector<HTMLElement>('.hold-cell');
+    const pitch = (first?.offsetHeight ?? 100) + (parseFloat(getComputedStyle(grid).rowGap) || 0);
+    grid.style.setProperty('--pitch', `${pitch}px`);
+    grid.style.setProperty('--spin-s', `${ms(1150) / 1000}s`);
     const empty = [...grid.querySelectorAll<HTMLElement>('.hold-cell:not(.locked)')];
     for (const cell of empty) {
       cell.classList.remove('land', 'drop');
       const strip = document.createElement('div');
       strip.className = 'reel-strip';
-      strip.style.animationDelay = `${-Math.random() * 0.2}s`;
       cell.appendChild(strip);
     }
     this.h.sound('drop');

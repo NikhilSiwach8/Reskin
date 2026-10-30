@@ -1,0 +1,23 @@
+import { createRequire } from 'node:module';
+import { createServer } from 'vite';
+const { chromium } = createRequire(import.meta.url)('playwright');
+const OUT = '/tmp/claude-0/-home-user-Reskin/32294433-8fe3-56ec-a05b-cdd907f44401/scratchpad/hw/shots';
+const server = await createServer({ server: { port: 5193, strictPort: true }, logLevel: 'error' }); await server.listen();
+const browser = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] });
+const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
+page.on('pageerror', (e) => console.log('ERR', e.message));
+await page.goto(`http://localhost:5193/?sessionID=hw-${Date.now()}&rgs_url=localhost:5193/rgs&lang=en&currency=USD`);
+await page.waitForSelector('#intro:not(.hidden)', { timeout: 120000 }).then(() => page.click('#intro', { position: { x: 20, y: 20 } })).catch(() => {});
+await page.waitForSelector('#guide:not(.hidden)', { timeout: 8000 }).then(() => page.click('#guide .guide-skip', { force: true })).catch(() => {});
+await page.screenshot({ path: `${OUT}/hd-main.jpg`, quality: 85 });
+await page.click('#dev-harness summary');
+await page.click('#dev-harness button[data-s="graveyard"][data-mode="graveyard"]');
+setInterval(() => page.evaluate(() => document.querySelector('#splash:not(.hidden) #splash-go')?.click()).catch(() => {}), 400);
+await page.waitForSelector('#hold:not(.hidden)', { timeout: 60000 });
+// catch a respin mid-spin
+await page.waitForSelector('#hold-grid .reel-strip', { timeout: 20000 });
+await page.waitForTimeout(150);
+await page.screenshot({ path: `${OUT}/reel-a.jpg`, quality: 85 });
+await page.waitForTimeout(90);
+await page.screenshot({ path: `${OUT}/reel-b.jpg`, quality: 85 });
+await browser.close(); await server.close();

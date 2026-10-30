@@ -1,10 +1,11 @@
 """Builds the Graveyard Lock orbs from the painted art (no new artwork):
 
-  panel_orb_soul    the candy-glass sphere from the board frame's corner (gold ring included)
-                    with the Ghost Marshmallow glowing inside it
+  panel_orb_soul    the Autoplay button's candy glass in its gold ring (its icon filled in from the
+                    glass), turned candy pink, with the Ghost Marshmallow glowing inside it
   panel_orb_mini    the same sphere turned slime-lime, the ghost inside
   panel_orb_major   the same sphere turned gold, the ghost inside
   bg_graveyard      the moonlit candy graveyard (bg_portal_exit) in a cold, ghostly grade
+  ui_reel_strip     public/assets: the Graveyard Lock reel, one orb (or a gap) per grave, looping
 
 They are written to art/source/ (WebP); tools/import-painted.py then imports them like any panel.
 
@@ -20,12 +21,27 @@ A = ROOT / "public" / "assets"
 SRC = ROOT / "art" / "source"
 SIZE = 512
 
-board = Image.open(A / "panel_board.webp").convert("RGBA")
-CX, CY, R = 119, 141, 70  # the top-left corner sphere and its gold ring
-sphere = board.crop((CX - R, CY - R, CX + R, CY + R)).resize((SIZE, SIZE), Image.LANCZOS)
-mask = Image.new("L", (SIZE * 4, SIZE * 4), 0)
-ImageDraw.Draw(mask).ellipse((8, 8, SIZE * 4 - 8, SIZE * 4 - 8), fill=255)
-sphere.putalpha(mask.resize((SIZE, SIZE), Image.LANCZOS))
+# the orb shell: the Autoplay button's candy glass in its gold ring, at the painting's full size,
+# with its arrow icon filled in from the surrounding glass (the ghost sits over the middle anyway)
+shell = Image.open(SRC / "btn_auto.webp").convert("RGBA")
+shell = shell.crop(shell.getchannel("A").point(lambda a: 255 if a > 8 else 0).getbbox()).resize((SIZE, SIZE), Image.LANCZOS)
+px = np.asarray(shell).astype(float)
+hsv = np.asarray(shell.convert("RGB").convert("HSV")).astype(float) / 255
+yy, xx = np.mgrid[:SIZE, :SIZE]
+r = np.hypot(xx - SIZE / 2, yy - SIZE / 2) / (SIZE / 2)
+icon = (hsv[..., 2] > 0.72) & (hsv[..., 1] < 0.42) & (r < 0.62)  # the cream arrows
+icon = np.asarray(Image.fromarray((icon * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(9))) > 0
+keep = (~icon).astype(float)
+filled = px.copy()
+for sigma in (6, 14, 30):  # normalised convolution: fill the holes from the glass around them
+    num = np.stack([np.asarray(Image.fromarray(np.clip(px[..., c] * keep, 0, 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(sigma))).astype(float) for c in range(3)], -1)
+    den = np.asarray(Image.fromarray((keep * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(sigma))).astype(float)[..., None] / 255
+    est = num / np.maximum(den, 1e-3)
+    hole = icon & (den[..., 0] > 0.02)
+    filled[hole, :3] = est[hole]
+    keep = np.maximum(keep, hole.astype(float))
+    px = filled.copy()
+sphere = Image.fromarray(np.clip(filled, 0, 255).astype(np.uint8), "RGBA")
 GLASS = int(SIZE * 0.4)  # radius of the glass inside the ring
 
 
@@ -69,9 +85,9 @@ def inside(orb: Image.Image, symbol: str, scale: float, glow: tuple[int, int, in
     return out
 
 
-soul = inside(sphere, "GM", 0.72, (255, 140, 230))
-mini = inside(recolor(sphere, 130, 1.0, 1.0), "GM", 0.72, (190, 255, 120))
-major = inside(recolor(sphere, 62, 1.1, 1.12), "GM", 0.72, (255, 220, 120))
+soul = inside(recolor(sphere, 12, 1.05, 1.05), "GM", 0.9, (255, 140, 230))
+mini = inside(recolor(sphere, 146, 1.0, 1.05), "GM", 0.9, (190, 255, 120))
+major = inside(recolor(sphere, 95, 1.15, 1.2), "GM", 0.9, (255, 220, 120))
 for name, im in (("soul", soul), ("mini", mini), ("major", major)):
     im.save(SRC / f"panel_orb_{name}.webp", "WEBP", quality=95, method=6)
 
@@ -87,4 +103,14 @@ yy, xx = np.mgrid[:h, :w]
 vignette = 1 - 0.55 * np.clip(np.hypot((xx - w / 2) / (w / 2), (yy - h / 2) / (h / 2)) - 0.35, 0, 1)
 px = np.asarray(yard).astype(float) * vignette[..., None] * np.array([0.82, 0.88, 1.0])
 Image.fromarray(px.clip(0, 255).astype(np.uint8)).save(SRC / "bg_graveyard.webp", "WEBP", quality=95, method=6)
+# the reel strip a column of empty graves scrolls while it spins: one tile per grave, looping
+TILE = 200
+order = ["soul", None, "lantern", "soul", None, "mini", "soul", None, "major", "soul", None, "soul"]
+art = {"soul": soul, "mini": mini, "major": major, "lantern": Image.open(A / "sym_JK.webp").convert("RGBA")}
+strip = Image.new("RGBA", (TILE, TILE * len(order)), (0, 0, 0, 0))
+for i, kind in enumerate(order):
+    if kind:
+        pad = 14 if kind == "lantern" else 8
+        strip.alpha_composite(art[kind].resize((TILE - 2 * pad, TILE - 2 * pad), Image.LANCZOS), (pad, i * TILE + pad))
+strip.save(A / "ui_reel_strip.webp", "WEBP", quality=88, method=6)
 print("wrote art/source/panel_orb_soul.webp, panel_orb_mini.webp, panel_orb_major.webp, bg_graveyard.webp")
