@@ -806,3 +806,17 @@ body.reduced #combo, body.reduced #peek { animation: none !important; }
   #rules-body { max-height: calc(100vh - 110px); }
 }
 .door .prize.over-art { --pk: 0.13; background: none; border-style: solid; border-color: transparent; border-radius: 0; border-width: calc(60px * var(--pk)) calc(110px * var(--pk)); border-image: var(--ui-pill) 60 110 fill / 1 / 0 stretch; padding: 0 2px; }
+/* the replay card stays clear of the Play button on short screens */
+@media (max-height: 500px) and (orientation: landscape) {
+  #replay-info { --fk: 0.08; font-size: 11px; }
+  #replay-info .tile-tag { margin-bottom: 2px; }
+  #replay-info dl { gap: 0 10px; }
+}
+@media (max-height: 300px) { #replay-info { --fk: 0.06; font-size: 9px; line-height: 1.2; } }
+@media (max-height: 300px) {
+  .splash-card, .modal-card { --fk: 0.06; max-height: calc(100vh - 8px); overflow: auto; }
+  .splash-card::after, .modal-card::after { display: none; }
+  #splash-title { font-size: 24px; }
+  #splash-sub { font-size: 11px; margin: 4px 0 6px; }
+  .splash-card .cta { --ck: 0.12; font-size: 14px; }
+}
