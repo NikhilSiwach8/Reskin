@@ -60,7 +60,7 @@ for (const viewport of [{ width: 1600, height: 900 }, { width: 390, height: 844 
   await page.evaluate(() => document.querySelector('#intro:not(.hidden) #intro-go')?.click());
   await page.waitForSelector('#loading', { state: 'hidden', timeout: 10000 });
   // a first visit shows the controls guide: skip it like a player
-  await page.waitForSelector('#guide:not(.hidden)', { timeout: 3000 }).then(() => page.click('#guide .guide-skip', { force: true })).catch(() => {});
+  await page.waitForSelector('#guide:not(.hidden)', { timeout: 8000 }).then(() => page.click('#guide .guide-skip', { force: true })).catch(() => {});
   await page.click('#btn-turbo', { force: true });
   const settle = async (label) => {
     // dialogs (free-spin intro / outro) continue by themselves in turbo

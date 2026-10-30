@@ -22,7 +22,7 @@
     "check:build": "node tools/check-build.mjs",
     "check:approval": "node tools/approval-check.mjs",
     "verify:math": "node --experimental-strip-types tools/verify-math.ts math-output/publish",
-    "release": "npm run verify:math && npm run check:build && python3 tools/package-release.py"
+    "release": "npm run build && npm run verify:math && npm run check:build && python3 tools/package-release.py"
   },
   "dependencies": {
     "@fontsource/fredoka": "^5.2.8",

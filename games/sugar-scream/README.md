@@ -85,7 +85,7 @@ Buy prices follow each feature's simulated value: raw 103.3% for Haunted Cauldro
 
 ## Deploying to Stake Engine
 
-Build the upload zips with `npm run math:publish && npm run build && npm run release`. This verifies every book and lookup row, then checks the production build (`npm run check:build`: it serves `dist/` from a CDN-style sub-folder, plays spins and both buys, and fails on any missing asset, page error or balance mismatch). Finally it writes two zips to `release/`, each under 50 MB:
+Build the upload zips with `npm run math:publish && npm run release`. The release builds the frontend first (so a zip never carries a stale build), verifies every book and lookup row, then checks the production build (`npm run check:build`: it serves `dist/` from a CDN-style sub-folder, plays spins and every buy, and fails on any missing asset, page error or balance mismatch). Finally it writes two zips to `release/`, each under 50 MB:
 
 - `sugar-scream-math.zip` (about 41 MB): `index.json`, plus `books_<mode>.jsonl.zst` and `lookUpTable_<mode>_0.csv` for `base`, `ante`, `bonus` and `fullmoon`.
 - `sugar-scream-frontend.zip` (about 8 MB): the static build, with `index.html` at the root.
